@@ -1,20 +1,11 @@
-# B.SEQuencer
-Repository: BSEQuencer
+# B.???
+Repository: BNoname
 
-Description: Multi channel MIDI step sequencer LV2 plugin with a variable matrix
-
-![screenshot](https://github.com/sjaehn/BSEQuencer/blob/master/docs/screenshot.png "Screenshot from B.SEQuencer")
-
+Description: A LV2 plugin. This plugin is in an early stage of development. No guarantees.
 
 Installation
 ------------
-a) Install the bsequencer (bsequencer-lv2) package for your system
-* [Arch linux](https://www.archlinux.org/packages/community/x86_64/bsequencer/) by David Runge
-* [Free BSD](https://www.freshports.org/audio/bsequencer-lv2) by yurivict
-* [NixOS](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/audio/bsequencer/default.nix) by Bart Brouns
-* Check https://repology.org/project/bsequencer/versions for other systems
-
-b) Build your own binaries in the following three steps.
+Build your own binaries in the following three steps.
 
 Step 1: Clone or download this repository.
 
@@ -36,36 +27,19 @@ alternative directory (e.g., /usr/local/lib/lv2/), change the variable `PREFIX` 
 sudo make install PREFIX=/usr/local
 ```
 
-
 Running
 -------
 After the installation Carla, Ardour and any other LV2 host should automatically detect B.SEQuencer.
 
 If jalv is installed, you can also call it
 ```
-jalv.gtk https://www.jahnichen.de/plugins/lv2/BSEQuencer
+jalv.gtk https://www.jahnichen.de/plugins/lv2/BNoname
 ```
 to run it stand-alone and connect it to the JACK system.
 
-
-Key features
-------------
-* Step sequencer with a selectable pattern matrix size (8x16, 16x16, 24x16, or 32x16)
-* Autoplay or host / MIDI controlled playing
-* Handles multiple MIDI inputs signals (keys) in one sequencer instance
-* Use musical scales and / or drumkits
-* Scale & drumkit editor
-* Controls for playing direction, jump, skip, and stop options placeable to any position within the matrix
-* Notes can be associated with four different, configurable output channels
-* Output channels connectable with individual MIDI channels
-
-
-Usage
------
-see https://github.com/sjaehn/BSEQuencer/wiki/B.SEQuencer
-
-
-See also
---------
-* Feature tour: https://www.youtube.com/watch?v=J6bU4GdUVYc
-* Preview: https://www.youtube.com/watch?v=iERRKL7J-KU
+TODO
+----
+* Find a name
+* Make a Description
+* GUI artwork
+* Debugging

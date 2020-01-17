@@ -1,5 +1,5 @@
-/* B.SEQuencer
- * MIDI Step Sequencer LV2 Plugin
+/*  B.Noname
+ * LV2 Plugin
  *
  * Copyright (C) 2018, 2019 by Sven Jähnichen
  *
@@ -18,18 +18,36 @@
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef MIDIDATA_HPP_
-#define MIDIDATA_HPP_
+#ifndef PORTS_HPP_
+#define PORTS_HPP_
 
-#include <cstdint>
+enum PortIndex {
+	CONTROL		= 0,
+	NOTIFY		= 1,
+	AUDIO_IN_1	= 2,
+	AUDIO_IN_2	= 3,
+	AUDIO_OUT_1	= 4,
+	AUDIO_OUT_2	= 5,
 
-struct MidiData
-{
-        int64_t frames;
-        uint8_t ch;
-        uint8_t status;
-        int note;
-        uint8_t velocity;
+	CONTROLLERS	= 6,
+	PLAY		= 0,
+	NR_OF_STEPS	= 1,
+	STEP_BASE	= 2,
+	STEP_SIZE	= 3,
+	MAXCONTROLLERS	= 4
 };
 
-#endif /* MIDIDATA_HPP_ */
+enum ModeIndex
+{
+	AUTOPLAY	= 1,
+	HOST_CONTROLLED	= 2
+};
+
+enum BaseIndex
+{
+	SECONDS		= 0,
+	BEATS		= 1,
+	BARS		= 2
+};
+
+#endif /* PORTS_HPP_ */

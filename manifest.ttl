@@ -2,12 +2,12 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix ui:   <http://lv2plug.in/ns/extensions/ui#>.
 
-<https://www.jahnichen.de/plugins/lv2/BSEQuencer>
+<https://www.jahnichen.de/plugins/lv2/BNoname>
         a lv2:Plugin ;
-        lv2:binary <BSEQuencer.so> ;
-        rdfs:seeAlso <BSEQuencer.ttl> .
+        lv2:binary <BNoname.so> ;
+        rdfs:seeAlso <BNoname.ttl> .
 
-<https://www.jahnichen.de/plugins/lv2/BSEQuencer#gui>   
+<https://www.jahnichen.de/plugins/lv2/BNoname#gui>
         a ui:X11UI;
-		ui:binary <BSEQuencer_GUI.so>;
-		rdfs:seeAlso <BSEQuencer.ttl> .
+	ui:binary <BNoname_GUI.so>;
+	rdfs:seeAlso <BNoname.ttl> .

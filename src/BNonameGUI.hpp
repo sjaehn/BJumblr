@@ -1,5 +1,5 @@
-/* B.SEQuencer
- * MIDI Step Sequencer LV2 Plugin
+/*  B.Noname
+ * LV2 Plugin
  *
  * Copyright (C) 2018, 2019 by Sven Jähnichen
  *
@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef BSEQUENCER_GUI_HPP_
-#define BSEQUENCER_GUI_HPP_
+#ifndef BNONAMEGUI_HPP_
+#define BNONAMEGUI_HPP_
 
 #include <lv2/lv2plug.in/ns/lv2core/lv2.h>
 #include <lv2/lv2plug.in/ns/extensions/ui/ui.h>
@@ -30,57 +30,55 @@
 #include <iostream>
 #include <algorithm>
 
-#include "BWidgets/BItems.hpp"
 #include "BWidgets/Widget.hpp"
 #include "BWidgets/Window.hpp"
 #include "BWidgets/Label.hpp"
 #include "BWidgets/DrawingSurface.hpp"
-#include "BWidgets/HSliderValue.hpp"
 #include "BWidgets/DialValue.hpp"
-#include "BWidgets/HSwitch.hpp"
-#include "BWidgets/TextToggleButton.hpp"
-#include "BWidgets/Text.hpp"
 #include "BWidgets/PopupListBox.hpp"
-#include "BWidgets/ImageIcon.hpp"
 #include "screen.h"
 
-#include "BScale.hpp"
-#include "ScaleMap.hpp"
 #include "drawbutton.hpp"
-#include "PlayStopButton.hpp"
-#include "ButtonBox.hpp"
-#include "CircledSymbol.hpp"
-#include "ResetButton.hpp"
-#include "UndoButton.hpp"
-#include "RedoButton.hpp"
+#include "HaloButton.hpp"
+#include "HaloToggleButton.hpp"
 #include "PadSurface.hpp"
 #include "definitions.h"
-#include "ports.h"
-#include "urids.h"
+#include "Ports.hpp"
+#include "Urids.hpp"
 #include "Pad.hpp"
 #include "PadMessage.hpp"
-#include "ScaleEditor.hpp"
 #include "Journal.hpp"
 
-#define BG_FILE "surface.png"
-#define EDIT_SYMBOL "EditSymbol.png"
-#define HELP_URL "https://github.com/sjaehn/BSEQuencer/wiki/B.SEQuencer"
-#define OPEN_CMD "xdg-open"
+#define BG_FILE "inc/surface.png"
 #define MAXUNDO 20
 
-#define RESIZE(widget, x, y, w, h, sz) widget.moveTo ((x) * (sz), (y) * (sz)); widget.resize ((w) * (sz), (h) * (sz));
-class BSEQuencer_GUI : public BWidgets::Window
+#define RESIZE(widget, x, y, w, h, sz) {widget.moveTo ((x) * (sz), (y) * (sz)); widget.resize ((w) * (sz), (h) * (sz));}
+
+enum editIndex
+{
+	EDIT_CUT	= 0,
+	EDIT_COPY	= 1,
+	EDIT_XFLIP	= 2,
+	EDIT_YFLIP	= 3,
+	EDIT_PASTE	= 4,
+	EDIT_RESET	= 5,
+	EDIT_UNDO	= 6,
+	EDIT_REDO	= 7,
+	MAXEDIT		= 8
+};
+
+const std::string editLabels[MAXEDIT] = {"Select & cut", "Select & copy", "Select & X flip", "Select & Y flip", "Paste", "Reset", "Undo", "Redo"};
+
+class BNonameGUI : public BWidgets::Window
 {
 public:
-	BSEQuencer_GUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow);
-	~BSEQuencer_GUI ();
+	BNonameGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow);
+	~BNonameGUI ();
 	void port_event (uint32_t port_index, uint32_t buffer_size, uint32_t format, const void *buffer);
 	void send_ui_on ();
 	void send_ui_off ();
 	void send_pad (int row, int step);
-	void send_scaleMaps (int scaleNr);
 	virtual void onConfigureRequest (BEvents::ExposeEvent* event) override;
-	virtual void onCloseRequest (BEvents::WidgetEvent* event) override;
 	void applyTheme (BStyles::Theme& theme) override;
 
 	LV2UI_Controller controller;
@@ -88,16 +86,11 @@ public:
 
 private:
 	static void valueChangedCallback(BEvents::Event* event);
-	static void helpPressedCallback (BEvents::Event* event);
-	static void editPressedCallback (BEvents::Event* event);
-	static void resetClickedCallback (BEvents::Event* event);
-	static void undoClickedCallback (BEvents::Event* event);
+	static void edit1ChangedCallback(BEvents::Event* event);
+	static void edit2ChangedCallback(BEvents::Event* event);
 	static void padsPressedCallback (BEvents::Event* event);
 	static void padsScrolledCallback (BEvents::Event* event);
-	static void padsFocusedCallback (BEvents::Event* event);
-	void scale ();
-	void scaleFocus ();
-	void drawCaption ();
+	virtual void resize () override;
 	void drawPad ();
 	void drawPad (int row, int step);
 	void drawPad (cairo_t* cr, int row, int step);
@@ -106,12 +99,12 @@ private:
 	double sz;
 	cairo_surface_t* bgImageSurface;
 
-	BSEQuencerURIs uris;
+	BNonameURIs uris;
 	LV2_Atom_Forge forge;
 
 	// Controllers
-	std::array<BWidgets::ValueWidget*, KNOBS_SIZE> controllerWidgets;
-	std::array<float, KNOBS_SIZE> controllers;
+	std::array<BWidgets::ValueWidget*, MAXCONTROLLERS> controllerWidgets;
+	std::array<float, MAXCONTROLLERS> controllers;
 
 	//Pads
 	class Pattern
@@ -125,7 +118,7 @@ private:
 		void store ();
 	private:
 		Journal<std::vector<PadMessage>, MAXUNDO> journal;
-		Pad pads [ROWS] [MAXSTEPS];
+		Pad pads [MAXSTEPS] [MAXSTEPS];
 		struct
 		{
 			std::vector<PadMessage> oldMessage;
@@ -146,90 +139,23 @@ private:
 
 	ClipBoard clipBoard;
 
-
-	// Cursors
-	uint32_t cursorBits [MAXSTEPS];
-	uint32_t noteBits;
-	uint32_t chBits;
-
-	// Temporary tools
-	bool tempTool;
-	double tempToolCh;
+	// Cursor
+	int cursor;
 	bool wheelScrolled;
-
-	ScaleMap scaleMaps[NR_SYSTEM_SCALES + NR_USER_SCALES];
+	bool padPressed;
+	bool deleteMode;
 
 	//Widgets
 	BWidgets::Widget mContainer;
 	PadSurface padSurface;
-	BWidgets::DrawingSurface captionSurface;
+	HaloToggleButton playButton;
+	HaloButton stopButton;
+	std::array<HaloToggleButton, EDIT_RESET> edit1Buttons;
+	std::array<HaloButton, MAXEDIT - EDIT_RESET> edit2Buttons;
+	BWidgets::PopupListBox stepSizeListBox;
+	BWidgets::PopupListBox stepBaseListBox;
+	BWidgets::PopupListBox padSizeListBox;
 
-	BWidgets::Widget modeBox;
-	BWidgets::Label modeBoxLabel;
-	BWidgets::Label modeLabel;
-	BWidgets::PopupListBox modeListBox;
-	BWidgets::Label modeAutoplayBpmLabel;
-	BWidgets::HSliderValue modeAutoplayBpmSlider;
-	BWidgets::Label modeAutoplayBpbLabel;
-	BWidgets::HSliderValue modeAutoplayBpbSlider;
-	BWidgets::Label modeMidiInChannelLabel;
-	BWidgets::PopupListBox modeMidiInChannelListBox;
-	BWidgets::Label modePlayLabel;
-	PlayStopButton modePlayButton;
-
-	BWidgets::Widget toolBox;
-	BWidgets::Label toolBoxLabel;
-	ButtonBox toolButtonBox;
-	BWidgets::TextToggleButton toolWholeStepButton;
-	ResetButton toolResetButton;
-	UndoButton toolUndoButton;
-	RedoButton toolRedoButton;
-	BWidgets::Label toolButtonBoxCtrlLabel;
-	BWidgets::Label toolButtonBoxChLabel;
-	BWidgets::Label toolButtonBoxEditLabel;
-	BWidgets::Label toolOctaveLabel;
-	BWidgets::DialValue toolOctaveDial;
-	BWidgets::Label toolVelocityLabel;
-	BWidgets::DialValue toolVelocityDial;
-	BWidgets::Label toolDurationLabel;
-	BWidgets::DialValue toolDurationDial;
-
-	BWidgets::Widget propertiesBox;
-	BWidgets::Label propertiesBoxLabel;
-	BWidgets::Label propertiesNrStepsLabel;
-	BWidgets::PopupListBox propertiesNrStepsListBox;
-	BWidgets::Label propertiesStepsPerLabel;
-	BWidgets::HSliderValue propertiesStepsPerSlider;
-	BWidgets::PopupListBox propertiesBaseListBox;
-	BWidgets::Label propertiesRootLabel;
-	BWidgets::PopupListBox propertiesRootListBox;
-	BWidgets::PopupListBox propertiesSignatureListBox;
-	BWidgets::Label propertiesOctaveLabel;
-	BWidgets::PopupListBox propertiesOctaveListBox;
-	BWidgets::Label propertiesScaleLabel;
-	BWidgets::ImageIcon propertiesScaleEditIcon;
-	BWidgets::PopupListBox propertiesScaleListBox;
-
-	struct ChBox
-	{
-		BWidgets::Widget box;
-		BWidgets::Label chLabel;
-		BWidgets::DrawingSurface chSymbol;
-		BWidgets::Label pitchLabel;
-		BWidgets::HSwitch pitchSwitch;
-		BWidgets::Widget pitchScreen;
-		BWidgets::Label channelLabel;
-		BWidgets::PopupListBox channelListBox;
-		BWidgets::Label velocityLabel;
-		BWidgets::DialValue velocityDial;
-		BWidgets::Label noteOffsetLabel;
-		BWidgets::DialValue noteOffsetDial;
-	};
-
-	std::array<ChBox, NR_SEQUENCER_CHS> chBoxes;
-
-	CircledSymbol helpLabel;
-	ScaleEditor* scaleEditor;
 
 	// Definition of styles
 	BColors::ColorSet fgColors = {{{0.0, 0.25, 0.75, 1.0}, {0.25, 0.75, 0.75, 1.0}, {0.0, 0.0, 0.1, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
@@ -246,38 +172,6 @@ private:
 	BColors::Color light = {1.0, 1.0, 1.0, 1.0};
 	BColors::Color evenPadBgColor = {0.0, 0.03, 0.06, 1.0};
 	BColors::Color oddPadBgColor = {0.0, 0.0, 0.0, 1.0};
-
-	std::array<ButtonStyle, NR_SEQUENCER_CHS + 1> chButtonStyles =
-	{{
-		{{0.0, 0.0, 0.0, 0.5}, NO_CTRL, "No channel"},
-		{{0.0, 0.0, 1.0, 1.0}, NO_CTRL, "Channel 1"},
-		{{1.0, 0.0, 1.0, 1.0}, NO_CTRL, "Channel 2"},
-		{{1.0, 0.5, 0.0, 1.0}, NO_CTRL, "Channel 3"},
-		{{1.0, 1.0, 0.0, 1.0}, NO_CTRL, "Channel 4"}
-	}};
-
-	std::array<ButtonStyle, NR_CTRL_BUTTONS> ctrlButtonStyles =
-	{{
-		{{0.0, 0.0, 0.0, 0.5}, NO_CTRL, "No control"},
-		{{0.0, 0.03, 0.06, 1.0}, CTRL_PLAY_FWD, "Play forward"},
-		{{0.0, 0.03, 0.06, 1.0}, CTRL_PLAY_REW, "Play reverse"},
-	  	{{0.0, 0.03, 0.06, 1.0}, CTRL_ALL_MARK, "Set all mark"},
-		{{0.0, 0.03, 0.06, 1.0}, CTRL_MARK, "Set mark"},
-		{{0.0, 0.03, 0.06, 1.0}, CTRL_JUMP_FWD, "Jump forward"},
-		{{0.0, 0.03, 0.06, 1.0}, CTRL_JUMP_BACK, "Jump backward"},
-	  	{{0.0, 0.03, 0.06, 1.0}, CTRL_SKIP, "Skip"},
-		{{0.0, 0.03, 0.06, 1.0}, CTRL_STOP, "Stop"}
-	}};
-
-	std::array<ButtonStyle, NR_EDIT_BUTTONS> editButtonStyles =
-	{{
-		{{0.0, 0.03, 0.06, 1.0}, EDIT_PICK, "Pick"},
-		{{0.0, 0.03, 0.06, 1.0}, EDIT_CUT, "Select & cut"},
-	  	{{0.0, 0.03, 0.06, 1.0}, EDIT_COPY, "Select & copy"},
-		{{0.0, 0.03, 0.06, 1.0}, EDIT_FLIPX, "Select & X flip"},
-		{{0.0, 0.03, 0.06, 1.0}, EDIT_FLIPY, "Select & Y flip"},
-		{{0.0, 0.03, 0.06, 1.0}, EDIT_PASTE, "Paste"}
-	}};
 
 	BStyles::Border border = {{ink, 1.0}, 0.0, 2.0, 0.0};
 	BStyles::Border menuBorder = {{BColors::darkgrey, 1.0}, 0.0, 0.0, 0.0};
@@ -309,11 +203,12 @@ private:
 	BStyles::Theme theme = BStyles::Theme
 	({
 		defaultStyles,
-		{"B.SEQuencer", 	{{"background", STYLEPTR (&BStyles::blackFill)},
+		{"B.Noname", 		{{"background", STYLEPTR (&BStyles::blackFill)},
 					 {"border", STYLEPTR (&BStyles::noBorder)}}},
 		{"main", 		{{"background", STYLEPTR (&widgetBg)},
 					 {"border", STYLEPTR (&BStyles::noBorder)}}},
 		{"widget", 		{{"uses", STYLEPTR (&defaultStyles)}}},
+		{"widget/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
 		{"screen", 		{{"background", STYLEPTR (&screenBg)}}},
 		{"box", 		{{"background", STYLEPTR (&boxBg)},
 					{"border", STYLEPTR (&border)}}},
@@ -325,56 +220,9 @@ private:
 					 {"bgcolors", STYLEPTR (&tgBgColors)},
 					 {"font", STYLEPTR (&tgLabelFont)}}},
 		{"tgbutton/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
-		{"dial", 		{{"uses", STYLEPTR (&defaultStyles)},
-					 {"fgcolors", STYLEPTR (&fgColors)},
-					 {"bgcolors", STYLEPTR (&bgColors)},
-					 {"textcolors", STYLEPTR (&fgColors)},
-					 {"font", STYLEPTR (&ctLabelFont)}}},
-		{"dial/focus",		{{"uses", STYLEPTR (&focusStyles)}}},
-		{"ch1", 		{{"uses", STYLEPTR (&defaultStyles)},
-					 {"fgcolors", STYLEPTR (&fgColors_ch1)},
-					 {"bgcolors", STYLEPTR (&bgColors)},
-					 {"textcolors", STYLEPTR (&fgColors)},
-					 {"font", STYLEPTR (&ctLabelFont)}}},
-		{"ch1/focus",		{{"uses", STYLEPTR (&focusStyles)}}},
-		{"ch2", 		{{"uses", STYLEPTR (&defaultStyles)},
-					 {"fgcolors", STYLEPTR (&fgColors_ch2)},
-					 {"bgcolors", STYLEPTR (&bgColors)},
-					 {"textcolors", STYLEPTR (&fgColors)},
-					 {"font", STYLEPTR (&ctLabelFont)}}},
-		{"ch2/focus",		{{"uses", STYLEPTR (&focusStyles)}}},
-		{"ch3", 		{{"uses", STYLEPTR (&defaultStyles)},
-					 {"fgcolors", STYLEPTR (&fgColors_ch3)},
-					 {"bgcolors", STYLEPTR (&bgColors)},
-					 {"textcolors", STYLEPTR (&fgColors)},
-					 {"font", STYLEPTR (&ctLabelFont)}}},
-		{"ch3/focus",		{{"uses", STYLEPTR (&focusStyles)}}},
-		{"ch4", 		{{"uses", STYLEPTR (&defaultStyles)},
-					 {"fgcolors", STYLEPTR (&fgColors_ch4)},
-					 {"bgcolors", STYLEPTR (&bgColors)},
-					 {"textcolors", STYLEPTR (&fgColors)},
-					 {"font", STYLEPTR (&ctLabelFont)}}},
-		{"ch4/focus",		{{"uses", STYLEPTR (&focusStyles)}}},
-		{"slider",		{{"uses", STYLEPTR (&defaultStyles)},
-					 {"fgcolors", STYLEPTR (&fgColors)},
-					 {"bgcolors", STYLEPTR (&bgColors)},
-					 {"textcolors", STYLEPTR (&fgColors)},
-					 {"font", STYLEPTR (&ctLabelFont)}}},
-		{"slider/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
 		{"ctlabel",	 	{{"uses", STYLEPTR (&labelStyles)}}},
 		{"lflabel",	 	{{"uses", STYLEPTR (&labelStyles)},
 					 {"font", STYLEPTR (&lfLabelFont)}}},
-		{"txtbox",	 	{{"background", STYLEPTR (&BStyles::noFill)},
-					 {"border", STYLEPTR (&labelborder)},
-					 //{"textcolors", STYLEPTR (&txColors)},
-					 {"font", STYLEPTR (&lfLabelFont)}}},
-		{"ilabel",	 	{{"uses", STYLEPTR (&labelStyles)},
-					 {"font", STYLEPTR (&iLabelFont)},
-					 {"textcolors", STYLEPTR (&BColors::whites)}}},
-		{"editlabel",	 	{{"uses", STYLEPTR (&labelStyles)},
-		 	 	 	 {"font", STYLEPTR (&iLabelFont)},
-					 {"textcolors", STYLEPTR (&BColors::whites)}}},
-		{"widget/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
 		{"menu",	 	{{"border", STYLEPTR (&menuBorder)},
 					 {"background", STYLEPTR (&menuBg)}}},
 		{"menu/item",	 	{{"uses", STYLEPTR (&defaultStyles)},
@@ -396,4 +244,4 @@ private:
 	});
 };
 
-#endif /* BSEQUENCER_GUI_HPP_ */
+#endif /* BNONAMEGUI_HPP_ */

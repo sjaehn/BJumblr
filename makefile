@@ -28,27 +28,27 @@ GUIPPFLAGS += -DPUGL_HAVE_CAIRO
 DSPFLAGS += `$(PKG_CONFIG) --cflags --libs $(LV2_LIBS)`
 GUIFLAGS += `$(PKG_CONFIG) --cflags --libs $(LV2_LIBS) $(GUI_LIBS)`
 
-BUNDLE = BSEQuencer.lv2
-DSP = BSEQuencer
-DSP_SRC = ./src/BSEQuencer.cpp
-GUI = BSEQuencer_GUI
-GUI_SRC = ./src/BSEQuencer_GUI.cpp
+BUNDLE = BNoname.lv2
+DSP = BNoname
+DSP_SRC = ./src/BNoname.cpp
+GUI = BNoname_GUI
+GUI_SRC = ./src/BNonameGUI.cpp
 OBJ_EXT = .so
 DSP_OBJ = $(DSP)$(OBJ_EXT)
 GUI_OBJ = $(GUI)$(OBJ_EXT)
 B_OBJECTS = $(addprefix $(BUNDLE)/, $(DSP_OBJ) $(GUI_OBJ))
-FILES = manifest.ttl BSEQuencer.ttl surface.png DrumSymbol.png NoteSymbol.png EditSymbol.png ScaleEditor.png LICENSE
-B_FILES = $(addprefix $(BUNDLE)/, $(FILES))
+
+ROOTFILES = \
+	manifest.ttl \
+	BNoname.ttl \
+	LICENSE
+
+INCFILES = \
+	inc/surface.png
+
+B_FILES = $(addprefix $(BUNDLE)/, $(ROOTFILES) $(INCFILES))
 
 GUI_INCL = \
-	src/BWidgets/ImageIcon.cpp \
-	src/BWidgets/Icon.cpp \
-	src/BWidgets/HPianoRoll.cpp \
-	src/BWidgets/PianoWidget.cpp \
-	src/BWidgets/TextToggleButton.cpp \
-	src/BWidgets/ToggleButton.cpp \
-	src/BWidgets/TextButton.cpp \
-	src/BWidgets/HSwitch.cpp \
 	src/BWidgets/PopupListBox.cpp \
 	src/BWidgets/ListBox.cpp \
 	src/BWidgets/ChoiceBox.cpp \
@@ -58,14 +58,8 @@ GUI_INCL = \
 	src/BWidgets/DownButton.cpp \
 	src/BWidgets/Button.cpp \
 	src/BWidgets/DrawingSurface.cpp \
-	src/BWidgets/DialValue.cpp \
-	src/BWidgets/Dial.cpp \
-	src/BWidgets/HSliderValue.cpp \
-	src/BWidgets/HSlider.cpp \
-	src/BWidgets/HScale.cpp \
 	src/BWidgets/RangeWidget.cpp \
 	src/BWidgets/ValueWidget.cpp \
-	src/BWidgets/Knob.cpp \
 	src/BWidgets/Label.cpp \
 	src/BWidgets/Window.cpp \
 	src/BWidgets/Widget.cpp \
@@ -91,7 +85,9 @@ ifeq ($(shell $(PKG_CONFIG) --exists cairo || echo no), no)
 endif
 
 $(BUNDLE): clean $(DSP_OBJ) $(GUI_OBJ)
-	@cp $(FILES) $(BUNDLE)
+	@cp $(ROOTFILES) $(BUNDLE)
+	@mkdir -p $(BUNDLE)/inc
+	@cp $(INCFILES) $(BUNDLE)/inc
 
 all: $(BUNDLE)
 

@@ -1,5 +1,5 @@
-/*  B.SEQuencer
- * MIDI Step Sequencer LV2 Plugin
+/*  B.Noname
+ * LV2 Plugin
  *
  * Copyright (C) 2018, 2019 by Sven Jähnichen
  *
@@ -21,60 +21,12 @@
 #ifndef DEFINITIONS_H_
 #define DEFINITIONS_H_
 
-#define NR_SYSTEM_SCALES 16
-#define NR_USER_SCALES 4
 #define MAXSTEPS 32
-#define ROWS 16
-#define NR_SEQUENCER_CHS 4
-#define NR_CTRL_BUTTONS 9
-#define NR_EDIT_BUTTONS 6
-#define NR_MIDI_KEYS 128
-#define AUTOPLAY_KEY 128
-#define ALL_CH 0xFF
-#define HALT_STEP 1000
-#define BSEQUENCER_URI "https://www.jahnichen.de/plugins/lv2/BSEQuencer"
-#define BSEQUENCER_GUI_URI "https://www.jahnichen.de/plugins/lv2/BSEQuencer#gui"
+#define BNONAME_URI "https://www.jahnichen.de/plugins/lv2/BNoname"
+#define BNONAME_GUI_URI "https://www.jahnichen.de/plugins/lv2/BNoname#gui"
 
 #ifndef LIMIT
 #define LIMIT(val, min, max) ((val) > (max) ? (max) : ((val) < (min) ? (min) : (val)))
 #endif /* LIMIT */
-
-typedef enum {
-	PER_BEAT	= 1,
-	PER_BAR		= 2
-} Steps;
-
-typedef enum {
-	AUTOPLAY	= 1,
-	HOST_CONTROLLED	= 2
-} ModeIndex;
-
-typedef enum {
-	Chromatic	= 1,
-	Major		= 2,
-	Minor		= 3
-} ScaleIndex;
-
-typedef enum {
-	NO_CTRL		= 0x00,
-	CTRL_PLAY_FWD	= 0x10,
-	CTRL_PLAY_REW	= 0x20,
-	CTRL_ALL_MARK	= 0x30,
-	CTRL_MARK	= 0x40,
-	CTRL_JUMP_FWD	= 0x50,
-	CTRL_JUMP_BACK	= 0x60,
-	CTRL_SKIP	= 0x70,
-	CTRL_STOP	= 0x80
-} CtrlButtons;
-
-typedef enum {
-	EDIT_PICK	= 0x100,
-	EDIT_CUT	= 0x200,
-	EDIT_COPY	= 0x300,
-	EDIT_FLIPX	= 0x400,
-	EDIT_FLIPY	= 0x500,
-	EDIT_PASTE	= 0x600
-} EditButtons;
-
 
 #endif /* DEFINITIONS_H_ */

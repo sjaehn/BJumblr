@@ -1,5 +1,25 @@
-#ifndef URIDS_H_
-#define URIDS_H_
+/*  B.Noname
+ * LV2 Plugin
+ *
+ * Copyright (C) 2018, 2019 by Sven Jähnichen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+#ifndef URIDS_HPP_
+#define URIDS_HPP_
 
 #include <lv2/lv2plug.in/ns/lv2core/lv2.h>
 #include <lv2/lv2plug.in/ns/ext/atom/atom.h>
@@ -7,10 +27,10 @@
 #include <lv2/lv2plug.in/ns/ext/atom/forge.h>
 #include <lv2/lv2plug.in/ns/ext/urid/urid.h>
 #include <lv2/lv2plug.in/ns/ext/time/time.h>
-#include <lv2/lv2plug.in/ns/ext/midi/midi.h>
 #include <lv2/lv2plug.in/ns/ext/state/state.h>
+#include "definitions.h"
 
-typedef struct
+struct BNonameURIs
 {
 	LV2_URID atom_Sequence;
 	LV2_URID atom_Float;
@@ -33,22 +53,13 @@ typedef struct
 	LV2_URID ui_on;
 	LV2_URID ui_off;
 	LV2_URID state_pad;
-	LV2_URID state_scales;
 	LV2_URID notify_padEvent;
 	LV2_URID notify_pad;
 	LV2_URID notify_statusEvent;
-	LV2_URID notify_cursors;
-	LV2_URID notify_notes;
-	LV2_URID notify_channels;
-	LV2_URID notify_scaleMapsEvent;
-	LV2_URID notify_scaleID;
-	LV2_URID notify_scaleName;
-	LV2_URID notify_scaleElements;
-	LV2_URID notify_scaleAltSymbols;
-	LV2_URID notify_scale;
-}  BSEQuencerURIs;
+	LV2_URID notify_cursor;
+};
 
-void getURIs (LV2_URID_Map* m, BSEQuencerURIs* uris)
+void getURIs (LV2_URID_Map* m, BNonameURIs* uris)
 {
 	uris->atom_Sequence = m->map(m->handle, LV2_ATOM__Sequence);
 	uris->atom_Float = m->map(m->handle, LV2_ATOM__Float);
@@ -60,7 +71,6 @@ void getURIs (LV2_URID_Map* m, BSEQuencerURIs* uris)
 	uris->atom_Vector = m->map(m->handle, LV2_ATOM__Vector);
 	uris->atom_Long = m->map (m->handle, LV2_ATOM__Long);
 	uris->atom_String = m->map (m->handle, LV2_ATOM__String);
-	uris->midi_Event = m->map(m->handle, LV2_MIDI__MidiEvent);
 	uris->time_Position = m->map(m->handle, LV2_TIME__Position);
 	uris->time_bar = m->map(m->handle, LV2_TIME__bar);
 	uris->time_barBeat = m->map(m->handle, LV2_TIME__barBeat);
@@ -68,22 +78,13 @@ void getURIs (LV2_URID_Map* m, BSEQuencerURIs* uris)
 	uris->time_beatUnit = m->map(m->handle, LV2_TIME__beatUnit);
 	uris->time_beatsPerBar = m->map(m->handle, LV2_TIME__beatsPerBar);
 	uris->time_speed = m->map(m->handle, LV2_TIME__speed);
-	uris->ui_on = m->map(m->handle, BSEQUENCER_URI "#UIon");
-	uris->ui_off = m->map(m->handle, BSEQUENCER_URI "#UIoff");
-	uris->state_pad = m->map(m->handle, BSEQUENCER_URI "#STATEpad");
-	uris->state_scales = m->map(m->handle, BSEQUENCER_URI "#STATEscales");
-	uris->notify_padEvent = m->map(m->handle, BSEQUENCER_URI "#NOTIFYpadEvent");
-	uris->notify_pad = m->map(m->handle, BSEQUENCER_URI "#NOTIFYpad");
-	uris->notify_statusEvent = m->map(m->handle, BSEQUENCER_URI "#NOTIFYstatusEvent");
-	uris->notify_cursors = m->map(m->handle, BSEQUENCER_URI "#NOTIFYcursors");
-	uris->notify_notes = m->map(m->handle, BSEQUENCER_URI "#NOTIFYnotes");
-	uris->notify_channels = m->map(m->handle, BSEQUENCER_URI "#NOTIFYchannels");
-	uris->notify_scaleMapsEvent = m->map(m->handle, BSEQUENCER_URI "#NOTIFYscaleMapsEvent");
-	uris->notify_scaleID = m->map(m->handle, BSEQUENCER_URI "#NOTIFYscaleID");
-	uris->notify_scaleName = m->map(m->handle, BSEQUENCER_URI "#NOTIFYscaleName");
-	uris->notify_scaleElements = m->map(m->handle, BSEQUENCER_URI "#NOTIFYscaleElements");
-	uris->notify_scaleAltSymbols = m->map(m->handle, BSEQUENCER_URI "#NOTIFYscaleAltSymbols");
-	uris->notify_scale = m->map(m->handle, BSEQUENCER_URI "#NOTIFYscale");
+	uris->ui_on = m->map(m->handle, BNONAME_URI "#UIon");
+	uris->ui_off = m->map(m->handle, BNONAME_URI "#UIoff");
+	uris->state_pad = m->map(m->handle, BNONAME_URI "#STATEpad");
+	uris->notify_padEvent = m->map(m->handle, BNONAME_URI "#NOTIFYpadEvent");
+	uris->notify_pad = m->map(m->handle, BNONAME_URI "#NOTIFYpad");
+	uris->notify_statusEvent = m->map(m->handle, BNONAME_URI "#NOTIFYstatusEvent");
+	uris->notify_cursor = m->map(m->handle, BNONAME_URI "#NOTIFYcursor");
 }
 
-#endif /* URIDS_H_ */
+#endif /* URIDS_HPP_ */

@@ -3,16 +3,13 @@
 
 struct Pad
 {
-	Pad () : Pad (0, 0, 0, 0) {}
-	Pad (float ch, float pitchOctave, float velocity, float duration) :
-		ch (ch),pitchOctave (pitchOctave), velocity (velocity), duration (duration) {}
-	bool operator== (Pad& that) {return ((ch == that.ch) && (pitchOctave == that.pitchOctave) && (velocity == that.velocity) && (duration == that.duration));}
+	Pad () : Pad (0) {}
+	Pad (float level) :
+		level (level) {}
+	bool operator== (Pad& that) {return (level == that.level);}
 	bool operator!= (Pad& that) {return (!operator== (that));}
 
-	float ch;			// Output channel number (1..4)
-	float pitchOctave;
-	float velocity;
-	float duration;
+	float level;
 };
 
 #endif /* PAD_HPP_ */
