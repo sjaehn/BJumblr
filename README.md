@@ -29,7 +29,7 @@ sudo make install PREFIX=/usr/local
 
 Running
 -------
-After the installation Carla, Ardour and any other LV2 host should automatically detect B.SEQuencer.
+After the installation Carla, Ardour and any other LV2 host should automatically detect B.Noname.
 
 If jalv is installed, you can also call it
 ```
