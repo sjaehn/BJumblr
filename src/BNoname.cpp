@@ -121,18 +121,19 @@ void BNoname::runSequencer (const int start, const int end)
 		audioOutput1[i] = 0;
 		audioOutput2[i] = 0;
 
-		// Interpolate position within the loop
-		double relpos = getPositionFromFrames (i - refFrame);	// Position relative to reference frame
-		double pos = floorfrac (position + relpos);		// 0..1 position
-		double step = pos * controllers[NR_OF_STEPS];		// 0..NR_OF_STEPS position
-		int iStep = step;
-
 		// Store to buffers
 		audioBuffer1[audioBufferCounter] = audioInput1[i];
 		audioBuffer2[audioBufferCounter] = audioInput2[i];
 
 		if (controllers[PLAY] != 0.0f)
 		{
+
+			// Interpolate position within the loop
+			double relpos = getPositionFromFrames (i - refFrame);	// Position relative to reference frame
+			double pos = floorfrac (position + relpos);		// 0..1 position
+			double step = pos * controllers[NR_OF_STEPS];		// 0..NR_OF_STEPS position
+			int iStep = step;
+			
 			for (int r = 0; r < MAXSTEPS; ++r)
 			{
 				float factor = pads[r][iStep].level;
