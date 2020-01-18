@@ -276,7 +276,7 @@ void BNoname::run (uint32_t n_samples)
 							int step = (int) pMes[i].step;
 							if ((row >= 0) && (row < MAXSTEPS) && (step >= 0) && (step < MAXSTEPS))
 							{
-								Pad pd (pMes->level);
+								Pad pd (pMes[i].level);
 								Pad valPad = validatePad (pd);
 								pads[row][step] = valPad;
 								if (valPad != pd)

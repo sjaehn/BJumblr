@@ -42,6 +42,7 @@
 		lv2:index 0 ;
 		lv2:symbol "control" ;
 		lv2:name "Control" ;
+		rsz:minimumSize 73000;
 	] , [
 		a lv2:OutputPort , atom:AtomPort ;
 		atom:bufferType atom:Sequence ;
