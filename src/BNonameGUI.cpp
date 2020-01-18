@@ -284,12 +284,15 @@ void BNonameGUI::resize ()
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) RESIZE (edit2Buttons[i], 288 + i * 30, 578, 24, 24, sz);
 	RESIZE (stepSizeListBox, 460, 580, 100, 20, sz);
 	stepSizeListBox.resizeListBox(BUtilities::Point (100 * sz, 160 * sz));
+	stepSizeListBox.moveListBox(BUtilities::Point (0, -160 * sz));
 	stepSizeListBox.resizeListBoxItems(BUtilities::Point (100 * sz, 20 * sz));
 	RESIZE (stepBaseListBox, 580, 580, 100, 20, sz);
 	stepBaseListBox.resizeListBox(BUtilities::Point (100 * sz, 80 * sz));
+	stepBaseListBox.moveListBox(BUtilities::Point (0, -80 * sz));
 	stepBaseListBox.resizeListBoxItems(BUtilities::Point (100 * sz, 20 * sz));
 	RESIZE (padSizeListBox, 720, 580, 100, 20, sz);
 	padSizeListBox.resizeListBox(BUtilities::Point (100 * sz, 140 * sz));
+	padSizeListBox.moveListBox(BUtilities::Point (0, -140 * sz));
 	padSizeListBox.resizeListBoxItems(BUtilities::Point (100 * sz, 20 * sz));
 
 	applyTheme (theme);

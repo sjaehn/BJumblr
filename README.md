@@ -41,8 +41,8 @@ Usage
 -----
 From the technical POV B.Noname is a sequencer pattern-controlled audio delay effect.
 
-The pattern defines at when (horizontal) and which (vertical) piece of the audio input stream is 
-sent to the audio output. Use the default diagonal line pattern for live playback. Moving a pad 
+The pattern defines at when (horizontal) and which (vertical) piece of the audio input stream is
+sent to the audio output. Use the default diagonal line pattern for live playback. Moving a pad
 one step to the right results in a one step delayed playback of the respective piece of the audio
 input stream. You can also set more then one pad per row to produce echo effects or make a canon.
 Each pad (and thus each piece) can be levelled up or down by mouse wheel scrolling.
@@ -52,4 +52,5 @@ TODO
 * Find a name
 * Make a Description
 * GUI artwork
+* Soft fading between slices
 * Debugging
