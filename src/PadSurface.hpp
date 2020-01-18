@@ -35,7 +35,7 @@ public:
                 DrawingSurface (x, y, width, height, name),
                 Focusable (std::chrono::milliseconds (BWIDGETS_DEFAULT_FOCUS_IN_MS),
 			std::chrono::milliseconds (BWIDGETS_DEFAULT_FOCUS_OUT_MS)),
-                focusText (0, 0, 400, 100, name + "/focus", "")
+                focusText (0, 0, 400, 100, name + "/focus", "Click to set or remove a pad.\nScroll to increase or decrease pad playback volume.")
         {
                 focusText.setOversize (true);
                 focusText.hide ();

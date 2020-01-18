@@ -32,7 +32,7 @@ BNonameGUI::BNonameGUI (const char *bundle_path, const LV2_Feature *const *featu
 	padSurface (18, 88, 804, 484, "box"),
 	playButton (18, 578, 24, 24, "widget", "Play"),
 	stopButton (48, 578, 24, 24, "widget", "Stop"),
-	stepSizeListBox (460, 580, 100, 20, 0, -160, 100, 160, "menu",
+	stepSizeListBox (480, 580, 80, 20, 0, -160, 80, 160, "menu",
 			 BItems::ItemList ({{0.0625, "1/16"}, {0.125, "1/8"}, {0.25, "1/4"}, {0.5, "1/2"}, {1, "1"}, {2, "2"}, {4, "4"}}), 1),
 	stepBaseListBox (580, 580, 100, 20, 0, -80, 100, 80, "menu", BItems::ItemList ({{0, "Seconds"}, {1, "Beats"}, {2, "Bars"}}), 1),
 	padSizeListBox (720, 580, 100, 20, 0, -140, 100, 140, "menu",
@@ -282,10 +282,10 @@ void BNonameGUI::resize ()
 	RESIZE (stopButton, 48, 578, 24, 24, sz);
 	for (int i = 0; i < EDIT_RESET; ++i) RESIZE (edit1Buttons[i], 108 + i * 30, 578, 24, 24, sz);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) RESIZE (edit2Buttons[i], 288 + i * 30, 578, 24, 24, sz);
-	RESIZE (stepSizeListBox, 460, 580, 100, 20, sz);
-	stepSizeListBox.resizeListBox(BUtilities::Point (100 * sz, 160 * sz));
+	RESIZE (stepSizeListBox, 480, 580, 80, 20, sz);
+	stepSizeListBox.resizeListBox(BUtilities::Point (80 * sz, 160 * sz));
 	stepSizeListBox.moveListBox(BUtilities::Point (0, -160 * sz));
-	stepSizeListBox.resizeListBoxItems(BUtilities::Point (100 * sz, 20 * sz));
+	stepSizeListBox.resizeListBoxItems(BUtilities::Point (80 * sz, 20 * sz));
 	RESIZE (stepBaseListBox, 580, 580, 100, 20, sz);
 	stepBaseListBox.resizeListBox(BUtilities::Point (100 * sz, 80 * sz));
 	stepBaseListBox.moveListBox(BUtilities::Point (0, -80 * sz));
