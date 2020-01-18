@@ -467,7 +467,8 @@ void BNonameGUI::edit2ChangedCallback(BEvents::Event* event)
 			{
 				for (int s = 0; s < MAXSTEPS; ++s)
 				{
-					ui->pattern.setPad (r, s, p0);
+					if (s == r) ui->pattern.setPad (r, s, Pad (1.0));
+					else ui->pattern.setPad (r, s, p0);
 					ui->send_pad (r, s);
 				}
 			}
