@@ -226,7 +226,13 @@ void BNoname::run (uint32_t n_samples)
 				*(new_controllers[i]) = val;
 				// TODO update GUI controller
 			}
-			controllers[i] = val;
+
+			if (controllers[i] != val)
+			{
+				controllers[i] = val;
+				uint64_t size = getFramesFromValue (controllers[STEP_SIZE] * controllers[NR_OF_STEPS]);
+				audioBufferSize = LIMIT (size, 0, maxBufferSize);
+			}
 		}
 	}
 
