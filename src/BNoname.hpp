@@ -21,6 +21,7 @@
 #ifndef BNONAME_HPP_
 #define BNONAME_HPP_
 
+#define FADETIME 0.01
 #define CONTROLLER_CHANGED(con) ((new_controllers[con]) ? (controllers[con] != *(new_controllers[con])) : false)
 
 #include <cmath>

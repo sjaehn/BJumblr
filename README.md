@@ -50,7 +50,6 @@ Each pad (and thus each piece) can be levelled up or down by mouse wheel scrolli
 TODO
 ----
 * Find a name
-* Make a Description
+* Make a description
 * GUI artwork
-* Soft fading between slices
 * Debugging

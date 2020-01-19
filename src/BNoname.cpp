@@ -133,7 +133,47 @@ void BNoname::runSequencer (const int start, const int end)
 			double pos = floorfrac (position + relpos);		// 0..1 position
 			double step = pos * controllers[NR_OF_STEPS];		// 0..NR_OF_STEPS position
 			int iStep = step;
-			
+			double fracTime = 0;					// Time from start of step
+			switch (int (controllers[STEP_BASE]))
+			{
+				case SECONDS:	fracTime = (step - iStep) * controllers[STEP_SIZE];
+						break;
+
+				case BEATS:	fracTime = (step - iStep) * controllers[STEP_SIZE] / (bpm / 60);
+						break;
+
+				case BARS:	fracTime = (step - iStep) * controllers[STEP_SIZE] / (bpm / (60 * beatsPerBar));
+						break;
+
+				default:	break;
+
+			}
+			double fade = (fracTime < FADETIME ? fracTime / FADETIME : 1.0);
+
+			double prevAudio1 = 0;
+			double prevAudio2 = 0;
+			double audio1 = 0;
+			double audio2 = 0;
+
+			// Fade out: Extrapolate audio using previous step data
+			if (fade != 1.0)
+			{
+				int prevStep = int (iStep + controllers[NR_OF_STEPS] - 1) % int (controllers[NR_OF_STEPS]);	// Previous step
+				for (int r = 0; r < MAXSTEPS; ++r)
+				{
+					float factor = pads[r][prevStep].level;
+					if (factor != 0.0)
+					{
+						int stepDiff = (r <= prevStep ? prevStep - r : prevStep + controllers[NR_OF_STEPS] - r);
+						size_t frame = size_t (maxBufferSize + audioBufferCounter - audioBufferSize * (double (stepDiff) / double (controllers[NR_OF_STEPS]))) % maxBufferSize;
+						prevAudio1 += factor * audioBuffer1[frame];
+						prevAudio2 += factor * audioBuffer2[frame];
+					}
+				}
+
+			}
+
+			// Calculate audio for this step
 			for (int r = 0; r < MAXSTEPS; ++r)
 			{
 				float factor = pads[r][iStep].level;
@@ -141,10 +181,14 @@ void BNoname::runSequencer (const int start, const int end)
 				{
 					int stepDiff = (r <= iStep ? iStep - r : iStep + controllers[NR_OF_STEPS] - r);
 					size_t frame = size_t (maxBufferSize + audioBufferCounter - audioBufferSize * (double (stepDiff) / double (controllers[NR_OF_STEPS]))) % maxBufferSize;
-					audioOutput1[i] += factor * audioBuffer1[frame];
-					audioOutput2[i] += factor * audioBuffer2[frame];
+					audio1 += factor * audioBuffer1[frame];
+					audio2 += factor * audioBuffer2[frame];
 				}
 			}
+
+			// Mix audio and store into output
+			audioOutput1[i] = fade * audio1 + (1 - fade) * prevAudio1;
+			audioOutput2[i] = fade * audio2 + (1 - fade) * prevAudio2;
 		}
 
 		// Increment counter
