@@ -29,7 +29,7 @@ BNoname::BNoname (double samplerate, const LV2_Feature* const* features) :
 	notifyForge (), notifyFrame (),
 	padMessageBuffer {PadMessage()},
 	new_controllers {nullptr}, controllers {0},
-	pads {Pad()},
+	editMode (0), pads {Pad()},
 	rate (samplerate), bpm (120.0f), beatsPerBar (4.0f), beatUnit (0),
 	speed (0.0f), bar (0), barBeat (0.0f),
 	outCapacity (0), position (0.0), cursor (0), offset (0.0), refFrame (0),
@@ -168,6 +168,8 @@ void BNoname::runSequencer (const int start, const int end)
 						size_t frame = size_t (maxBufferSize + audioBufferCounter - audioBufferSize * (double (stepDiff) / double (controllers[NR_OF_STEPS]))) % maxBufferSize;
 						prevAudio1 += factor * audioBuffer1[frame];
 						prevAudio2 += factor * audioBuffer2[frame];
+
+						if (editMode == 1) break;	// Only one active pad allowed in REPLACE mode
 					}
 				}
 
@@ -183,6 +185,8 @@ void BNoname::runSequencer (const int start, const int end)
 					size_t frame = size_t (maxBufferSize + audioBufferCounter - audioBufferSize * (double (stepDiff) / double (controllers[NR_OF_STEPS]))) % maxBufferSize;
 					audio1 += factor * audioBuffer1[frame];
 					audio2 += factor * audioBuffer2[frame];
+
+					if (editMode == 1) break;	// Only one active pad allowed in REPLACE mode
 				}
 			}
 
@@ -308,8 +312,14 @@ void BNoname::run (uint32_t n_samples)
 			// GUI pad changed notifications
 			else if (obj->body.otype == uris.notify_padEvent)
 			{
-				LV2_Atom *oPd = NULL;
-				lv2_atom_object_get (obj, uris.notify_pad,  &oPd, NULL);
+				LV2_Atom *oEd = NULL, *oPd = NULL;
+				lv2_atom_object_get (obj,
+					 	     uris.notify_editMode, &oEd,
+						     uris.notify_pad, &oPd,
+						     NULL);
+
+				// EditMode notification
+				if (oEd && (oEd->type == uris.atom_Int)) editMode = ((LV2_Atom_Int*)oEd)->body;
 
 				// Pad notification
 				if (oPd && (oPd->type == uris.atom_Vector))
@@ -442,7 +452,11 @@ LV2_State_Status BNoname::state_save (LV2_State_Store_Function store, LV2_State_
 			const LV2_Feature* const* features)
 {
 	// Store pads
-	char padDataString[0x8010] = "Matrix data:\n";
+	char padDataString[0x8010] = "\nEdit mode:\n";
+	char emString[16];
+	snprintf (emString, 16, "em:%d;\n", editMode);
+	strcat (padDataString, emString);
+	strcat (padDataString, "\nMatrix data:\n");
 
 	for (int step = 0; step < MAXSTEPS; ++step)
 	{
@@ -476,14 +490,34 @@ LV2_State_Status BNoname::state_restore (LV2_State_Retrieve_Function retrieve, L
 
 	if (padData && (type == uris.atom_String))
 	{
+		std::string padDataString = (char*) padData;
+		const std::string keywords[3] = {"em:","id:", "lv:"};
+
+		// Get editMode
+		{
+			size_t strPos = padDataString.find (keywords[0]);
+			size_t nextPos = 0;
+			if ((strPos != std::string::npos) && (strPos + 3 <= padDataString.length()))
+			{
+				padDataString.erase (0, strPos + 3);
+				int em;
+				try {em = std::stof (padDataString, &nextPos);}
+				catch  (const std::exception& e)
+				{
+					fprintf (stderr, "BNoname.lv2: Invalid editMode data\n");
+				}
+
+				if (nextPos > 0) padDataString.erase (0, nextPos);
+				if ((em < 0) || (em > 1)) fprintf (stderr, "BNoname.lv2: Invalid editMode data\n");
+			}
+		}
+
 		// Restore pads
 		// Parse retrieved data
-		std::string padDataString = (char*) padData;
-		const std::string keywords[2] = {"id:", "lv:"};
 		while (!padDataString.empty())
 		{
 			// Look for next "id:"
-			size_t strPos = padDataString.find ("id:");
+			size_t strPos = padDataString.find (keywords[1]);
 			size_t nextPos = 0;
 			if (strPos == std::string::npos) break;	// No "id:" found => end
 			if (strPos + 3 > padDataString.length()) break;	// Nothing more after id => end
@@ -506,7 +540,7 @@ LV2_State_Status BNoname::state_restore (LV2_State_Retrieve_Function retrieve, L
 			int step = id / MAXSTEPS;
 
 			// Look for pad data
-			for (int i = 1; i < 2; ++i)
+			for (int i = 2; i < 3; ++i)
 			{
 				strPos = padDataString.find (keywords[i]);
 				if (strPos == std::string::npos) continue;	// Keyword not found => next keyword
@@ -527,8 +561,8 @@ LV2_State_Status BNoname::state_restore (LV2_State_Retrieve_Function retrieve, L
 
 				if (nextPos > 0) padDataString.erase (0, nextPos);
 				switch (i) {
-				case 1: pads[row][step].level = val;
-						break;
+				case 2:	pads[row][step].level = val;
+					break;
 				default:break;
 				}
 			}
@@ -633,6 +667,8 @@ void BNoname::notifyPadsToGui ()
 		LV2_Atom_Forge_Frame frame;
 		lv2_atom_forge_frame_time(&notifyForge, 0);
 		lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_padEvent);
+		lv2_atom_forge_key(&notifyForge, uris.notify_editMode);
+		lv2_atom_forge_int(&notifyForge, editMode);
 		lv2_atom_forge_key(&notifyForge, uris.notify_pad);
 		lv2_atom_forge_vector(&notifyForge, sizeof(float), uris.atom_Float, sizeof(PadMessage) / sizeof(float) * (end + 1), (void*) padMessageBuffer);
 		lv2_atom_forge_pop(&notifyForge, &frame);

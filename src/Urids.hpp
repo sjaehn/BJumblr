@@ -55,6 +55,7 @@ struct BNonameURIs
 	LV2_URID state_pad;
 	LV2_URID notify_padEvent;
 	LV2_URID notify_pad;
+	LV2_URID notify_editMode;
 	LV2_URID notify_statusEvent;
 	LV2_URID notify_cursor;
 };
@@ -83,6 +84,7 @@ void getURIs (LV2_URID_Map* m, BNonameURIs* uris)
 	uris->state_pad = m->map(m->handle, BNONAME_URI "#STATEpad");
 	uris->notify_padEvent = m->map(m->handle, BNONAME_URI "#NOTIFYpadEvent");
 	uris->notify_pad = m->map(m->handle, BNONAME_URI "#NOTIFYpad");
+	uris->notify_editMode = m->map(m->handle, BNONAME_URI "#NOTIFYeditMode");
 	uris->notify_statusEvent = m->map(m->handle, BNONAME_URI "#NOTIFYstatusEvent");
 	uris->notify_cursor = m->map(m->handle, BNONAME_URI "#NOTIFYcursor");
 }

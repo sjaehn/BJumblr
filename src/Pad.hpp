@@ -6,8 +6,8 @@ struct Pad
 	Pad () : Pad (0) {}
 	Pad (float level) :
 		level (level) {}
-	bool operator== (Pad& that) {return (level == that.level);}
-	bool operator!= (Pad& that) {return (!operator== (that));}
+	bool operator== (const Pad& that) {return (level == that.level);}
+	bool operator!= (const Pad& that) {return (!operator== (that));}
 
 	float level;
 };

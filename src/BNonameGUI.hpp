@@ -91,6 +91,8 @@ private:
 	static void padsPressedCallback (BEvents::Event* event);
 	static void padsScrolledCallback (BEvents::Event* event);
 	virtual void resize () override;
+	bool validatePad ();
+	bool validatePad (int row, int step, Pad& pad);
 	void drawPad ();
 	void drawPad (int row, int step);
 	void drawPad (cairo_t* cr, int row, int step);
@@ -105,6 +107,7 @@ private:
 	// Controllers
 	std::array<BWidgets::ValueWidget*, MAXCONTROLLERS> controllerWidgets;
 	std::array<float, MAXCONTROLLERS> controllers;
+	int editMode;
 
 	//Pads
 	class Pattern
@@ -152,6 +155,7 @@ private:
 	HaloButton stopButton;
 	std::array<HaloToggleButton, EDIT_RESET> edit1Buttons;
 	std::array<HaloButton, MAXEDIT - EDIT_RESET> edit2Buttons;
+	BWidgets::PopupListBox editModeListBox;
 	BWidgets::PopupListBox stepSizeListBox;
 	BWidgets::PopupListBox stepBaseListBox;
 	BWidgets::PopupListBox padSizeListBox;

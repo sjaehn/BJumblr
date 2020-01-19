@@ -104,6 +104,7 @@ private:
 	};
 
 	//Pads
+	int editMode;
 	Pad pads [MAXSTEPS] [MAXSTEPS];
 
 	// Host communicated data

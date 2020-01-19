@@ -37,12 +37,6 @@ enum PortIndex {
 	MAXCONTROLLERS	= 4
 };
 
-enum ModeIndex
-{
-	AUTOPLAY	= 1,
-	HOST_CONTROLLED	= 2
-};
-
 enum BaseIndex
 {
 	SECONDS		= 0,

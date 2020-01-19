@@ -26,22 +26,24 @@ BNonameGUI::BNonameGUI (const char *bundle_path, const LV2_Feature *const *featu
 	controller (NULL), write_function (NULL),
 	pluginPath (bundle_path ? std::string (bundle_path) : std::string ("")),
 	sz (1.0), bgImageSurface (nullptr),
-	uris (), forge (), clipBoard (),
+	uris (), forge (), editMode (0), clipBoard (),
 	cursor (0), wheelScrolled (false), padPressed (false), deleteMode (false),
 	mContainer (0, 0, 840, 620, "main"),
 	padSurface (18, 88, 804, 484, "box"),
-	playButton (18, 578, 24, 24, "widget", "Play"),
-	stopButton (48, 578, 24, 24, "widget", "Stop"),
-	stepSizeListBox (480, 580, 80, 20, 0, -160, 80, 160, "menu",
+	playButton (18, 588, 24, 24, "widget", "Play"),
+	stopButton (48, 588, 24, 24, "widget", "Stop"),
+	editModeListBox (400, 590, 90, 20, 0, -60, 90, 60, "menu",
+			 BItems::ItemList ({{0, "Add"}, {1, "Replace"}}), 0),
+	stepSizeListBox (520, 590, 70, 20, 0, -160, 70, 160, "menu",
 			 BItems::ItemList ({{0.0625, "1/16"}, {0.125, "1/8"}, {0.25, "1/4"}, {0.5, "1/2"}, {1, "1"}, {2, "2"}, {4, "4"}}), 1),
-	stepBaseListBox (580, 580, 100, 20, 0, -80, 100, 80, "menu", BItems::ItemList ({{0, "Seconds"}, {1, "Beats"}, {2, "Bars"}}), 1),
-	padSizeListBox (720, 580, 100, 20, 0, -140, 100, 140, "menu",
+	stepBaseListBox (600, 590, 90, 20, 0, -80, 90, 80, "menu", BItems::ItemList ({{0, "Seconds"}, {1, "Beats"}, {2, "Bars"}}), 1),
+	padSizeListBox (720, 590, 100, 20, 0, -140, 100, 140, "menu",
 		     BItems::ItemList ({{4, "4 Steps"}, {8, "8 Steps"}, {12, "12 Steps"}, {16, "16 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16)
 
 {
 	// Init editButtons
-	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i] = HaloToggleButton (108 + i * 30, 578, 24, 24, "widget", editLabels[i]);
-	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i] = HaloButton (288 + i * 30, 578, 24, 24, "widget", editLabels[i + EDIT_RESET]);
+	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i] = HaloToggleButton (108 + i * 30, 588, 24, 24, "widget", editLabels[i]);
+	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i] = HaloButton (288 + i * 30, 588, 24, 24, "widget", editLabels[i + EDIT_RESET]);
 
 	// Link controllerWidgets
 	controllerWidgets[PLAY] = (BWidgets::ValueWidget*) &playButton;
@@ -55,6 +57,7 @@ BNonameGUI::BNonameGUI (const char *bundle_path, const LV2_Feature *const *featu
 	// Set callback functions
 	for (int i = 0; i < MAXCONTROLLERS; ++i) controllerWidgets[i]->setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
 	stopButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
+	editModeListBox.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i].setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, edit1ChangedCallback);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i].setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, edit2ChangedCallback);
 
@@ -76,6 +79,7 @@ BNonameGUI::BNonameGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (stopButton);
 	for (int i = 0; i < EDIT_RESET; ++i) mContainer.add (edit1Buttons[i]);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) mContainer.add (edit2Buttons[i]);
+	mContainer.add (editModeListBox);
 	mContainer.add (stepSizeListBox);
 	mContainer.add (stepBaseListBox);
 	mContainer.add (padSizeListBox);
@@ -195,8 +199,16 @@ void BNonameGUI::port_event(uint32_t port, uint32_t buffer_size,
 			// Pad notification
 			if (obj->body.otype == uris.notify_padEvent)
 			{
-				LV2_Atom *oPad = NULL;
-				lv2_atom_object_get(obj, uris.notify_pad, &oPad, NULL);
+				LV2_Atom *oEdit = NULL, *oPad = NULL;
+				lv2_atom_object_get(obj,
+						    uris.notify_editMode, &oEdit,
+						    uris.notify_pad, &oPad,
+						    NULL);
+
+				if (oEdit && (oEdit->type == uris.atom_Int) && (editMode != ((LV2_Atom_Int*)oEdit)->body))
+				{
+					editModeListBox.setValue (((LV2_Atom_Int*)oEdit)->body);
+				}
 
 				if (oPad && (oPad->type == uris.atom_Vector))
 				{
@@ -278,19 +290,23 @@ void BNonameGUI::resize ()
 	//Scale widgets
 	RESIZE (mContainer, 0, 0, 840, 620, sz);
 	RESIZE (padSurface, 18, 88, 804, 484, sz);
-	RESIZE (playButton, 18, 578, 24, 24, sz);
-	RESIZE (stopButton, 48, 578, 24, 24, sz);
-	for (int i = 0; i < EDIT_RESET; ++i) RESIZE (edit1Buttons[i], 108 + i * 30, 578, 24, 24, sz);
-	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) RESIZE (edit2Buttons[i], 288 + i * 30, 578, 24, 24, sz);
-	RESIZE (stepSizeListBox, 480, 580, 80, 20, sz);
-	stepSizeListBox.resizeListBox(BUtilities::Point (80 * sz, 160 * sz));
+	RESIZE (playButton, 18, 588, 24, 24, sz);
+	RESIZE (stopButton, 48, 588, 24, 24, sz);
+	for (int i = 0; i < EDIT_RESET; ++i) RESIZE (edit1Buttons[i], 108 + i * 30, 588, 24, 24, sz);
+	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) RESIZE (edit2Buttons[i], 288 + i * 30, 588, 24, 24, sz);
+	RESIZE (editModeListBox, 400, 590, 90, 20, sz);
+	editModeListBox.resizeListBox(BUtilities::Point (90 * sz, 60 * sz));
+	editModeListBox.moveListBox(BUtilities::Point (0, -60 * sz));
+	editModeListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
+	RESIZE (stepSizeListBox, 520, 590, 70, 20, sz);
+	stepSizeListBox.resizeListBox(BUtilities::Point (70 * sz, 160 * sz));
 	stepSizeListBox.moveListBox(BUtilities::Point (0, -160 * sz));
-	stepSizeListBox.resizeListBoxItems(BUtilities::Point (80 * sz, 20 * sz));
-	RESIZE (stepBaseListBox, 580, 580, 100, 20, sz);
-	stepBaseListBox.resizeListBox(BUtilities::Point (100 * sz, 80 * sz));
+	stepSizeListBox.resizeListBoxItems(BUtilities::Point (70 * sz, 20 * sz));
+	RESIZE (stepBaseListBox, 600, 590, 90, 20, sz);
+	stepBaseListBox.resizeListBox(BUtilities::Point (90 * sz, 80 * sz));
 	stepBaseListBox.moveListBox(BUtilities::Point (0, -80 * sz));
-	stepBaseListBox.resizeListBoxItems(BUtilities::Point (100 * sz, 20 * sz));
-	RESIZE (padSizeListBox, 720, 580, 100, 20, sz);
+	stepBaseListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
+	RESIZE (padSizeListBox, 720, 590, 100, 20, sz);
 	padSizeListBox.resizeListBox(BUtilities::Point (100 * sz, 140 * sz));
 	padSizeListBox.moveListBox(BUtilities::Point (0, -140 * sz));
 	padSizeListBox.resizeListBoxItems(BUtilities::Point (100 * sz, 20 * sz));
@@ -309,6 +325,7 @@ void BNonameGUI::applyTheme (BStyles::Theme& theme)
 	stopButton.applyTheme (theme);
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i].applyTheme (theme);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i].applyTheme (theme);
+	editModeListBox.applyTheme (theme);
 	stepSizeListBox.applyTheme (theme);
 	stepBaseListBox.applyTheme (theme);
 	padSizeListBox.applyTheme (theme);
@@ -353,10 +370,92 @@ void BNonameGUI::send_pad (int row, int step)
 
 	LV2_Atom_Forge_Frame frame;
 	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_padEvent);
+	lv2_atom_forge_key(&forge, uris.notify_editMode);
+	lv2_atom_forge_int(&forge, editMode);
 	lv2_atom_forge_key(&forge, uris.notify_pad);
 	lv2_atom_forge_vector(&forge, sizeof(float), uris.atom_Float, sizeof(PadMessage) / sizeof(float), (void*) &padmsg);
 	lv2_atom_forge_pop(&forge, &frame);
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
+}
+
+bool BNonameGUI::validatePad ()
+{
+	bool changed = false;
+
+	// REPLACE mode
+	if (editMode == 1)
+	{
+		for (int s = 0; s < MAXSTEPS; ++s)
+		{
+			bool padOn = false;
+			for (int r = 0; r < MAXSTEPS; ++r)
+			{
+				// Clear if there is already an active pad
+				if (padOn)
+				{
+					if (pattern.getPad (r, s).level != 0.0)
+					{
+						pattern.setPad (r, s, Pad(0));
+						send_pad (r, s);
+						changed = true;
+					}
+				}
+
+				// First active pad
+				else if (pattern.getPad (r, s).level != 0.0)
+				{
+					padOn = true;
+				}
+			}
+
+			// Empty step: Set default
+			if (!padOn)
+			{
+				pattern.setPad (s, s, Pad (1.0));
+				send_pad (s, s);
+				changed = true;
+			}
+		}
+	}
+
+	return (!changed);
+}
+
+bool BNonameGUI::validatePad (int row, int step, Pad& pad)
+{
+	bool changed = false;
+
+	// REPLACE mode
+	if (editMode == 1)
+	{
+		if (pad.level != 0.0)
+		{
+			pattern.setPad (row, step, pad);
+			send_pad (row, step);
+
+			for (int r = 0; r < MAXSTEPS; ++r)
+			{
+				// Clear all other active pads
+				if (r != row)
+				{
+					if (pattern.getPad (r, step).level != 0.0)
+					{
+						pattern.setPad (r, step, Pad(0));
+						send_pad (r, step);
+						changed = true;
+					}
+				}
+			}
+		}
+	}
+
+	else
+	{
+		pattern.setPad (row, step, pad);
+		send_pad (row, step);
+	}
+
+	return (!changed);
 }
 
 void BNonameGUI::valueChangedCallback(BEvents::Event* event)
@@ -393,11 +492,25 @@ void BNonameGUI::valueChangedCallback(BEvents::Event* event)
 		}
 	}
 
-	// Buttons
-	else if (value == 1.0)
+	// Other widgets
+	else if (widget == &ui->editModeListBox)
 	{
-		// Stop
-		if (widget == &ui->stopButton) ui->playButton.setValue (0.0);
+		ui->editMode = ui->editModeListBox.getValue();
+		if (!ui->validatePad())
+		{
+			ui->drawPad();
+			ui->pattern.store ();
+		}
+	}
+
+	// Buttons
+	else if (widget == &ui->stopButton)
+	{
+		if (value == 1.0)
+		{
+			// Stop
+			if (widget == &ui->stopButton) ui->playButton.setValue (0.0);
+		}
 	}
 }
 
@@ -490,6 +603,7 @@ void BNonameGUI::edit2ChangedCallback(BEvents::Event* event)
 				size_t s = LIMIT (p.step, 0, MAXSTEPS);
 				ui->send_pad (r, s);
 			}
+			ui->validatePad();
 			ui->drawPad ();
 		}
 		break;
@@ -503,6 +617,7 @@ void BNonameGUI::edit2ChangedCallback(BEvents::Event* event)
 				size_t s = LIMIT (p.step, 0, MAXSTEPS);
 				ui->send_pad (r, s);
 			}
+			ui->validatePad();
 			ui->drawPad ();
 		}
 		break;
@@ -590,6 +705,7 @@ void BNonameGUI::padsPressedCallback (BEvents::Event* event)
 						{
 							if (!ui->clipBoard.data.empty ())
 							{
+								bool valid = true;
 								for (int r = 0; r < int (ui->clipBoard.data.size ()); ++r)
 								{
 									for (int s = 0; s < int (ui->clipBoard.data[r].size ()); ++s)
@@ -602,12 +718,15 @@ void BNonameGUI::padsPressedCallback (BEvents::Event* event)
 											(step + s < maxstep)
 										)
 										{
-											ui->pattern.setPad (row - r, step + s, ui->clipBoard.data.at(r).at(s));
-											ui->drawPad (row - r, step + s);
-											ui->send_pad (row - r, step + s);
+											if (!ui->validatePad (row - r, step + s, ui->clipBoard.data.at(r).at(s)))
+											{
+												valid = false;
+											}
+											else if (valid) ui->drawPad (row - r, step + s);
 										}
 									}
 								}
+								if (!valid) ui->drawPad();
 							}
 						}
 
@@ -616,11 +735,10 @@ void BNonameGUI::padsPressedCallback (BEvents::Event* event)
 					// Set (or unset) pad
 					else
 					{
-						if (!ui->padPressed) ui->deleteMode = (oldPad.level == 1.0);
+						if (!ui->padPressed) ui->deleteMode = ((oldPad.level == 1.0) && (ui->editMode != 1));
 						Pad newPad = (ui->deleteMode ? Pad (0.0) : Pad (1.0));
-						ui->pattern.setPad (row, step, newPad);
-						ui->drawPad (row, step);
-						ui->send_pad (row, step);
+						if (!ui->validatePad (row, step, newPad)) ui->drawPad();
+						else ui->drawPad (row,step);
 					}
 
 					ui->padPressed = true;
@@ -653,22 +771,39 @@ void BNonameGUI::padsPressedCallback (BEvents::Event* event)
 					int clipSMax = ui->clipBoard.origin.second + ui->clipBoard.extends.second;
 					if (clipSMin > clipSMax) std::swap (clipSMin, clipSMax);
 
+					// XFLIP
+					// Validation required for REPLACE mode
 					if (editNr == EDIT_XFLIP)
 					{
-						for (int ds = 0; ds < int ((clipSMax + 1 - clipSMin) / 2); ++ds)
+						// Temp. copy selection
+						Pad pads[clipRMax + 1 - clipRMin][clipSMax + 1 - clipSMin];
+						for (int ds = 0; ds <= clipSMax - clipSMin; ++ds)
 						{
-							for (int r = clipRMin; r <= clipRMax; ++r)
+							for (int dr = 0; dr <= clipRMax - clipRMin; ++dr)
 							{
-								Pad pd = ui->pattern.getPad (r, clipSMin + ds);
-								ui->pattern.setPad (r, clipSMin + ds, ui->pattern.getPad (r, clipSMax - ds));
-								ui->send_pad (r, clipSMin + ds);
-								ui->pattern.setPad (r, clipSMax - ds, pd);
-								ui->send_pad (r, clipSMax - ds);
+								pads[dr][ds] = ui->pattern.getPad (clipRMin + dr, clipSMin + ds);
 							}
 						}
+
+						// X flip temp. copy & paste selection
+						bool valid = true;
+						for (int ds = 0; ds <= clipSMax - clipSMin; ++ds)
+						{
+							for (int dr = 0; dr <= clipRMax - clipRMin; ++dr)
+							{
+								if (!ui->validatePad (clipRMin + dr, clipSMax - ds, pads[dr][ds]))
+								{
+									valid = false;
+								}
+								else if (valid) ui->drawPad (clipRMin + dr, clipSMax - ds);
+							}
+						}
+						if (!valid) ui->drawPad();
 						ui->pattern.store ();
 					}
 
+					// YFLIP
+					// No need to validate
 					if (editNr == EDIT_YFLIP)
 					{
 						for (int dr = 0; dr < int ((clipRMax + 1 - clipRMin) / 2); ++dr)
@@ -685,6 +820,9 @@ void BNonameGUI::padsPressedCallback (BEvents::Event* event)
 						ui->pattern.store ();
 					}
 
+					// Store selected data in clipboard after flip (XFLIP, YFLIP)
+					// Or store selected data in clipboard before deletion (CUT)
+					// Or store selected data anyway (COPY)
 					ui->clipBoard.data.clear ();
 					for (int r = clipRMax; r >= clipRMin; --r)
 					{
@@ -694,14 +832,46 @@ void BNonameGUI::padsPressedCallback (BEvents::Event* event)
 						ui->clipBoard.data.push_back (padRow);
 					}
 
+					// CUT
+					// Validation required for REPLACE mode
 					if (editNr == EDIT_CUT)
 					{
-						for (int r = clipRMax; r >= clipRMin; --r)
+						for (int s = clipSMin; s <= clipSMax; ++s)
 						{
-							for (int s = clipSMin; s <= clipSMax; ++s)
+							bool empty = false;
+
+							for (int r = clipRMax; r >= clipRMin; --r)
 							{
-								ui->pattern.setPad (r, s,  Pad ());
-								ui->send_pad (r, s);
+								// Limit action to not empty pads
+								if (ui->pattern.getPad (r, s) != Pad())
+								{
+									// REPLACE mode: delete everything except default pads
+									if (ui->editMode == 1)
+									{
+										if (r != s)
+										{
+											ui->pattern.setPad (r, s,  Pad ());
+											ui->send_pad (r, s);
+											empty = true;
+										}
+
+										else empty = true;
+									}
+
+									// ADD mode: simply delete
+									else
+									{
+										ui->pattern.setPad (r, s,  Pad ());
+										ui->send_pad (r, s);
+									}
+								}
+							}
+
+							// Emptied column in REPLACE mode: set default
+							if (empty)
+							{
+								ui->pattern.setPad (s, s,  Pad (1.0));
+								ui->send_pad (s, s);
 							}
 						}
 						ui->pattern.store ();
@@ -742,9 +912,8 @@ void BNonameGUI::padsScrolledCallback (BEvents::Event* event)
 		{
 			Pad pd = ui->pattern.getPad (row, step);
 			pd.level = LIMIT (pd.level + 0.01 * wheelEvent->getDelta().y, 0.0, 1.0);
-			ui->pattern.setPad (row, step, pd);
-			ui->drawPad (row, step);
-			ui->send_pad (row, step);
+			if (!ui->validatePad (row, step, pd)) ui->drawPad();
+			else ui->drawPad (row, step);
 			ui->wheelScrolled = true;
 		}
 	}
