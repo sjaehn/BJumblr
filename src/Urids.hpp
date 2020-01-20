@@ -58,6 +58,8 @@ struct BNonameURIs
 	LV2_URID notify_editMode;
 	LV2_URID notify_statusEvent;
 	LV2_URID notify_cursor;
+	LV2_URID notify_messageEvent;
+	LV2_URID notify_message;
 };
 
 void getURIs (LV2_URID_Map* m, BNonameURIs* uris)
@@ -87,6 +89,8 @@ void getURIs (LV2_URID_Map* m, BNonameURIs* uris)
 	uris->notify_editMode = m->map(m->handle, BNONAME_URI "#NOTIFYeditMode");
 	uris->notify_statusEvent = m->map(m->handle, BNONAME_URI "#NOTIFYstatusEvent");
 	uris->notify_cursor = m->map(m->handle, BNONAME_URI "#NOTIFYcursor");
+	uris->notify_messageEvent = m->map(m->handle, BNONAME_URI "#NOTIFYmessageEvent");
+	uris->notify_message = m->map(m->handle, BNONAME_URI "#NOTIFYmessage");
 }
 
 #endif /* URIDS_HPP_ */

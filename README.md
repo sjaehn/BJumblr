@@ -37,6 +37,8 @@ jalv.gtk https://www.jahnichen.de/plugins/lv2/BNoname
 ```
 to run it stand-alone and connect it to the JACK system.
 
+**Jack transport is required to get information about beat and bar position (not required for seconds mode)**
+
 Usage
 -----
 From the technical POV B.Noname is a sequencer pattern-controlled audio delay effect.

@@ -37,7 +37,8 @@ BNoname::BNoname (double samplerate, const LV2_Feature* const* features) :
 	audioBuffer1 (maxBufferSize, 0.0f),
 	audioBuffer2 (maxBufferSize, 0.0f),
 	audioBufferCounter (0), audioBufferSize (samplerate * 8),
-	ui_on (false), scheduleNotifyPadsToGui (false), scheduleNotifyStatusToGui (false)
+	ui_on (false), scheduleNotifyPadsToGui (false), scheduleNotifyStatusToGui (false),
+	message ()
 
 {
 	//Scan host features for URID map
@@ -278,6 +279,20 @@ void BNoname::run (uint32_t n_samples)
 
 			if (controllers[i] != val)
 			{
+				if (i == STEP_BASE)
+				{
+					if (val == SECONDS)
+					{
+						if (bpm < 1.0) message.setMessage (JACK_STOP_MSG);
+						else message.deleteMessage (JACK_STOP_MSG);
+					}
+					else
+					{
+						if ((speed == 0) || (bpm < 1.0)) message.setMessage (JACK_STOP_MSG);
+						else message.deleteMessage (JACK_STOP_MSG);
+					}
+				}
+
 				controllers[i] = val;
 				uint64_t size = getFramesFromValue (controllers[STEP_SIZE] * controllers[NR_OF_STEPS]);
 				audioBufferSize = LIMIT (size, 0, maxBufferSize);
@@ -421,6 +436,10 @@ void BNoname::run (uint32_t n_samples)
 					refFrame = ev->time.frames;
 					uint64_t size = getFramesFromValue (controllers[STEP_SIZE] * controllers[NR_OF_STEPS]);
 					audioBufferSize = LIMIT (size, 0, maxBufferSize);
+
+					// Store message
+					if (((bpm < 1.0) || (speed == 0.0)) && (controllers[STEP_BASE] != SECONDS)) message.setMessage (JACK_STOP_MSG);
+					else message.deleteMessage (JACK_STOP_MSG);
 				}
 			}
 		}
@@ -445,6 +464,7 @@ void BNoname::run (uint32_t n_samples)
 	// Send notifications to GUI
 	if (ui_on && scheduleNotifyStatusToGui) notifyStatusToGui ();
 	if (ui_on && scheduleNotifyPadsToGui) notifyPadsToGui ();
+	if (ui_on && message.isScheduled ()) notifyMessageToGui ();
 	lv2_atom_forge_pop(&notifyForge, &notifyFrame);
 }
 
@@ -691,6 +711,19 @@ void BNoname::notifyStatusToGui ()
 	lv2_atom_forge_pop(&notifyForge, &frame);
 
 	scheduleNotifyStatusToGui = false;
+}
+
+void BNoname::notifyMessageToGui()
+{
+	uint32_t messageNr = message.loadMessage ();
+
+	// Send notifications
+	LV2_Atom_Forge_Frame frame;
+	lv2_atom_forge_frame_time(&notifyForge, 0);
+	lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_messageEvent);
+	lv2_atom_forge_key(&notifyForge, uris.notify_message);
+	lv2_atom_forge_int(&notifyForge, messageNr);
+	lv2_atom_forge_pop(&notifyForge, &frame);
 }
 
 /*

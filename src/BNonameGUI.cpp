@@ -20,6 +20,7 @@
 
 #include "BNonameGUI.hpp"
 #include "BUtilities/to_string.hpp"
+#include "MessageDefinitions.hpp"
 
 BNonameGUI::BNonameGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow) :
 	Window (840, 620, "B.Noname", parentWindow, true),
@@ -29,6 +30,7 @@ BNonameGUI::BNonameGUI (const char *bundle_path, const LV2_Feature *const *featu
 	uris (), forge (), editMode (0), clipBoard (),
 	cursor (0), wheelScrolled (false), padPressed (false), deleteMode (false),
 	mContainer (0, 0, 840, 620, "main"),
+	messageLabel (440, 45, 380, 20, "ctlabel", ""),
 	padSurface (18, 88, 804, 484, "box"),
 	playButton (18, 588, 24, 24, "widget", "Play"),
 	stopButton (48, 588, 24, 24, "widget", "Stop"),
@@ -75,6 +77,7 @@ BNonameGUI::BNonameGUI (const char *bundle_path, const LV2_Feature *const *featu
 	applyTheme (theme);
 
 	// Pack widgets
+	mContainer.add (messageLabel);
 	mContainer.add (playButton);
 	mContainer.add (stopButton);
 	for (int i = 0; i < EDIT_RESET; ++i) mContainer.add (edit1Buttons[i]);
@@ -239,6 +242,19 @@ void BNonameGUI::port_event(uint32_t port, uint32_t buffer_size,
 				}
 			}
 
+			// Message notification
+			else if (obj->body.otype == uris.notify_messageEvent)
+			{
+				const LV2_Atom* data = NULL;
+				lv2_atom_object_get(obj, uris.notify_message, &data, 0);
+				if (data && (data->type == uris.atom_Int))
+				{
+					const int messageNr = ((LV2_Atom_Int*)data)->body;
+					std::string msg = ((messageNr >= NO_MSG) && (messageNr < MAXMESSAGES) ? messageStrings[messageNr] : "");
+					messageLabel.setText (msg);
+				}
+			}
+
 			// Status notifications
 			else if (obj->body.otype == uris.notify_statusEvent)
 			{
@@ -289,6 +305,7 @@ void BNonameGUI::resize ()
 
 	//Scale widgets
 	RESIZE (mContainer, 0, 0, 840, 620, sz);
+	RESIZE (messageLabel, 440, 45, 380, 20, sz);
 	RESIZE (padSurface, 18, 88, 804, 484, sz);
 	RESIZE (playButton, 18, 588, 24, 24, sz);
 	RESIZE (stopButton, 48, 588, 24, 24, sz);
@@ -319,7 +336,7 @@ void BNonameGUI::resize ()
 void BNonameGUI::applyTheme (BStyles::Theme& theme)
 {
 	mContainer.applyTheme (theme);
-
+	messageLabel.applyTheme (theme);
 	padSurface.applyTheme (theme);
 	playButton.applyTheme (theme);
 	stopButton.applyTheme (theme);

@@ -150,6 +150,7 @@ private:
 
 	//Widgets
 	BWidgets::Widget mContainer;
+	BWidgets::Label messageLabel;
 	PadSurface padSurface;
 	HaloToggleButton playButton;
 	HaloButton stopButton;
@@ -167,7 +168,7 @@ private:
 	BColors::ColorSet fgColors_ch2 = {{{0.75, 0.0, 0.75, 1.0}, {0.75, 0.25, 0.75, 1.0}, {0.1, 0.0, 0.1, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
 	BColors::ColorSet fgColors_ch3 = {{{0.875, 0.4235, 0.0, 1.0}, {0.875, 0.75, 0.25, 1.0}, {0.1, 0.05, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
 	BColors::ColorSet fgColors_ch4 = {{{0.75, 0.75, 0.0, 1.0}, {0.75, 0.75, 0.75, 1.0}, {0.1, 0.1, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
-	BColors::ColorSet txColors = {{{0.167, 0.37, 0.80, 1.0}, {0.33, 0.5, 0.85, 1.0}, {0.0, 0.0, 0.25, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
+	BColors::ColorSet txColors = {{{0.75, 0.75, 0.0, 1.0}, {1.0, 1.0, 0.0, 1.0}, {0.1, 0.1, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
 	BColors::ColorSet tgColors = {{BColors::grey, BColors::white, BColors::grey, BColors::darkgrey}};
 	BColors::ColorSet bgColors = {{{0.15, 0.15, 0.15, 1.0}, {0.3, 0.3, 0.3, 1.0}, {0.05, 0.05, 0.05, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
 	BColors::ColorSet tgBgColors = {{{0.0, 0.03, 0.06, 1.0}, {0.3, 0.3, 0.3, 1.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
@@ -197,7 +198,7 @@ private:
 					  {"border", STYLEPTR (&BStyles::noBorder)}}};
 	BStyles::StyleSet labelStyles = {"labels", {{"background", STYLEPTR (&BStyles::noFill)},
 					{"border", STYLEPTR (&labelborder)},
-					{"textcolors", STYLEPTR (&txColors)},
+					{"textcolors", STYLEPTR (&BColors::whites)},
 					{"font", STYLEPTR (&ctLabelFont)}}};
 	BStyles::StyleSet focusStyles = {"labels", {{"background", STYLEPTR (&screenBg)},
 					{"border", STYLEPTR (&focusborder)},

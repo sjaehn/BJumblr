@@ -43,6 +43,7 @@
 #include "Urids.hpp"
 #include "Pad.hpp"
 #include "PadMessage.hpp"
+#include "Message.hpp"
 
 struct Limit
 {
@@ -73,6 +74,7 @@ private:
 	void padMessageBufferAllPads ();
 	void notifyPadsToGui ();
 	void notifyStatusToGui ();
+	void notifyMessageToGui();
 
 	// URIs
 	BNonameURIs uris;
@@ -133,6 +135,7 @@ private:
 	bool ui_on;
 	bool scheduleNotifyPadsToGui;
 	bool scheduleNotifyStatusToGui;
+	Message message;
 };
 
 #endif /* BNONAME_HPP_ */
