@@ -1,4 +1,4 @@
-/*  B.Noname
+/*  B.Jumblr
  * LV2 Plugin
  *
  * Copyright (C) 2018, 2019 by Sven Jähnichen
@@ -30,7 +30,7 @@
 #include <lv2/lv2plug.in/ns/ext/state/state.h>
 #include "definitions.h"
 
-struct BNonameURIs
+struct BJumblrURIs
 {
 	LV2_URID atom_Sequence;
 	LV2_URID atom_Float;
@@ -62,7 +62,7 @@ struct BNonameURIs
 	LV2_URID notify_message;
 };
 
-void getURIs (LV2_URID_Map* m, BNonameURIs* uris)
+void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 {
 	uris->atom_Sequence = m->map(m->handle, LV2_ATOM__Sequence);
 	uris->atom_Float = m->map(m->handle, LV2_ATOM__Float);
@@ -81,16 +81,16 @@ void getURIs (LV2_URID_Map* m, BNonameURIs* uris)
 	uris->time_beatUnit = m->map(m->handle, LV2_TIME__beatUnit);
 	uris->time_beatsPerBar = m->map(m->handle, LV2_TIME__beatsPerBar);
 	uris->time_speed = m->map(m->handle, LV2_TIME__speed);
-	uris->ui_on = m->map(m->handle, BNONAME_URI "#UIon");
-	uris->ui_off = m->map(m->handle, BNONAME_URI "#UIoff");
-	uris->state_pad = m->map(m->handle, BNONAME_URI "#STATEpad");
-	uris->notify_padEvent = m->map(m->handle, BNONAME_URI "#NOTIFYpadEvent");
-	uris->notify_pad = m->map(m->handle, BNONAME_URI "#NOTIFYpad");
-	uris->notify_editMode = m->map(m->handle, BNONAME_URI "#NOTIFYeditMode");
-	uris->notify_statusEvent = m->map(m->handle, BNONAME_URI "#NOTIFYstatusEvent");
-	uris->notify_cursor = m->map(m->handle, BNONAME_URI "#NOTIFYcursor");
-	uris->notify_messageEvent = m->map(m->handle, BNONAME_URI "#NOTIFYmessageEvent");
-	uris->notify_message = m->map(m->handle, BNONAME_URI "#NOTIFYmessage");
+	uris->ui_on = m->map(m->handle, BJUMBLR_URI "#UIon");
+	uris->ui_off = m->map(m->handle, BJUMBLR_URI "#UIoff");
+	uris->state_pad = m->map(m->handle, BJUMBLR_URI "#STATEpad");
+	uris->notify_padEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadEvent");
+	uris->notify_pad = m->map(m->handle, BJUMBLR_URI "#NOTIFYpad");
+	uris->notify_editMode = m->map(m->handle, BJUMBLR_URI "#NOTIFYeditMode");
+	uris->notify_statusEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYstatusEvent");
+	uris->notify_cursor = m->map(m->handle, BJUMBLR_URI "#NOTIFYcursor");
+	uris->notify_messageEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYmessageEvent");
+	uris->notify_message = m->map(m->handle, BJUMBLR_URI "#NOTIFYmessage");
 }
 
 #endif /* URIDS_HPP_ */

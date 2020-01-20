@@ -1,4 +1,4 @@
-/*  B.Noname
+/*  B.Jumblr
  * LV2 Plugin
  *
  * Copyright (C) 2018, 2019 by Sven Jähnichen
@@ -18,12 +18,12 @@
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "BNonameGUI.hpp"
+#include "BJumblrGUI.hpp"
 #include "BUtilities/to_string.hpp"
 #include "MessageDefinitions.hpp"
 
-BNonameGUI::BNonameGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow) :
-	Window (840, 620, "B.Noname", parentWindow, true),
+BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow) :
+	Window (840, 620, "B.Jumblr", parentWindow, true),
 	controller (NULL), write_function (NULL),
 	pluginPath (bundle_path ? std::string (bundle_path) : std::string ("")),
 	sz (1.0), bgImageSurface (nullptr),
@@ -111,12 +111,12 @@ BNonameGUI::BNonameGUI (const char *bundle_path, const LV2_Feature *const *featu
 	lv2_atom_forge_init (&forge, map);
 }
 
-BNonameGUI::~BNonameGUI ()
+BJumblrGUI::~BJumblrGUI ()
 {
 	send_ui_off ();
 }
 
-void BNonameGUI::Pattern::clear ()
+void BJumblrGUI::Pattern::clear ()
 {
 	Pad pad0 = Pad ();
 
@@ -135,11 +135,11 @@ void BNonameGUI::Pattern::clear ()
 	store ();
 }
 
-Pad BNonameGUI::Pattern::getPad (const size_t row, const size_t step) const
+Pad BJumblrGUI::Pattern::getPad (const size_t row, const size_t step) const
 {
 	return pads[LIMIT (row, 0, MAXSTEPS)][LIMIT (step, 0, MAXSTEPS)];
 }
-void BNonameGUI::Pattern::setPad (const size_t row, const size_t step, const Pad& pad)
+void BJumblrGUI::Pattern::setPad (const size_t row, const size_t step, const Pad& pad)
 {
 	size_t r = LIMIT (row, 0, MAXSTEPS);
 	size_t s = LIMIT (step, 0, MAXSTEPS);
@@ -148,7 +148,7 @@ void BNonameGUI::Pattern::setPad (const size_t row, const size_t step, const Pad
 	pads[r][s] = pad;
 }
 
-std::vector<PadMessage> BNonameGUI::Pattern::undo ()
+std::vector<PadMessage> BJumblrGUI::Pattern::undo ()
 {
 	if (!changes.newMessage.empty ()) store ();
 
@@ -164,7 +164,7 @@ std::vector<PadMessage> BNonameGUI::Pattern::undo ()
 	return padMessages;
 }
 
-std::vector<PadMessage> BNonameGUI::Pattern::redo ()
+std::vector<PadMessage> BJumblrGUI::Pattern::redo ()
 {
 	if (!changes.newMessage.empty ()) store ();
 
@@ -179,7 +179,7 @@ std::vector<PadMessage> BNonameGUI::Pattern::redo ()
 	return padMessages;
 }
 
-void BNonameGUI::Pattern::store ()
+void BJumblrGUI::Pattern::store ()
 {
 	if (changes.newMessage.empty ()) return;
 
@@ -188,7 +188,7 @@ void BNonameGUI::Pattern::store ()
 	changes.newMessage.clear ();
 }
 
-void BNonameGUI::port_event(uint32_t port, uint32_t buffer_size,
+void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 	uint32_t format, const void* buffer)
 {
 	// Notify port
@@ -284,7 +284,7 @@ void BNonameGUI::port_event(uint32_t port, uint32_t buffer_size,
 
 }
 
-void BNonameGUI::resize ()
+void BJumblrGUI::resize ()
 {
 	hide ();
 	//Scale fonts
@@ -333,7 +333,7 @@ void BNonameGUI::resize ()
 	show ();
 }
 
-void BNonameGUI::applyTheme (BStyles::Theme& theme)
+void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 {
 	mContainer.applyTheme (theme);
 	messageLabel.applyTheme (theme);
@@ -348,7 +348,7 @@ void BNonameGUI::applyTheme (BStyles::Theme& theme)
 	padSizeListBox.applyTheme (theme);
 }
 
-void BNonameGUI::onConfigureRequest (BEvents::ExposeEvent* event)
+void BJumblrGUI::onConfigureRequest (BEvents::ExposeEvent* event)
 {
 	Window::onConfigureRequest (event);
 
@@ -356,7 +356,7 @@ void BNonameGUI::onConfigureRequest (BEvents::ExposeEvent* event)
 	resize ();
 }
 
-void BNonameGUI::send_ui_on ()
+void BJumblrGUI::send_ui_on ()
 {
 	uint8_t obj_buf[64];
 	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
@@ -367,7 +367,7 @@ void BNonameGUI::send_ui_on ()
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }
 
-void BNonameGUI::send_ui_off ()
+void BJumblrGUI::send_ui_off ()
 {
 	uint8_t obj_buf[64];
 	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
@@ -378,7 +378,7 @@ void BNonameGUI::send_ui_off ()
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }
 
-void BNonameGUI::send_pad (int row, int step)
+void BJumblrGUI::send_pad (int row, int step)
 {
 	PadMessage padmsg (step, row, pattern.getPad (row, step));
 
@@ -395,7 +395,7 @@ void BNonameGUI::send_pad (int row, int step)
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }
 
-bool BNonameGUI::validatePad ()
+bool BJumblrGUI::validatePad ()
 {
 	bool changed = false;
 
@@ -438,7 +438,7 @@ bool BNonameGUI::validatePad ()
 	return (!changed);
 }
 
-bool BNonameGUI::validatePad (int row, int step, Pad& pad)
+bool BJumblrGUI::validatePad (int row, int step, Pad& pad)
 {
 	bool changed = false;
 
@@ -475,13 +475,13 @@ bool BNonameGUI::validatePad (int row, int step, Pad& pad)
 	return (!changed);
 }
 
-void BNonameGUI::valueChangedCallback(BEvents::Event* event)
+void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 {
 	if (!event) return;
 	BWidgets::ValueWidget* widget = (BWidgets::ValueWidget*) event->getWidget ();
 	if (!widget) return;
 	float value = widget->getValue();
-	BNonameGUI* ui = (BNonameGUI*) widget->getMainWindow();
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
 	if (!ui) return;
 
 	int controllerNr = -1;
@@ -531,14 +531,14 @@ void BNonameGUI::valueChangedCallback(BEvents::Event* event)
 	}
 }
 
-void BNonameGUI::edit1ChangedCallback(BEvents::Event* event)
+void BJumblrGUI::edit1ChangedCallback(BEvents::Event* event)
 {
 	if (!event) return;
 	BWidgets::ValueWidget* widget = (BWidgets::ValueWidget*) event->getWidget ();
 	if (!widget) return;
 	float value = widget->getValue();
 	if (value != 1.0) return;
-	BNonameGUI* ui = (BNonameGUI*) widget->getMainWindow();
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
 	if (!ui) return;
 
 	// Identify editButtons: CUT ... PASTE
@@ -563,14 +563,14 @@ void BNonameGUI::edit1ChangedCallback(BEvents::Event* event)
 	}
 }
 
-void BNonameGUI::edit2ChangedCallback(BEvents::Event* event)
+void BJumblrGUI::edit2ChangedCallback(BEvents::Event* event)
 {
 	if (!event) return;
 	BWidgets::ValueWidget* widget = (BWidgets::ValueWidget*) event->getWidget ();
 	if (!widget) return;
 	float value = widget->getValue();
 	if (value != 1.0) return;
-	BNonameGUI* ui = (BNonameGUI*) widget->getMainWindow();
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
 	if (!ui) return;
 
 	// Identify editButtons: RESET ... REDO
@@ -643,13 +643,13 @@ void BNonameGUI::edit2ChangedCallback(BEvents::Event* event)
 	}
 }
 
-void BNonameGUI::padsPressedCallback (BEvents::Event* event)
+void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 {
 	if (!event) return;
 	BEvents::PointerEvent* pointerEvent = (BEvents::PointerEvent*) event;
 	BWidgets::DrawingSurface* widget = (BWidgets::DrawingSurface*) event->getWidget ();
 	if (!widget) return;
-	BNonameGUI* ui = (BNonameGUI*) widget->getMainWindow();
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
 	if (!ui) return;
 
 	if
@@ -908,13 +908,13 @@ void BNonameGUI::padsPressedCallback (BEvents::Event* event)
 	}
 }
 
-void BNonameGUI::padsScrolledCallback (BEvents::Event* event)
+void BJumblrGUI::padsScrolledCallback (BEvents::Event* event)
 {
 	if ((event) && (event->getWidget ()) && (event->getWidget()->getMainWindow()) &&
 		((event->getEventType () == BEvents::WHEEL_SCROLL_EVENT)))
 	{
 		BWidgets::DrawingSurface* widget = (BWidgets::DrawingSurface*) event->getWidget ();
-		BNonameGUI* ui = (BNonameGUI*) widget->getMainWindow();
+		BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
 		BEvents::WheelEvent* wheelEvent = (BEvents::WheelEvent*) event;
 
 		// Get size of drawing area
@@ -936,7 +936,7 @@ void BNonameGUI::padsScrolledCallback (BEvents::Event* event)
 	}
 }
 
-void BNonameGUI::drawPad ()
+void BJumblrGUI::drawPad ()
 {
 	cairo_surface_t* surface = padSurface.getDrawingSurface();
 	cairo_t* cr = cairo_create (surface);
@@ -949,7 +949,7 @@ void BNonameGUI::drawPad ()
 	padSurface.update();
 }
 
-void BNonameGUI::drawPad (int row, int step)
+void BJumblrGUI::drawPad (int row, int step)
 {
 	cairo_surface_t* surface = padSurface.getDrawingSurface();
 	cairo_t* cr = cairo_create (surface);
@@ -958,7 +958,7 @@ void BNonameGUI::drawPad (int row, int step)
 	padSurface.update();
 }
 
-void BNonameGUI::drawPad (cairo_t* cr, int row, int step)
+void BJumblrGUI::drawPad (cairo_t* cr, int row, int step)
 {
 	int maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
 	if ((!cr) || (cairo_status (cr) != CAIRO_STATUS_SUCCESS) || (row < 0) || (row >= maxstep) || (step < 0) ||
@@ -1014,9 +1014,9 @@ LV2UI_Handle instantiate (const LV2UI_Descriptor *descriptor,
 	PuglNativeWindow parentWindow = 0;
 	LV2UI_Resize* resize = NULL;
 
-	if (strcmp(plugin_uri, BNONAME_URI) != 0)
+	if (strcmp(plugin_uri, BJUMBLR_URI) != 0)
 	{
-		std::cerr << "BNoname.lv2#GUI: GUI does not support plugin with URI " << plugin_uri << std::endl;
+		std::cerr << "BJumblr.lv2#GUI: GUI does not support plugin with URI " << plugin_uri << std::endl;
 		return NULL;
 	}
 
@@ -1025,14 +1025,14 @@ LV2UI_Handle instantiate (const LV2UI_Descriptor *descriptor,
 		if (!strcmp(features[i]->URI, LV2_UI__parent)) parentWindow = (PuglNativeWindow) features[i]->data;
 		else if (!strcmp(features[i]->URI, LV2_UI__resize)) resize = (LV2UI_Resize*)features[i]->data;
 	}
-	if (parentWindow == 0) std::cerr << "BNoname.lv2#GUI: No parent window.\n";
+	if (parentWindow == 0) std::cerr << "BJumblr.lv2#GUI: No parent window.\n";
 
 	// New instance
-	BNonameGUI* ui;
-	try {ui = new BNonameGUI (bundle_path, features, parentWindow);}
+	BJumblrGUI* ui;
+	try {ui = new BJumblrGUI (bundle_path, features, parentWindow);}
 	catch (std::exception& exc)
 	{
-		std::cerr << "BNoname.lv2#GUI: Instantiation failed. " << exc.what () << std::endl;
+		std::cerr << "BJumblr.lv2#GUI: Instantiation failed. " << exc.what () << std::endl;
 		return NULL;
 	}
 
@@ -1057,20 +1057,20 @@ LV2UI_Handle instantiate (const LV2UI_Descriptor *descriptor,
 
 void cleanup(LV2UI_Handle ui)
 {
-	BNonameGUI* self = (BNonameGUI*) ui;
+	BJumblrGUI* self = (BJumblrGUI*) ui;
 	delete self;
 }
 
 void port_event(LV2UI_Handle ui, uint32_t port_index, uint32_t buffer_size,
 	uint32_t format, const void* buffer)
 {
-	BNonameGUI* self = (BNonameGUI*) ui;
+	BJumblrGUI* self = (BJumblrGUI*) ui;
 	self->port_event(port_index, buffer_size, format, buffer);
 }
 
 static int call_idle (LV2UI_Handle ui)
 {
-	BNonameGUI* self = (BNonameGUI*) ui;
+	BJumblrGUI* self = (BJumblrGUI*) ui;
 	self->handleEvents ();
 	return 0;
 }
@@ -1084,7 +1084,7 @@ static const void* extension_data(const char* uri)
 }
 
 const LV2UI_Descriptor guiDescriptor = {
-		BNONAME_GUI_URI,
+		BJUMBLR_GUI_URI,
 		instantiate,
 		cleanup,
 		port_event,

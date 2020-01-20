@@ -1,4 +1,4 @@
-/*  B.Noname
+/*  B.Jumblr
  * LV2 Plugin
  *
  * Copyright (C) 2018, 2019 by Sven Jähnichen
@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef BNONAME_HPP_
-#define BNONAME_HPP_
+#ifndef BJUMBLR_HPP_
+#define BJUMBLR_HPP_
 
 #define FADETIME 0.01
 #define CONTROLLER_CHANGED(con) ((new_controllers[con]) ? (controllers[con] != *(new_controllers[con])) : false)
@@ -52,10 +52,10 @@ struct Limit
 	float step;
 };
 
-class BNoname
+class BJumblr
 {
 public:
-	BNoname (double samplerate, const LV2_Feature* const* features);
+	BJumblr (double samplerate, const LV2_Feature* const* features);
 	void connect_port(uint32_t port, void *data);
 	void run(uint32_t n_samples);
 	LV2_State_Status state_save(LV2_State_Store_Function store, LV2_State_Handle handle, uint32_t flags, const LV2_Feature* const* features);
@@ -77,7 +77,7 @@ private:
 	void notifyMessageToGui();
 
 	// URIs
-	BNonameURIs uris;
+	BJumblrURIs uris;
 	LV2_URID_Map* map;
 	LV2_URID_Unmap* unmap;
 
@@ -138,4 +138,4 @@ private:
 	Message message;
 };
 
-#endif /* BNONAME_HPP_ */
+#endif /* BJUMBLR_HPP_ */

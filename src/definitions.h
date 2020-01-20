@@ -1,4 +1,4 @@
-/*  B.Noname
+/*  B.Jumblr
  * LV2 Plugin
  *
  * Copyright (C) 2018, 2019 by Sven Jähnichen
@@ -22,8 +22,8 @@
 #define DEFINITIONS_H_
 
 #define MAXSTEPS 32
-#define BNONAME_URI "https://www.jahnichen.de/plugins/lv2/BNoname"
-#define BNONAME_GUI_URI "https://www.jahnichen.de/plugins/lv2/BNoname#gui"
+#define BJUMBLR_URI "https://www.jahnichen.de/plugins/lv2/BJumblr"
+#define BJUMBLR_GUI_URI "https://www.jahnichen.de/plugins/lv2/BJumblr#gui"
 
 #ifndef LIMIT
 #define LIMIT(val, min, max) ((val) > (max) ? (max) : ((val) < (min) ? (min) : (val)))

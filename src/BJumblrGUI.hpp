@@ -1,4 +1,4 @@
-/*  B.Noname
+/*  B.Jumblr
  * LV2 Plugin
  *
  * Copyright (C) 2018, 2019 by Sven Jähnichen
@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef BNONAMEGUI_HPP_
-#define BNONAMEGUI_HPP_
+#ifndef BJUMBLRGUI_HPP_
+#define BJUMBLRGUI_HPP_
 
 #include <lv2/lv2plug.in/ns/lv2core/lv2.h>
 #include <lv2/lv2plug.in/ns/extensions/ui/ui.h>
@@ -69,11 +69,11 @@ enum editIndex
 
 const std::string editLabels[MAXEDIT] = {"Select & cut", "Select & copy", "Select & X flip", "Select & Y flip", "Paste", "Reset", "Undo", "Redo"};
 
-class BNonameGUI : public BWidgets::Window
+class BJumblrGUI : public BWidgets::Window
 {
 public:
-	BNonameGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow);
-	~BNonameGUI ();
+	BJumblrGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow);
+	~BJumblrGUI ();
 	void port_event (uint32_t port_index, uint32_t buffer_size, uint32_t format, const void *buffer);
 	void send_ui_on ();
 	void send_ui_off ();
@@ -101,7 +101,7 @@ private:
 	double sz;
 	cairo_surface_t* bgImageSurface;
 
-	BNonameURIs uris;
+	BJumblrURIs uris;
 	LV2_Atom_Forge forge;
 
 	// Controllers
@@ -208,7 +208,7 @@ private:
 	BStyles::Theme theme = BStyles::Theme
 	({
 		defaultStyles,
-		{"B.Noname", 		{{"background", STYLEPTR (&BStyles::blackFill)},
+		{"B.Jumblr", 		{{"background", STYLEPTR (&BStyles::blackFill)},
 					 {"border", STYLEPTR (&BStyles::noBorder)}}},
 		{"main", 		{{"background", STYLEPTR (&widgetBg)},
 					 {"border", STYLEPTR (&BStyles::noBorder)}}},
@@ -249,4 +249,4 @@ private:
 	});
 };
 
-#endif /* BNONAMEGUI_HPP_ */
+#endif /* BJUMBLRGUI_HPP_ */

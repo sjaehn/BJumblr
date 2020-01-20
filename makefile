@@ -28,11 +28,11 @@ GUIPPFLAGS += -DPUGL_HAVE_CAIRO
 DSPFLAGS += `$(PKG_CONFIG) --cflags --libs $(LV2_LIBS)`
 GUIFLAGS += `$(PKG_CONFIG) --cflags --libs $(LV2_LIBS) $(GUI_LIBS)`
 
-BUNDLE = BNoname.lv2
-DSP = BNoname
-DSP_SRC = ./src/BNoname.cpp
-GUI = BNoname_GUI
-GUI_SRC = ./src/BNonameGUI.cpp
+BUNDLE = BJumblr.lv2
+DSP = BJumblr
+DSP_SRC = ./src/BJumblr.cpp
+GUI = BJumblr_GUI
+GUI_SRC = ./src/BJumblrGUI.cpp
 OBJ_EXT = .so
 DSP_OBJ = $(DSP)$(OBJ_EXT)
 GUI_OBJ = $(GUI)$(OBJ_EXT)
@@ -40,7 +40,7 @@ B_OBJECTS = $(addprefix $(BUNDLE)/, $(DSP_OBJ) $(GUI_OBJ))
 
 ROOTFILES = \
 	manifest.ttl \
-	BNoname.ttl \
+	BJumblr.ttl \
 	LICENSE
 
 INCFILES = \

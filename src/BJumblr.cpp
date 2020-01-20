@@ -1,4 +1,4 @@
-/*  B.Noname
+/*  B.Jumblr
  * LV2 Plugin
  *
  * Copyright (C) 2018 by Sven Jähnichen
@@ -18,11 +18,11 @@
  * Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include "BNoname.hpp"
+#include "BJumblr.hpp"
 
 inline double floorfrac (const double value) {return value - floor (value);}
 
-BNoname::BNoname (double samplerate, const LV2_Feature* const* features) :
+BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	map (NULL), unmap (NULL), controlPort (nullptr), notifyPort (nullptr),
 	audioInput1 (nullptr), audioInput2 (nullptr),
 	audioOutput1 (nullptr), audioOutput2 (nullptr),
@@ -58,7 +58,7 @@ BNoname::BNoname (double samplerate, const LV2_Feature* const* features) :
 
 	if (!m)
 	{
-		fprintf (stderr, "BNoname.lv2: Host does not support urid:map.\n");
+		fprintf (stderr, "BJumblr.lv2: Host does not support urid:map.\n");
 		return;
 	}
 
@@ -66,7 +66,7 @@ BNoname::BNoname (double samplerate, const LV2_Feature* const* features) :
 	map = m;
 	unmap = u;
 	getURIs (m, &uris);
-	if (!map) fprintf(stderr, "BNoname.lv2: Host does not support urid:map.\n");
+	if (!map) fprintf(stderr, "BJumblr.lv2: Host does not support urid:map.\n");
 
 	// Initialize notify
 	lv2_atom_forge_init (&notifyForge, map);
@@ -86,7 +86,7 @@ BNoname::BNoname (double samplerate, const LV2_Feature* const* features) :
 
 }
 
-void BNoname::connect_port (uint32_t port, void *data)
+void BJumblr::connect_port (uint32_t port, void *data)
 {
 	switch (port)
 	{
@@ -114,7 +114,7 @@ void BNoname::connect_port (uint32_t port, void *data)
 	}
 }
 
-void BNoname::runSequencer (const int start, const int end)
+void BJumblr::runSequencer (const int start, const int end)
 {
 	for (int i = start; i < end; ++i)
 	{
@@ -201,7 +201,7 @@ void BNoname::runSequencer (const int start, const int end)
 	}
 }
 
-double BNoname::getPositionFromBeats (const double beats) const
+double BJumblr::getPositionFromBeats (const double beats) const
 {
 	if (controllers[STEP_SIZE] == 0.0) return 0.0;
 
@@ -214,7 +214,7 @@ double BNoname::getPositionFromBeats (const double beats) const
 	}
 }
 
-double BNoname::getPositionFromFrames (const uint64_t frames) const
+double BJumblr::getPositionFromFrames (const uint64_t frames) const
 {
 	if ((controllers[STEP_SIZE] == 0.0) || (rate == 0)) return 0.0;
 
@@ -227,7 +227,7 @@ double BNoname::getPositionFromFrames (const uint64_t frames) const
 	}
 }
 
-double BNoname::getPositionFromSeconds (const double seconds) const
+double BJumblr::getPositionFromSeconds (const double seconds) const
 {
 	if (controllers[STEP_SIZE] == 0.0) return 0.0;
 
@@ -240,7 +240,7 @@ double BNoname::getPositionFromSeconds (const double seconds) const
 	}
 }
 
-uint64_t BNoname::getFramesFromValue (const double value) const
+uint64_t BJumblr::getFramesFromValue (const double value) const
 {
 	if (bpm < 1.0) return 0;
 
@@ -253,7 +253,7 @@ uint64_t BNoname::getFramesFromValue (const double value) const
 	}
 }
 
-void BNoname::run (uint32_t n_samples)
+void BJumblr::run (uint32_t n_samples)
 {
 	int64_t last_t = 0;
 
@@ -272,7 +272,7 @@ void BNoname::run (uint32_t n_samples)
 			float val = validateValue (*(new_controllers[i]), controllerLimits[i]);
 			if (val != *(new_controllers[i]))
 			{
-				fprintf (stderr, "BNoname.lv2: Value out of range in run (): Controller#%i\n", i);
+				fprintf (stderr, "BJumblr.lv2: Value out of range in run (): Controller#%i\n", i);
 				*(new_controllers[i]) = val;
 				// TODO update GUI controller
 			}
@@ -311,7 +311,7 @@ void BNoname::run (uint32_t n_samples)
 			if (obj->body.otype == uris.ui_on)
 			{
 				ui_on = true;
-				//fprintf (stderr, "BNoname.lv2: UI on received.\n");
+				//fprintf (stderr, "BJumblr.lv2: UI on received.\n");
 				padMessageBufferAllPads ();
 				scheduleNotifyPadsToGui = true;
 				scheduleNotifyStatusToGui = true;
@@ -320,7 +320,7 @@ void BNoname::run (uint32_t n_samples)
 			// GUI off
 			else if (obj->body.otype == uris.ui_off)
 			{
-				//fprintf (stderr, "BNoname.lv2: UI off received.\n");
+				//fprintf (stderr, "BJumblr.lv2: UI off received.\n");
 				ui_on = false;
 			}
 
@@ -357,7 +357,7 @@ void BNoname::run (uint32_t n_samples)
 								pads[row][step] = valPad;
 								if (valPad != pd)
 								{
-									fprintf (stderr, "BNoname.lv2: Pad out of range in run (): pads[%i][%i].\n", row, step);
+									fprintf (stderr, "BJumblr.lv2: Pad out of range in run (): pads[%i][%i].\n", row, step);
 									padMessageBufferAppendPad (row, step, valPad);
 									scheduleNotifyPadsToGui = true;
 								}
@@ -468,7 +468,7 @@ void BNoname::run (uint32_t n_samples)
 	lv2_atom_forge_pop(&notifyForge, &notifyFrame);
 }
 
-LV2_State_Status BNoname::state_save (LV2_State_Store_Function store, LV2_State_Handle handle, uint32_t flags,
+LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_Handle handle, uint32_t flags,
 			const LV2_Feature* const* features)
 {
 	// Store pads
@@ -493,14 +493,14 @@ LV2_State_Status BNoname::state_save (LV2_State_Store_Function store, LV2_State_
 	}
 	store (handle, uris.state_pad, padDataString, strlen (padDataString) + 1, uris.atom_String, LV2_STATE_IS_POD);
 
-	//fprintf (stderr, "BNoname.lv2: State saved.\n");
+	//fprintf (stderr, "BJumblr.lv2: State saved.\n");
 	return LV2_STATE_SUCCESS;
 }
 
-LV2_State_Status BNoname::state_restore (LV2_State_Retrieve_Function retrieve, LV2_State_Handle handle, uint32_t flags,
+LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, LV2_State_Handle handle, uint32_t flags,
 			const LV2_Feature* const* features)
 {
-	//fprintf (stderr, "BNoname.lv2: state_restore ()\n");
+	//fprintf (stderr, "BJumblr.lv2: state_restore ()\n");
 
 	// Retrieve pad data
 	size_t   size;
@@ -524,11 +524,11 @@ LV2_State_Status BNoname::state_restore (LV2_State_Retrieve_Function retrieve, L
 				try {em = std::stof (padDataString, &nextPos);}
 				catch  (const std::exception& e)
 				{
-					fprintf (stderr, "BNoname.lv2: Invalid editMode data\n");
+					fprintf (stderr, "BJumblr.lv2: Invalid editMode data\n");
 				}
 
 				if (nextPos > 0) padDataString.erase (0, nextPos);
-				if ((em < 0) || (em > 1)) fprintf (stderr, "BNoname.lv2: Invalid editMode data\n");
+				if ((em < 0) || (em > 1)) fprintf (stderr, "BJumblr.lv2: Invalid editMode data\n");
 			}
 		}
 
@@ -546,14 +546,14 @@ LV2_State_Status BNoname::state_restore (LV2_State_Retrieve_Function retrieve, L
 			try {id = std::stof (padDataString, &nextPos);}
 			catch  (const std::exception& e)
 			{
-				fprintf (stderr, "BNoname.lv2: Restore pad state incomplete. Can't parse ID from \"%s...\"", padDataString.substr (0, 63).c_str());
+				fprintf (stderr, "BJumblr.lv2: Restore pad state incomplete. Can't parse ID from \"%s...\"", padDataString.substr (0, 63).c_str());
 				break;
 			}
 
 			if (nextPos > 0) padDataString.erase (0, nextPos);
 			if ((id < 0) || (id >= MAXSTEPS * MAXSTEPS))
 			{
-				fprintf (stderr, "BNoname.lv2: Restore pad state incomplete. Invalid matrix data block loaded with ID %i. Try to use the data before this id.\n", id);
+				fprintf (stderr, "BJumblr.lv2: Restore pad state incomplete. Invalid matrix data block loaded with ID %i. Try to use the data before this id.\n", id);
 				break;
 			}
 			int row = id % MAXSTEPS;
@@ -574,7 +574,7 @@ LV2_State_Status BNoname::state_restore (LV2_State_Retrieve_Function retrieve, L
 				try {val = std::stof (padDataString, &nextPos);}
 				catch  (const std::exception& e)
 				{
-					fprintf (stderr, "BNoname.lv2: Restore padstate incomplete. Can't parse %s from \"%s...\"",
+					fprintf (stderr, "BJumblr.lv2: Restore padstate incomplete. Can't parse %s from \"%s...\"",
 							 keywords[i].substr(0,2).c_str(), padDataString.substr (0, 63).c_str());
 					break;
 				}
@@ -597,7 +597,7 @@ LV2_State_Status BNoname::state_restore (LV2_State_Retrieve_Function retrieve, L
 				Pad valPad = validatePad (pads[i][j]);
 				if (valPad != pads[i][j])
 				{
-					fprintf (stderr, "BNoname.lv2: Pad out of range in state_restore (): pads[%i][%i].\n", i, j);
+					fprintf (stderr, "BJumblr.lv2: Pad out of range in state_restore (): pads[%i][%i].\n", i, j);
 					pads[i][j] = valPad;
 				}
 			}
@@ -623,7 +623,7 @@ LV2_State_Status BNoname::state_restore (LV2_State_Retrieve_Function retrieve, L
  * @param limit
  * @return		Value is within the limit
  */
-float BNoname::validateValue (float value, const Limit limit)
+float BJumblr::validateValue (float value, const Limit limit)
 {
 	float ltdValue = ((limit.step != 0) ? (limit.min + round ((value - limit.min) / limit.step) * limit.step) : value);
 	return LIMIT (ltdValue, limit.min, limit.max);
@@ -632,7 +632,7 @@ float BNoname::validateValue (float value, const Limit limit)
 /*
  * Validates a single pad
  */
-Pad BNoname::validatePad (Pad pad)
+Pad BJumblr::validatePad (Pad pad)
 {
 	return Pad(validateValue (pad.level, {0, 1, 0}));
 }
@@ -640,7 +640,7 @@ Pad BNoname::validatePad (Pad pad)
 /*
  * Appends a single pad to padMessageBuffer
  */
-bool BNoname::padMessageBufferAppendPad (int row, int step, Pad pad)
+bool BJumblr::padMessageBufferAppendPad (int row, int step, Pad pad)
 {
 	PadMessage end = PadMessage (ENDPADMESSAGE);
 	PadMessage msg = PadMessage (step, row, pad.level);
@@ -661,7 +661,7 @@ bool BNoname::padMessageBufferAppendPad (int row, int step, Pad pad)
 /*
  * Copies all pads to padMessageBuffer (thus overwrites it!)
  */
-void BNoname::padMessageBufferAllPads ()
+void BJumblr::padMessageBufferAllPads ()
 {
 	for (int i = 0; i < MAXSTEPS; ++i)
 	{
@@ -673,7 +673,7 @@ void BNoname::padMessageBufferAllPads ()
 	}
 }
 
-void BNoname::notifyPadsToGui ()
+void BJumblr::notifyPadsToGui ()
 {
 	PadMessage endmsg (ENDPADMESSAGE);
 	if (!(endmsg == padMessageBuffer[0]))
@@ -700,7 +700,7 @@ void BNoname::notifyPadsToGui ()
 	}
 }
 
-void BNoname::notifyStatusToGui ()
+void BJumblr::notifyStatusToGui ()
 {
 	// Prepare forge buffer and initialize atom sequence
 	LV2_Atom_Forge_Frame frame;
@@ -713,7 +713,7 @@ void BNoname::notifyStatusToGui ()
 	scheduleNotifyStatusToGui = false;
 }
 
-void BNoname::notifyMessageToGui()
+void BJumblr::notifyMessageToGui()
 {
 	uint32_t messageNr = message.loadMessage ();
 
@@ -736,11 +736,11 @@ void BNoname::notifyMessageToGui()
 static LV2_Handle instantiate (const LV2_Descriptor* descriptor, double samplerate, const char* bundle_path, const LV2_Feature* const* features)
 {
 	// New instance
-	BNoname* instance;
-	try {instance = new BNoname(samplerate, features);}
+	BJumblr* instance;
+	try {instance = new BJumblr(samplerate, features);}
 	catch (std::exception& exc)
 	{
-		fprintf (stderr, "BNoname.lv2: Plugin instantiation failed. %s\n", exc.what ());
+		fprintf (stderr, "BJumblr.lv2: Plugin instantiation failed. %s\n", exc.what ());
 		return NULL;
 	}
 
@@ -749,20 +749,20 @@ static LV2_Handle instantiate (const LV2_Descriptor* descriptor, double samplera
 
 static void connect_port (LV2_Handle instance, uint32_t port, void *data)
 {
-	BNoname* inst = (BNoname*) instance;
+	BJumblr* inst = (BJumblr*) instance;
 	inst->connect_port (port, data);
 }
 
 static void run (LV2_Handle instance, uint32_t n_samples)
 {
-	BNoname* inst = (BNoname*) instance;
+	BJumblr* inst = (BJumblr*) instance;
 	inst->run (n_samples);
 }
 
 static LV2_State_Status state_save(LV2_Handle instance, LV2_State_Store_Function store, LV2_State_Handle handle, uint32_t flags,
            const LV2_Feature* const* features)
 {
-	BNoname* inst = (BNoname*)instance;
+	BJumblr* inst = (BJumblr*)instance;
 	if (!inst) return LV2_STATE_SUCCESS;
 
 	inst->state_save (store, handle, flags, features);
@@ -772,14 +772,14 @@ static LV2_State_Status state_save(LV2_Handle instance, LV2_State_Store_Function
 static LV2_State_Status state_restore(LV2_Handle instance, LV2_State_Retrieve_Function retrieve, LV2_State_Handle handle, uint32_t flags,
            const LV2_Feature* const* features)
 {
-	BNoname* inst = (BNoname*)instance;
+	BJumblr* inst = (BJumblr*)instance;
 	inst->state_restore (retrieve, handle, flags, features);
 	return LV2_STATE_SUCCESS;
 }
 
 static void cleanup (LV2_Handle instance)
 {
-	BNoname* inst = (BNoname*) instance;
+	BJumblr* inst = (BJumblr*) instance;
 	delete inst;
 }
 
@@ -796,7 +796,7 @@ static const void* extension_data(const char* uri)
 
 static const LV2_Descriptor descriptor =
 {
-		BNONAME_URI,
+		BJUMBLR_URI,
 		instantiate,
 		connect_port,
 		NULL,	// activate
