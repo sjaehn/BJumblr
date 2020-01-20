@@ -24,7 +24,7 @@
 
 <https://www.jahnichen.de/plugins/lv2/BNoname>
         a lv2:Plugin , lv2:DelayPlugin, doap:Project ;
-        rdfs:comment "Description needed" ;
+        rdfs:comment "B.Noname is a pattern-controlled audio stream re-sequencer LV2 plugin." ;
 	doap:name "B.Noname" ;
 	doap:license <http://usefulinc.com/doap/licenses/gpl>;
 #	lv2:microVersion 1 ;

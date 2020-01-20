@@ -1,10 +1,11 @@
 # B.???
 Repository: BNoname
 
-Description: A LV2 plugin. B.Noname resequences an audio input stream. This plugin is in an early stage of development. No guarantees.
+Description: B.Noname is a pattern-controlled audio stream re-sequencer LV2 plugin. This plugin is in an early stage of development. No guarantees.
 
-Installation
-------------
+
+## Installation
+
 Build your own binaries in the following three steps.
 
 Step 1: Clone or download this repository.
@@ -27,8 +28,8 @@ alternative directory (e.g., /usr/local/lib/lv2/), change the variable `PREFIX` 
 sudo make install PREFIX=/usr/local
 ```
 
-Running
--------
+## Running
+
 After the installation Carla, Ardour and any other LV2 host should automatically detect B.Noname.
 
 If jalv is installed, you can also call it
@@ -39,19 +40,27 @@ to run it stand-alone and connect it to the JACK system.
 
 **Jack transport is required to get information about beat and bar position (not required for seconds mode)**
 
-Usage
------
+
+## Usage
+
 From the technical POV B.Noname is a sequencer pattern-controlled audio delay effect.
 
 The pattern defines at when (horizontal) and which (vertical) piece of the audio input stream is
 sent to the audio output. Use the default diagonal line pattern for live playback. Moving a pad
 one step to the right results in a one step delayed playback of the respective piece of the audio
-input stream. You can also set more then one pad per row to produce echo effects or make a canon.
-Each pad (and thus each piece) can be levelled up or down by mouse wheel scrolling.
+input stream. Each pad (and thus each piece) can be levelled up or down by mouse wheel scrolling.
 
-TODO
-----
+### Step edit mode
+
+There are two edit modes. The **ADD** mode allows to place additional pads to a step (or to remove
+them). So you can also set more then one pad per row to produce echo effects or make a canon.
+
+In contrast, there is only (exactly) one pad per step allowed in the **REPLACE** mode. Clicking or
+dragging will result in a replacement of the original pad.
+
+
+## TODO
+
 * Find a name
-* Make a description
 * GUI artwork
 * Debugging
