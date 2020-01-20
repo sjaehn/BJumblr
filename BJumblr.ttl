@@ -6,7 +6,6 @@
 @prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
 @prefix time: <http://lv2plug.in/ns/ext/time#> .
 @prefix urid: <http://lv2plug.in/ns/ext/urid#> .
-@prefix midi: <http://lv2plug.in/ns/ext/midi#> .
 @prefix state: <http://lv2plug.in/ns/ext/state#> .
 @prefix ui: <http://lv2plug.in/ns/extensions/ui#> .
 @prefix rsz: <http://lv2plug.in/ns/ext/resize-port#> .
@@ -38,7 +37,6 @@
 		a lv2:InputPort , atom:AtomPort ;
 		atom:bufferType atom:Sequence ;
 		atom:supports time:Position ;
-		atom:supports midi:MidiEvent ;
 		lv2:index 0 ;
 		lv2:symbol "control" ;
 		lv2:name "Control" ;

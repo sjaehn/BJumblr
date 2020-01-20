@@ -33,7 +33,7 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	rate (samplerate), bpm (120.0f), beatsPerBar (4.0f), beatUnit (0),
 	speed (0.0f), bar (0), barBeat (0.0f),
 	outCapacity (0), position (0.0), cursor (0), offset (0.0), refFrame (0),
-	maxBufferSize (samplerate * 24 *32),
+	maxBufferSize (samplerate * 24 * 32),
 	audioBuffer1 (maxBufferSize, 0.0f),
 	audioBuffer2 (maxBufferSize, 0.0f),
 	audioBufferCounter (0), audioBufferSize (samplerate * 8),
@@ -118,10 +118,6 @@ void BJumblr::runSequencer (const int start, const int end)
 {
 	for (int i = start; i < end; ++i)
 	{
-		// Init audio output
-		audioOutput1[i] = 0;
-		audioOutput2[i] = 0;
-
 		// Store to buffers
 		audioBuffer1[audioBufferCounter] = audioInput1[i];
 		audioBuffer2[audioBufferCounter] = audioInput2[i];
@@ -196,6 +192,12 @@ void BJumblr::runSequencer (const int start, const int end)
 			audioOutput2[i] = fade * audio2 + (1 - fade) * prevAudio2;
 		}
 
+		else
+		{
+			audioOutput1[i] = 0;
+			audioOutput2[i] = 0;
+		}
+
 		// Increment counter
 		audioBufferCounter = (audioBufferCounter + 1) % maxBufferSize;
 	}
@@ -255,7 +257,7 @@ uint64_t BJumblr::getFramesFromValue (const double value) const
 
 void BJumblr::run (uint32_t n_samples)
 {
-	int64_t last_t = 0;
+	uint32_t last_t = 0;
 
 	if ((!controlPort) || (!notifyPort) || (!audioInput1) || (!audioInput2) || (!audioOutput1) || (!audioOutput2)) return;
 

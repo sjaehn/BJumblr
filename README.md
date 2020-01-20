@@ -64,4 +64,4 @@ REPLACE mode results in their replacement by default pads.
 
 ## TODO
 
-* Debugging
+* Add sync offset option
