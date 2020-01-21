@@ -35,11 +35,11 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	playButton (18, 588, 24, 24, "widget", "Play"),
 	bypassButton (48, 588, 24, 24, "widget", "Bypass"),
 	stopButton (78, 588, 24, 24, "widget", "Stop"),
-	syncWidget (400, 590, 100, 20, "widget", 0),
+	syncWidget (400, 590, 95, 20, "widget", 0),
 	zeroStepOffsetButton (0, 0, 20, 20, "menu/button"),
-	decStepOffsetButton (20, 0, 20, 20, "menu/button"),
-	hostSyncButton (40, 0, 40, 20, "menu/button", "Host"),
-	incStepOffsetButton (80, 0, 20, 20, "menu/button"),
+	decStepOffsetButton (25, 0, 20, 20, "menu/button"),
+	hostSyncButton (50, 0, 20, 20, "menu/button"),
+	incStepOffsetButton (75, 0, 20, 20, "menu/button"),
 	editModeListBox (530, 590, 90, 20, 0, -60, 90, 60, "menu",
 			 BItems::ItemList ({{0, "Add"}, {1, "Replace"}}), 0),
 	stepSizeListBox (650, 590, 70, 20, 0, -160, 70, 160, "menu",
@@ -331,11 +331,11 @@ void BJumblrGUI::resize ()
 	RESIZE (stopButton, 78, 588, 24, 24, sz);
 	for (int i = 0; i < EDIT_RESET; ++i) RESIZE (edit1Buttons[i], 128 + i * 30, 588, 24, 24, sz);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) RESIZE (edit2Buttons[i], 298 + i * 30, 588, 24, 24, sz);
-	RESIZE (syncWidget, 400, 590, 20, 20, sz);
+	RESIZE (syncWidget, 400, 590, 95, 20, sz);
 	RESIZE (zeroStepOffsetButton, 0, 0, 20, 20, sz);
-	RESIZE (decStepOffsetButton, 20, 0, 20, 20, sz);
-	RESIZE (hostSyncButton, 40, 0, 40, 20, sz);
-	RESIZE (incStepOffsetButton, 80, 0, 20, 20, sz);
+	RESIZE (decStepOffsetButton, 25, 0, 20, 20, sz);
+	RESIZE (hostSyncButton, 50, 0, 20, 20, sz);
+	RESIZE (incStepOffsetButton, 75, 0, 20, 20, sz);
 	RESIZE (editModeListBox, 530, 590, 90, 20, sz);
 	editModeListBox.resizeListBox(BUtilities::Point (90 * sz, 60 * sz));
 	editModeListBox.moveListBox(BUtilities::Point (0, -60 * sz));

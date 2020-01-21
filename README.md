@@ -52,6 +52,12 @@ sent to the audio output. Use the default diagonal line pattern for live playbac
 one step to the right results in a one step delayed playback of the respective piece of the audio
 input stream. Each pad (and thus each piece) can be levelled up or down by mouse wheel scrolling.
 
+### Step sync
+
+B.Jumblr time line automatically synchronizes with the host time/position. Use the button - and +
+to manually shift the time line to the left or the right, respectively. The button < sets the time
+line to the start of the pattern. The home button can be used to re-synchronize with the host.
+
 ### Column (step) edit mode
 
 There are two edit modes. The **ADD** mode allows to place additional pads to a step (or to remove
@@ -64,4 +70,4 @@ REPLACE mode results in their replacement by default pads.
 
 ## TODO
 
-* Add dry/wet option
+* Add dry/wet option (?)

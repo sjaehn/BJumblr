@@ -38,13 +38,13 @@
 #include "BWidgets/PopupListBox.hpp"
 #include "BWidgets/LeftButton.hpp"
 #include "BWidgets/PlusButton.hpp"
-#include "BWidgets/TextButton.hpp"
 #include "BWidgets/MinusButton.hpp"
 #include "screen.h"
 
 #include "drawbutton.hpp"
 #include "HaloButton.hpp"
 #include "HaloToggleButton.hpp"
+#include "HomeButton.hpp"
 #include "PadSurface.hpp"
 #include "definitions.h"
 #include "Ports.hpp"
@@ -165,7 +165,7 @@ private:
 	BWidgets::ValueWidget syncWidget;
 	BWidgets::LeftButton zeroStepOffsetButton;
 	BWidgets::MinusButton decStepOffsetButton;
-	BWidgets::TextButton hostSyncButton;
+	HomeButton hostSyncButton;
 	BWidgets::PlusButton incStepOffsetButton;
 	BWidgets::PopupListBox editModeListBox;
 	BWidgets::PopupListBox stepSizeListBox;

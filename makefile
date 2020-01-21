@@ -59,7 +59,6 @@ GUI_INCL = \
 	src/BWidgets/LeftButton.cpp \
 	src/BWidgets/PlusButton.cpp \
 	src/BWidgets/MinusButton.cpp \
-	src/BWidgets/TextButton.cpp \
 	src/BWidgets/Button.cpp \
 	src/BWidgets/DrawingSurface.cpp \
 	src/BWidgets/RangeWidget.cpp \
