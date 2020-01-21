@@ -1113,8 +1113,8 @@ LV2UI_Handle instantiate (const LV2UI_Descriptor *descriptor,
 	double sz = 1.0;
 	int screenWidth  = getScreenWidth ();
 	int screenHeight = getScreenHeight ();
-	if ((screenWidth < 600) || (screenHeight < 460)) sz = 0.5;
-	else if ((screenWidth < 880) || (screenHeight < 660)) sz = 0.66;
+	if ((screenWidth < 690) || (screenHeight < 460)) sz = 0.5;
+	else if ((screenWidth < 1000) || (screenHeight < 660)) sz = 0.66;
 
 	if (resize) resize->ui_resize(resize->handle, 960 * sz, 620 * sz);
 
