@@ -36,6 +36,10 @@
 #include "BWidgets/DrawingSurface.hpp"
 #include "BWidgets/DialValue.hpp"
 #include "BWidgets/PopupListBox.hpp"
+#include "BWidgets/LeftButton.hpp"
+#include "BWidgets/PlusButton.hpp"
+#include "BWidgets/TextButton.hpp"
+#include "BWidgets/MinusButton.hpp"
 #include "screen.h"
 
 #include "drawbutton.hpp"
@@ -90,6 +94,7 @@ private:
 	static void edit2ChangedCallback(BEvents::Event* event);
 	static void padsPressedCallback (BEvents::Event* event);
 	static void padsScrolledCallback (BEvents::Event* event);
+	static void syncButtonClickedCallback(BEvents::Event* event);
 	virtual void resize () override;
 	bool validatePad ();
 	bool validatePad (int row, int step, Pad& pad);
@@ -156,6 +161,11 @@ private:
 	HaloButton stopButton;
 	std::array<HaloToggleButton, EDIT_RESET> edit1Buttons;
 	std::array<HaloButton, MAXEDIT - EDIT_RESET> edit2Buttons;
+	BWidgets::ValueWidget syncWidget;
+	BWidgets::LeftButton zeroStepOffsetButton;
+	BWidgets::MinusButton decStepOffsetButton;
+	BWidgets::TextButton hostSyncButton;
+	BWidgets::PlusButton incStepOffsetButton;
 	BWidgets::PopupListBox editModeListBox;
 	BWidgets::PopupListBox stepSizeListBox;
 	BWidgets::PopupListBox stepBaseListBox;

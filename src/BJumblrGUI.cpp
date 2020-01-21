@@ -23,23 +23,28 @@
 #include "MessageDefinitions.hpp"
 
 BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow) :
-	Window (840, 620, "B.Jumblr", parentWindow, true),
+	Window (960, 620, "B.Jumblr", parentWindow, true),
 	controller (NULL), write_function (NULL),
 	pluginPath (bundle_path ? std::string (bundle_path) : std::string ("")),
 	sz (1.0), bgImageSurface (nullptr),
 	uris (), forge (), editMode (0), clipBoard (),
 	cursor (0), wheelScrolled (false), padPressed (false), deleteMode (false),
-	mContainer (0, 0, 840, 620, "main"),
+	mContainer (0, 0, 960, 620, "main"),
 	messageLabel (440, 45, 380, 20, "ctlabel", ""),
-	padSurface (18, 88, 804, 484, "box"),
+	padSurface (18, 88, 924, 484, "box"),
 	playButton (18, 588, 24, 24, "widget", "Play"),
 	stopButton (48, 588, 24, 24, "widget", "Stop"),
-	editModeListBox (400, 590, 90, 20, 0, -60, 90, 60, "menu",
+	syncWidget (400, 590, 100, 20, "widget", 0),
+	zeroStepOffsetButton (0, 0, 20, 20, "menu/button"),
+	decStepOffsetButton (20, 0, 20, 20, "menu/button"),
+	hostSyncButton (40, 0, 40, 20, "menu/button", "Host"),
+	incStepOffsetButton (80, 0, 20, 20, "menu/button"),
+	editModeListBox (530, 590, 90, 20, 0, -60, 90, 60, "menu",
 			 BItems::ItemList ({{0, "Add"}, {1, "Replace"}}), 0),
-	stepSizeListBox (520, 590, 70, 20, 0, -160, 70, 160, "menu",
+	stepSizeListBox (650, 590, 70, 20, 0, -160, 70, 160, "menu",
 			 BItems::ItemList ({{0.0625, "1/16"}, {0.125, "1/8"}, {0.25, "1/4"}, {0.5, "1/2"}, {1, "1"}, {2, "2"}, {4, "4"}}), 1),
-	stepBaseListBox (600, 590, 90, 20, 0, -80, 90, 80, "menu", BItems::ItemList ({{0, "Seconds"}, {1, "Beats"}, {2, "Bars"}}), 1),
-	padSizeListBox (720, 590, 100, 20, 0, -140, 100, 140, "menu",
+	stepBaseListBox (730, 590, 90, 20, 0, -80, 90, 80, "menu", BItems::ItemList ({{0, "Seconds"}, {1, "Beats"}, {2, "Bars"}}), 1),
+	padSizeListBox (850, 590, 90, 20, 0, -140, 100, 140, "menu",
 		     BItems::ItemList ({{4, "4 Steps"}, {8, "8 Steps"}, {12, "12 Steps"}, {16, "16 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16)
 
 {
@@ -52,6 +57,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	controllerWidgets[NR_OF_STEPS] = (BWidgets::ValueWidget*) &padSizeListBox;
 	controllerWidgets[STEP_SIZE] = (BWidgets::ValueWidget*) &stepSizeListBox;
 	controllerWidgets[STEP_BASE] = (BWidgets::ValueWidget*) &stepBaseListBox;
+	controllerWidgets[STEP_OFFSET] = (BWidgets::ValueWidget*) &syncWidget;
 
 	// Init controller values
 	for (int i = 0; i < MAXCONTROLLERS; ++i) controllers[i] = controllerWidgets[i]->getValue ();
@@ -59,6 +65,11 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	// Set callback functions
 	for (int i = 0; i < MAXCONTROLLERS; ++i) controllerWidgets[i]->setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
 	stopButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
+	syncWidget.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
+	zeroStepOffsetButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, syncButtonClickedCallback);
+	decStepOffsetButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, syncButtonClickedCallback);
+	hostSyncButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, syncButtonClickedCallback);
+	incStepOffsetButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, syncButtonClickedCallback);
 	editModeListBox.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i].setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, edit1ChangedCallback);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i].setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, edit2ChangedCallback);
@@ -82,6 +93,11 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (stopButton);
 	for (int i = 0; i < EDIT_RESET; ++i) mContainer.add (edit1Buttons[i]);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) mContainer.add (edit2Buttons[i]);
+	syncWidget.add (zeroStepOffsetButton);
+	syncWidget.add (decStepOffsetButton);
+	syncWidget.add (hostSyncButton);
+	syncWidget.add (incStepOffsetButton);
+	mContainer.add (syncWidget);
 	mContainer.add (editModeListBox);
 	mContainer.add (stepSizeListBox);
 	mContainer.add (stepBaseListBox);
@@ -294,7 +310,7 @@ void BJumblrGUI::resize ()
 	lfLabelFont.setFontSize (12 * sz);
 
 	//Background
-	cairo_surface_t* surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 840 * sz, 620 * sz);
+	cairo_surface_t* surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 960 * sz, 620 * sz);
 	cairo_t* cr = cairo_create (surface);
 	cairo_scale (cr, sz, sz);
 	cairo_set_source_surface(cr, bgImageSurface, 0, 0);
@@ -304,29 +320,34 @@ void BJumblrGUI::resize ()
 	cairo_surface_destroy (surface);
 
 	//Scale widgets
-	RESIZE (mContainer, 0, 0, 840, 620, sz);
+	RESIZE (mContainer, 0, 0, 960, 620, sz);
 	RESIZE (messageLabel, 440, 45, 380, 20, sz);
-	RESIZE (padSurface, 18, 88, 804, 484, sz);
+	RESIZE (padSurface, 18, 88, 924, 484, sz);
 	RESIZE (playButton, 18, 588, 24, 24, sz);
 	RESIZE (stopButton, 48, 588, 24, 24, sz);
 	for (int i = 0; i < EDIT_RESET; ++i) RESIZE (edit1Buttons[i], 108 + i * 30, 588, 24, 24, sz);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) RESIZE (edit2Buttons[i], 288 + i * 30, 588, 24, 24, sz);
-	RESIZE (editModeListBox, 400, 590, 90, 20, sz);
+	RESIZE (syncWidget, 400, 590, 20, 20, sz);
+	RESIZE (zeroStepOffsetButton, 0, 0, 20, 20, sz);
+	RESIZE (decStepOffsetButton, 20, 0, 20, 20, sz);
+	RESIZE (hostSyncButton, 40, 0, 40, 20, sz);
+	RESIZE (incStepOffsetButton, 80, 0, 20, 20, sz);
+	RESIZE (editModeListBox, 530, 590, 90, 20, sz);
 	editModeListBox.resizeListBox(BUtilities::Point (90 * sz, 60 * sz));
 	editModeListBox.moveListBox(BUtilities::Point (0, -60 * sz));
 	editModeListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
-	RESIZE (stepSizeListBox, 520, 590, 70, 20, sz);
+	RESIZE (stepSizeListBox, 650, 590, 70, 20, sz);
 	stepSizeListBox.resizeListBox(BUtilities::Point (70 * sz, 160 * sz));
 	stepSizeListBox.moveListBox(BUtilities::Point (0, -160 * sz));
 	stepSizeListBox.resizeListBoxItems(BUtilities::Point (70 * sz, 20 * sz));
-	RESIZE (stepBaseListBox, 600, 590, 90, 20, sz);
+	RESIZE (stepBaseListBox, 730, 590, 90, 20, sz);
 	stepBaseListBox.resizeListBox(BUtilities::Point (90 * sz, 80 * sz));
 	stepBaseListBox.moveListBox(BUtilities::Point (0, -80 * sz));
 	stepBaseListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
-	RESIZE (padSizeListBox, 720, 590, 100, 20, sz);
-	padSizeListBox.resizeListBox(BUtilities::Point (100 * sz, 140 * sz));
+	RESIZE (padSizeListBox, 850, 590, 90, 20, sz);
+	padSizeListBox.resizeListBox(BUtilities::Point (90 * sz, 140 * sz));
 	padSizeListBox.moveListBox(BUtilities::Point (0, -140 * sz));
-	padSizeListBox.resizeListBoxItems(BUtilities::Point (100 * sz, 20 * sz));
+	padSizeListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
 
 	applyTheme (theme);
 	drawPad ();
@@ -342,6 +363,11 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	stopButton.applyTheme (theme);
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i].applyTheme (theme);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i].applyTheme (theme);
+	syncWidget.applyTheme (theme);
+	zeroStepOffsetButton.applyTheme (theme);
+	decStepOffsetButton.applyTheme (theme);
+	hostSyncButton.applyTheme (theme);
+	incStepOffsetButton.applyTheme (theme);
 	editModeListBox.applyTheme (theme);
 	stepSizeListBox.applyTheme (theme);
 	stepBaseListBox.applyTheme (theme);
@@ -352,7 +378,7 @@ void BJumblrGUI::onConfigureRequest (BEvents::ExposeEvent* event)
 {
 	Window::onConfigureRequest (event);
 
-	sz = (getWidth() / 840 > getHeight() / 620 ? getHeight() / 620 : getWidth() / 840);
+	sz = (getWidth() / 960 > getHeight() / 620 ? getHeight() / 620 : getWidth() / 960);
 	resize ();
 }
 
@@ -936,6 +962,40 @@ void BJumblrGUI::padsScrolledCallback (BEvents::Event* event)
 	}
 }
 
+void BJumblrGUI::syncButtonClickedCallback(BEvents::Event* event)
+{
+	if (!event) return;
+	BWidgets::ValueWidget* widget = (BWidgets::ValueWidget*) event->getWidget ();
+	if (!widget) return;
+	float value = widget->getValue();
+	if (value != 1.0) return;
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	int offset = 0;
+
+	if (widget == &ui->zeroStepOffsetButton)
+	{
+		offset = (int (ui->controllers[NR_OF_STEPS] - ui->cursor + ui->controllers[STEP_OFFSET])) % int (ui->controllers[NR_OF_STEPS]);
+	}
+
+	else if (widget == &ui->decStepOffsetButton)
+	{
+		offset = (int (ui->controllers[STEP_OFFSET] + ui->controllers[NR_OF_STEPS]) - 1) % int (ui->controllers[NR_OF_STEPS]);
+	}
+
+	else if (widget == &ui->hostSyncButton) offset = 0;
+
+	else if (widget == &ui->incStepOffsetButton)
+	{
+		offset = int (ui->controllers[STEP_OFFSET] + 1) % int (ui->controllers[NR_OF_STEPS]);
+	}
+
+	else return;
+
+	ui->syncWidget.setValue (offset);
+}
+
 void BJumblrGUI::drawPad ()
 {
 	cairo_surface_t* surface = padSurface.getDrawingSurface();
@@ -1046,7 +1106,7 @@ LV2UI_Handle instantiate (const LV2UI_Descriptor *descriptor,
 	if ((screenWidth < 600) || (screenHeight < 460)) sz = 0.5;
 	else if ((screenWidth < 880) || (screenHeight < 660)) sz = 0.66;
 
-	if (resize) resize->ui_resize(resize->handle, 840 * sz, 620 * sz);
+	if (resize) resize->ui_resize(resize->handle, 960 * sz, 620 * sz);
 
 	*widget = (LV2UI_Widget) puglGetNativeWindow (ui->getPuglView ());
 

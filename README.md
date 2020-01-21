@@ -64,4 +64,4 @@ REPLACE mode results in their replacement by default pads.
 
 ## TODO
 
-* Add sync offset option
+* Add dry/wet option

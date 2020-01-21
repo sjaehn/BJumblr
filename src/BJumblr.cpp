@@ -128,7 +128,7 @@ void BJumblr::runSequencer (const int start, const int end)
 			// Interpolate position within the loop
 			double relpos = getPositionFromFrames (i - refFrame);	// Position relative to reference frame
 			double pos = floorfrac (position + relpos);		// 0..1 position
-			double step = pos * controllers[NR_OF_STEPS];		// 0..NR_OF_STEPS position
+			double step = fmod (pos * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET], controllers[NR_OF_STEPS]);	// 0..NR_OF_STEPS position
 			int iStep = step;
 			double fracTime = 0;					// Time from start of step
 			switch (int (controllers[STEP_BASE]))
@@ -458,7 +458,7 @@ void BJumblr::run (uint32_t n_samples)
 	// Update position in case of no new barBeat submitted on next call
 	double relpos = getPositionFromFrames (n_samples - refFrame);	// Position relative to reference frame
 	position = floorfrac (position + relpos);
-	if (controllers[PLAY]) cursor = position * controllers[NR_OF_STEPS];
+	if (controllers[PLAY]) cursor = int (position * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET]) % int (controllers[NR_OF_STEPS]);
 	refFrame = 0;
 
 	scheduleNotifyStatusToGui = true;

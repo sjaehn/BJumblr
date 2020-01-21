@@ -22,19 +22,20 @@
 #define PORTS_HPP_
 
 enum PortIndex {
-	CONTROL		= 0,
-	NOTIFY		= 1,
-	AUDIO_IN_1	= 2,
-	AUDIO_IN_2	= 3,
-	AUDIO_OUT_1	= 4,
-	AUDIO_OUT_2	= 5,
+	CONTROL			= 0,
+	NOTIFY			= 1,
+	AUDIO_IN_1		= 2,
+	AUDIO_IN_2		= 3,
+	AUDIO_OUT_1		= 4,
+	AUDIO_OUT_2		= 5,
 
-	CONTROLLERS	= 6,
-	PLAY		= 0,
-	NR_OF_STEPS	= 1,
-	STEP_BASE	= 2,
-	STEP_SIZE	= 3,
-	MAXCONTROLLERS	= 4
+	CONTROLLERS		= 6,
+	PLAY			= 0,
+	NR_OF_STEPS		= 1,
+	STEP_BASE		= 2,
+	STEP_SIZE		= 3,
+	STEP_OFFSET		= 4,
+	MAXCONTROLLERS		= 5
 };
 
 enum BaseIndex

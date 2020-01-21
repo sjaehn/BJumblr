@@ -102,7 +102,8 @@ private:
 		{0, 1, 1},	// PLAY
 		{4, 32, 1}, 	// NR_OF_STEPS
 		{0, 2, 1},	// STEP_BASE
-		{0.01, 4, 0}	// STEP_SIZE
+		{0.01, 4, 0},	// STEP_SIZE
+		{0, 31, 1}	// STEP_OFFSET
 	};
 
 	//Pads
