@@ -33,7 +33,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	messageLabel (440, 45, 380, 20, "ctlabel", ""),
 	padSurface (18, 88, 924, 484, "box"),
 	playButton (18, 588, 24, 24, "widget", "Play"),
-	stopButton (48, 588, 24, 24, "widget", "Stop"),
+	bypassButton (48, 588, 24, 24, "widget", "Bypass"),
+	stopButton (78, 588, 24, 24, "widget", "Stop"),
 	syncWidget (400, 590, 100, 20, "widget", 0),
 	zeroStepOffsetButton (0, 0, 20, 20, "menu/button"),
 	decStepOffsetButton (20, 0, 20, 20, "menu/button"),
@@ -49,8 +50,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 
 {
 	// Init editButtons
-	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i] = HaloToggleButton (108 + i * 30, 588, 24, 24, "widget", editLabels[i]);
-	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i] = HaloButton (288 + i * 30, 588, 24, 24, "widget", editLabels[i + EDIT_RESET]);
+	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i] = HaloToggleButton (128 + i * 30, 588, 24, 24, "widget", editLabels[i]);
+	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i] = HaloButton (298 + i * 30, 588, 24, 24, "widget", editLabels[i + EDIT_RESET]);
 
 	// Link controllerWidgets
 	controllerWidgets[PLAY] = (BWidgets::ValueWidget*) &playButton;
@@ -64,6 +65,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 
 	// Set callback functions
 	for (int i = 0; i < MAXCONTROLLERS; ++i) controllerWidgets[i]->setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
+	bypassButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
 	stopButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
 	syncWidget.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
 	zeroStepOffsetButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, syncButtonClickedCallback);
@@ -90,6 +92,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	// Pack widgets
 	mContainer.add (messageLabel);
 	mContainer.add (playButton);
+	mContainer.add (bypassButton);
 	mContainer.add (stopButton);
 	for (int i = 0; i < EDIT_RESET; ++i) mContainer.add (edit1Buttons[i]);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) mContainer.add (edit2Buttons[i]);
@@ -324,9 +327,10 @@ void BJumblrGUI::resize ()
 	RESIZE (messageLabel, 440, 45, 380, 20, sz);
 	RESIZE (padSurface, 18, 88, 924, 484, sz);
 	RESIZE (playButton, 18, 588, 24, 24, sz);
-	RESIZE (stopButton, 48, 588, 24, 24, sz);
-	for (int i = 0; i < EDIT_RESET; ++i) RESIZE (edit1Buttons[i], 108 + i * 30, 588, 24, 24, sz);
-	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) RESIZE (edit2Buttons[i], 288 + i * 30, 588, 24, 24, sz);
+	RESIZE (bypassButton, 48, 588, 24, 24, sz);
+	RESIZE (stopButton, 78, 588, 24, 24, sz);
+	for (int i = 0; i < EDIT_RESET; ++i) RESIZE (edit1Buttons[i], 128 + i * 30, 588, 24, 24, sz);
+	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) RESIZE (edit2Buttons[i], 298 + i * 30, 588, 24, 24, sz);
 	RESIZE (syncWidget, 400, 590, 20, 20, sz);
 	RESIZE (zeroStepOffsetButton, 0, 0, 20, 20, sz);
 	RESIZE (decStepOffsetButton, 20, 0, 20, 20, sz);
@@ -360,6 +364,7 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	messageLabel.applyTheme (theme);
 	padSurface.applyTheme (theme);
 	playButton.applyTheme (theme);
+	bypassButton.applyTheme (theme);
 	stopButton.applyTheme (theme);
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i].applyTheme (theme);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i].applyTheme (theme);
@@ -529,10 +534,9 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 		ui->write_function(ui->controller, CONTROLLERS + controllerNr, sizeof(float), 0, &ui->controllers[controllerNr]);
 
 		// Layout changed
-		if (controllerNr == NR_OF_STEPS)
-		{
-			ui->drawPad ();
-		}
+		if (controllerNr == NR_OF_STEPS) ui->drawPad ();
+
+		else if (controllerNr == PLAY) ui->bypassButton.setValue (value == 2.0 ? 1 : 0);
 	}
 
 	// Other widgets
@@ -547,12 +551,18 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 	}
 
 	// Buttons
+	else if (widget == &ui->bypassButton)
+	{
+		if ((value == 0.0) && (ui->playButton.getValue() == 2.0)) ui->playButton.setValue (0.0);
+		else if (value == 1.0) ui->playButton.setValue (2.0);
+	}
+
 	else if (widget == &ui->stopButton)
 	{
 		if (value == 1.0)
 		{
-			// Stop
-			if (widget == &ui->stopButton) ui->playButton.setValue (0.0);
+			ui->playButton.setValue (0.0);
+			ui->bypassButton.setValue (0.0);
 		}
 	}
 }

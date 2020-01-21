@@ -158,6 +158,7 @@ private:
 	BWidgets::Label messageLabel;
 	PadSurface padSurface;
 	HaloToggleButton playButton;
+	HaloToggleButton bypassButton;
 	HaloButton stopButton;
 	std::array<HaloToggleButton, EDIT_RESET> edit1Buttons;
 	std::array<HaloButton, MAXEDIT - EDIT_RESET> edit2Buttons;

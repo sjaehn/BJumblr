@@ -35,7 +35,7 @@ public:
 
 	virtual void onButtonPressed (BEvents::PointerEvent* event) override
 	{
-		setValue (1.0 - getValue());
+		setValue (getValue() == 1.0 ? 0.0 : 1.0);
 		Widget::cbfunction_[BEvents::EventType::BUTTON_PRESS_EVENT] (event);
 	}
 

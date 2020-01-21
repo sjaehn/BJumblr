@@ -122,7 +122,7 @@ void BJumblr::runSequencer (const int start, const int end)
 		audioBuffer1[audioBufferCounter] = audioInput1[i];
 		audioBuffer2[audioBufferCounter] = audioInput2[i];
 
-		if (controllers[PLAY] != 0.0f)
+		if (controllers[PLAY] == 1.0f)
 		{
 
 			// Interpolate position within the loop
@@ -190,6 +190,12 @@ void BJumblr::runSequencer (const int start, const int end)
 			// Mix audio and store into output
 			audioOutput1[i] = fade * audio1 + (1 - fade) * prevAudio1;
 			audioOutput2[i] = fade * audio2 + (1 - fade) * prevAudio2;
+		}
+
+		else if (controllers[PLAY] == 2.0f)
+		{
+			audioOutput1[i] = audioInput1[i];
+			audioOutput2[i] = audioInput2[i];
 		}
 
 		else
