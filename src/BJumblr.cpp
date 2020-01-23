@@ -130,6 +130,7 @@ void BJumblr::runSequencer (const int start, const int end)
 			double pos = floorfrac (position + relpos);		// 0..1 position
 			double step = fmod (pos * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET], controllers[NR_OF_STEPS]);	// 0..NR_OF_STEPS position
 			int iStep = step;
+			int iNrOfSteps = controllers[NR_OF_STEPS];
 			double fracTime = 0;					// Time from start of step
 			switch (int (controllers[STEP_BASE]))
 			{
@@ -155,14 +156,14 @@ void BJumblr::runSequencer (const int start, const int end)
 			// Fade out: Extrapolate audio using previous step data
 			if (fade != 1.0)
 			{
-				int prevStep = int (iStep + controllers[NR_OF_STEPS] - 1) % int (controllers[NR_OF_STEPS]);	// Previous step
-				for (int r = 0; r < MAXSTEPS; ++r)
+				int iPrevStep = (iStep + iNrOfSteps - 1) % iNrOfSteps;	// Previous step
+				for (int r = 0; r < iNrOfSteps; ++r)
 				{
-					float factor = pads[r][prevStep].level;
+					float factor = pads[r][iPrevStep].level;
 					if (factor != 0.0)
 					{
-						int stepDiff = (r <= prevStep ? prevStep - r : prevStep + controllers[NR_OF_STEPS] - r);
-						size_t frame = size_t (maxBufferSize + audioBufferCounter - audioBufferSize * (double (stepDiff) / double (controllers[NR_OF_STEPS]))) % maxBufferSize;
+						int stepDiff = (r <= iPrevStep ? iPrevStep - r : iPrevStep + iNrOfSteps - r);
+						size_t frame = size_t (maxBufferSize + audioBufferCounter - audioBufferSize * (double (stepDiff) / double (iNrOfSteps))) % maxBufferSize;
 						prevAudio1 += factor * audioBuffer1[frame];
 						prevAudio2 += factor * audioBuffer2[frame];
 
@@ -173,13 +174,13 @@ void BJumblr::runSequencer (const int start, const int end)
 			}
 
 			// Calculate audio for this step
-			for (int r = 0; r < MAXSTEPS; ++r)
+			for (int r = 0; r < iNrOfSteps; ++r)
 			{
 				float factor = pads[r][iStep].level;
 				if (factor != 0.0)
 				{
-					int stepDiff = (r <= iStep ? iStep - r : iStep + controllers[NR_OF_STEPS] - r);
-					size_t frame = size_t (maxBufferSize + audioBufferCounter - audioBufferSize * (double (stepDiff) / double (controllers[NR_OF_STEPS]))) % maxBufferSize;
+					int stepDiff = (r <= iStep ? iStep - r : iStep + iNrOfSteps - r);
+					size_t frame = size_t (maxBufferSize + audioBufferCounter - audioBufferSize * (double (stepDiff) / double (iNrOfSteps))) % maxBufferSize;
 					audio1 += factor * audioBuffer1[frame];
 					audio2 += factor * audioBuffer2[frame];
 
