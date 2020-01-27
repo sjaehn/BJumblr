@@ -70,4 +70,7 @@ REPLACE mode results in their replacement by default pads.
 
 ## TODO
 
-* Add dry/wet option (?)
+* Hover effect: show pad properties
+
+## Links
+* Preview video: https://www.youtube.com/watch?v=n3LrpOD8MrI

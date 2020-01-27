@@ -61,6 +61,9 @@ GUI_INCL = \
 	src/BWidgets/MinusButton.cpp \
 	src/BWidgets/Button.cpp \
 	src/BWidgets/DrawingSurface.cpp \
+	src/BWidgets/DialValue.cpp \
+	src/BWidgets/Dial.cpp \
+	src/BWidgets/Knob.cpp \
 	src/BWidgets/RangeWidget.cpp \
 	src/BWidgets/ValueWidget.cpp \
 	src/BWidgets/Label.cpp \

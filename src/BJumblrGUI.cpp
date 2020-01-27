@@ -23,13 +23,13 @@
 #include "MessageDefinitions.hpp"
 
 BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow) :
-	Window (960, 620, "B.Jumblr", parentWindow, true),
+	Window (1020, 620, "B.Jumblr", parentWindow, true),
 	controller (NULL), write_function (NULL),
 	pluginPath (bundle_path ? std::string (bundle_path) : std::string ("")),
 	sz (1.0), bgImageSurface (nullptr),
 	uris (), forge (), editMode (0), clipBoard (),
 	cursor (0), wheelScrolled (false), padPressed (false), deleteMode (false),
-	mContainer (0, 0, 960, 620, "main"),
+	mContainer (0, 0, 1020, 620, "main"),
 	messageLabel (440, 45, 380, 20, "ctlabel", ""),
 	padSurface (18, 88, 924, 484, "box"),
 	playButton (18, 588, 24, 24, "widget", "Play"),
@@ -46,12 +46,16 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 			 BItems::ItemList ({{0.0625, "1/16"}, {0.125, "1/8"}, {0.25, "1/4"}, {0.5, "1/2"}, {1, "1"}, {2, "2"}, {4, "4"}}), 1),
 	stepBaseListBox (730, 590, 90, 20, 0, -80, 90, 80, "menu", BItems::ItemList ({{0, "Seconds"}, {1, "Beats"}, {2, "Bars"}}), 1),
 	padSizeListBox (850, 590, 90, 20, 0, -140, 100, 140, "menu",
-		     BItems::ItemList ({{4, "4 Steps"}, {8, "8 Steps"}, {12, "12 Steps"}, {16, "16 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16)
+		     BItems::ItemList ({{4, "4 Steps"}, {8, "8 Steps"}, {12, "12 Steps"}, {16, "16 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16),
+	levelDial (960, 520, 40, 48, "dial", 1.0, 0.0, 1.0, 0.01, "%1.2f")
 
 {
 	// Init editButtons
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i] = HaloToggleButton (128 + i * 30, 588, 24, 24, "widget", editLabels[i]);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i] = HaloButton (298 + i * 30, 588, 24, 24, "widget", editLabels[i + EDIT_RESET]);
+
+	for (int i = 0; i < 5; ++i) levelButtons[i] = HaloToggleButton (958, 368 + i * 30, 44, 22, "widget", std::to_string (1.0 - 0.25 * double(i)));
+	levelButtons[0].setValue (1.0);
 
 	// Link controllerWidgets
 	controllerWidgets[PLAY] = (BWidgets::ValueWidget*) &playButton;
@@ -75,6 +79,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	editModeListBox.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i].setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, edit1ChangedCallback);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i].setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, edit2ChangedCallback);
+	for (int i = 0; i < 5; ++i) levelButtons[i].setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, levelChangedCallback);
+	levelDial.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, levelChangedCallback);
 
 	padSurface.setDraggable (true);
 	padSurface.setCallbackFunction (BEvents::BUTTON_PRESS_EVENT, padsPressedCallback);
@@ -84,8 +90,14 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	padSurface.setScrollable (true);
 	padSurface.setCallbackFunction (BEvents::WHEEL_SCROLL_EVENT, padsScrolledCallback);
 
-	// Apply theme
+	// Load background & apply theme
 	bgImageSurface = cairo_image_surface_create_from_png ((pluginPath + BG_FILE).c_str());
+	for (int i = 0; i < 5; ++i)
+	{
+		BColors::Color col = BColors::yellow;
+		col.applyBrightness (- 0.25 * double(i));
+		drawButton (bgImageSurface, 960, 370 + i * 30, 40, 18, col);
+	}
 	widgetBg.loadFillFromCairoSurface (bgImageSurface);
 	applyTheme (theme);
 
@@ -106,6 +118,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (stepBaseListBox);
 	mContainer.add (padSizeListBox);
 	mContainer.add (padSurface);
+	for (int i = 0; i < 5; ++i) mContainer.add (levelButtons[i]);
+	mContainer.add (levelDial);
 
 	drawPad();
 	add (mContainer);
@@ -313,7 +327,7 @@ void BJumblrGUI::resize ()
 	lfLabelFont.setFontSize (12 * sz);
 
 	//Background
-	cairo_surface_t* surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 960 * sz, 620 * sz);
+	cairo_surface_t* surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 1020 * sz, 620 * sz);
 	cairo_t* cr = cairo_create (surface);
 	cairo_scale (cr, sz, sz);
 	cairo_set_source_surface(cr, bgImageSurface, 0, 0);
@@ -323,7 +337,7 @@ void BJumblrGUI::resize ()
 	cairo_surface_destroy (surface);
 
 	//Scale widgets
-	RESIZE (mContainer, 0, 0, 960, 620, sz);
+	RESIZE (mContainer, 0, 0, 1020, 620, sz);
 	RESIZE (messageLabel, 440, 45, 380, 20, sz);
 	RESIZE (padSurface, 18, 88, 924, 484, sz);
 	RESIZE (playButton, 18, 588, 24, 24, sz);
@@ -352,6 +366,8 @@ void BJumblrGUI::resize ()
 	padSizeListBox.resizeListBox(BUtilities::Point (90 * sz, 140 * sz));
 	padSizeListBox.moveListBox(BUtilities::Point (0, -140 * sz));
 	padSizeListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
+	for (int i = 0; i < 5; ++i) RESIZE (levelButtons[i], 958, 368 + 30 * i, 44, 22, sz);
+	RESIZE (levelDial, 960, 520, 40, 48, sz);
 
 	applyTheme (theme);
 	drawPad ();
@@ -377,13 +393,15 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	stepSizeListBox.applyTheme (theme);
 	stepBaseListBox.applyTheme (theme);
 	padSizeListBox.applyTheme (theme);
+	for (int i = 0; i < 5; ++i) levelButtons[i].applyTheme (theme);
+	levelDial.applyTheme (theme);
 }
 
 void BJumblrGUI::onConfigureRequest (BEvents::ExposeEvent* event)
 {
 	Window::onConfigureRequest (event);
 
-	sz = (getWidth() / 960 > getHeight() / 620 ? getHeight() / 620 : getWidth() / 960);
+	sz = (getWidth() / 1020 > getHeight() / 620 ? getHeight() / 620 : getWidth() / 1020);
 	resize ();
 }
 
@@ -564,6 +582,44 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 			ui->playButton.setValue (0.0);
 			ui->bypassButton.setValue (0.0);
 		}
+	}
+}
+
+void BJumblrGUI::levelChangedCallback(BEvents::Event* event)
+{
+	if (!event) return;
+	BWidgets::ValueWidget* widget = (BWidgets::ValueWidget*) event->getWidget ();
+	if (!widget) return;
+	float value = widget->getValue();
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	if (widget == &ui->levelDial)
+	{
+		for (int i = 0; i < 5; ++i)
+		{
+			if (value == 1.0 - double (i) * 0.25) ui->levelButtons[i].setValue (1.0);
+			else ui->levelButtons[i].setValue (0.0);
+		}
+	}
+
+	else
+	{
+
+		int buttonNr = -1;
+
+		// Identify controller
+		for (int i = 0; i < 5; ++i)
+		{
+			if (widget == &ui->levelButtons[i])
+			{
+				buttonNr = i;
+				break;
+			}
+		}
+
+		// Controllers
+		if ((buttonNr >= 0) && (value == 1.0)) ui->levelDial.setValue (1.0 - double (buttonNr) * 0.25);
 	}
 }
 
@@ -788,13 +844,18 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 					// Set (or unset) pad
 					else
 					{
-						if (!ui->padPressed) ui->deleteMode = ((oldPad.level == 1.0) && (ui->editMode != 1));
-						Pad newPad = (ui->deleteMode ? Pad (0.0) : Pad (1.0));
+						if (!ui->padPressed) ui->deleteMode = ((oldPad.level == ui->levelDial.getValue()) && (ui->editMode != 1));
+						Pad newPad = (ui->deleteMode ? Pad (0.0) : Pad (ui->levelDial.getValue()));
 						if (!ui->validatePad (row, step, newPad)) ui->drawPad();
 						else ui->drawPad (row,step);
 					}
 
 					ui->padPressed = true;
+				}
+
+				else if (pointerEvent->getButton() == BDevices::RIGHT_BUTTON)
+				{
+					ui->levelDial.setValue (ui->pattern.getPad (row, step).level);
 				}
 			}
 		}
@@ -1113,10 +1174,10 @@ LV2UI_Handle instantiate (const LV2UI_Descriptor *descriptor,
 	double sz = 1.0;
 	int screenWidth  = getScreenWidth ();
 	int screenHeight = getScreenHeight ();
-	if ((screenWidth < 690) || (screenHeight < 460)) sz = 0.5;
-	else if ((screenWidth < 1000) || (screenHeight < 660)) sz = 0.66;
+	if ((screenWidth < 730) || (screenHeight < 460)) sz = 0.5;
+	else if ((screenWidth < 1060) || (screenHeight < 660)) sz = 0.66;
 
-	if (resize) resize->ui_resize(resize->handle, 960 * sz, 620 * sz);
+	if (resize) resize->ui_resize(resize->handle, 1020 * sz, 620 * sz);
 
 	*widget = (LV2UI_Widget) puglGetNativeWindow (ui->getPuglView ());
 

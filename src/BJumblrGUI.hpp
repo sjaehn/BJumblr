@@ -90,6 +90,7 @@ public:
 
 private:
 	static void valueChangedCallback(BEvents::Event* event);
+	static void levelChangedCallback(BEvents::Event* event);
 	static void edit1ChangedCallback(BEvents::Event* event);
 	static void edit2ChangedCallback(BEvents::Event* event);
 	static void padsPressedCallback (BEvents::Event* event);
@@ -171,14 +172,12 @@ private:
 	BWidgets::PopupListBox stepSizeListBox;
 	BWidgets::PopupListBox stepBaseListBox;
 	BWidgets::PopupListBox padSizeListBox;
+	std::array<HaloToggleButton, 5> levelButtons;
+	BWidgets::DialValue levelDial;
 
 
 	// Definition of styles
-	BColors::ColorSet fgColors = {{{0.0, 0.25, 0.75, 1.0}, {0.25, 0.75, 0.75, 1.0}, {0.0, 0.0, 0.1, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
-	BColors::ColorSet fgColors_ch1 = {{{0.0, 0.25, 0.75, 1.0}, {0.25, 0.75, 0.75, 1.0}, {0.0, 0.0, 0.1, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
-	BColors::ColorSet fgColors_ch2 = {{{0.75, 0.0, 0.75, 1.0}, {0.75, 0.25, 0.75, 1.0}, {0.1, 0.0, 0.1, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
-	BColors::ColorSet fgColors_ch3 = {{{0.875, 0.4235, 0.0, 1.0}, {0.875, 0.75, 0.25, 1.0}, {0.1, 0.05, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
-	BColors::ColorSet fgColors_ch4 = {{{0.75, 0.75, 0.0, 1.0}, {0.75, 0.75, 0.75, 1.0}, {0.1, 0.1, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
+	BColors::ColorSet fgColors = {{{0.75, 0.75, 0.0, 1.0}, {1.0, 1.0, 0.25, 1.0}, {0.1, 0.1, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
 	BColors::ColorSet txColors = {{{0.75, 0.75, 0.0, 1.0}, {1.0, 1.0, 0.0, 1.0}, {0.1, 0.1, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
 	BColors::ColorSet tgColors = {{BColors::grey, BColors::white, BColors::grey, BColors::darkgrey}};
 	BColors::ColorSet bgColors = {{{0.15, 0.15, 0.15, 1.0}, {0.3, 0.3, 0.3, 1.0}, {0.05, 0.05, 0.05, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
@@ -236,6 +235,12 @@ private:
 					 {"bgcolors", STYLEPTR (&tgBgColors)},
 					 {"font", STYLEPTR (&tgLabelFont)}}},
 		{"tgbutton/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
+		{"dial", 		{{"uses", STYLEPTR (&defaultStyles)},
+					 {"fgcolors", STYLEPTR (&fgColors)},
+					 {"bgcolors", STYLEPTR (&bgColors)},
+					 {"textcolors", STYLEPTR (&fgColors)},
+					 {"font", STYLEPTR (&ctLabelFont)}}},
+		{"dial/focus", 		{{"uses", STYLEPTR (&focusStyles)}}},
 		{"ctlabel",	 	{{"uses", STYLEPTR (&labelStyles)}}},
 		{"lflabel",	 	{{"uses", STYLEPTR (&labelStyles)},
 					 {"font", STYLEPTR (&lfLabelFont)}}},
