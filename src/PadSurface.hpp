@@ -35,7 +35,7 @@ public:
                 DrawingSurface (x, y, width, height, name),
                 Focusable (std::chrono::milliseconds (BWIDGETS_DEFAULT_FOCUS_IN_MS),
 			std::chrono::milliseconds (BWIDGETS_DEFAULT_FOCUS_OUT_MS)),
-                focusText (0, 0, 400, 100, name + "/focus", "Click to set or remove a pad.\nScroll to increase or decrease pad playback volume.")
+                focusText (0, 0, 120, 100, name + "/focus", "", true)
         {
                 focusText.setOversize (true);
                 focusText.hide ();
@@ -50,6 +50,22 @@ public:
         	{
         		BUtilities::Point pos = event->getPosition();
         		focusText.moveTo (pos.x - 0.5 * focusText.getWidth(), pos.y - focusText.getHeight());
+
+                        // Resize
+                        cairo_surface_t* surface = getDrawingSurface();
+                	cairo_t* cr = cairo_create (surface);
+                        focusText.resize (400,100);	// Maximize size first to omit breaks
+                	std::vector<std::string> textblock = focusText.getTextBlock ();
+                	double blockheight = focusText.getTextBlockHeight (textblock);
+                	double blockwidth = 0.0;
+                	for (std::string textline : textblock)
+                	{
+                		cairo_text_extents_t ext = focusText.getFont ()->getTextExtents (cr, textline);
+                		if (ext.width > blockwidth) blockwidth = ext.width;
+                	}
+                	focusText.resize (blockwidth + 2 * focusText.getXOffset (), blockheight + 2 * focusText.getYOffset ());
+                	focusText.resize();
+
         		focusText.show();
         	}
         }

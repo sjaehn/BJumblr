@@ -90,6 +90,10 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	padSurface.setScrollable (true);
 	padSurface.setCallbackFunction (BEvents::WHEEL_SCROLL_EVENT, padsScrolledCallback);
 
+	padSurface.setFocusable (true);
+	padSurface.setCallbackFunction (BEvents::FOCUS_IN_EVENT, padsFocusedCallback);
+	padSurface.setCallbackFunction (BEvents::FOCUS_OUT_EVENT, padsFocusedCallback);
+
 	// Load background & apply theme
 	bgImageSurface = cairo_image_surface_create_from_png ((pluginPath + BG_FILE).c_str());
 	for (int i = 0; i < 5; ++i)
@@ -1030,6 +1034,34 @@ void BJumblrGUI::padsScrolledCallback (BEvents::Event* event)
 			else ui->drawPad (row, step);
 			ui->wheelScrolled = true;
 		}
+	}
+}
+
+void BJumblrGUI::padsFocusedCallback (BEvents::Event* event)
+{
+	if (!event) return;
+	BEvents::FocusEvent* focusEvent = (BEvents::FocusEvent*) event;
+	BWidgets::DrawingSurface* widget = (BWidgets::DrawingSurface*) event->getWidget ();
+	if (!widget) return;
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	// Get size of drawing area
+	const double width = ui->padSurface.getEffectiveWidth ();
+	const double height = ui->padSurface.getEffectiveHeight ();
+
+	int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
+	int row = maxstep - 1 - int ((focusEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
+	int step = (focusEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
+
+	if ((row >= 0) && (row < maxstep) && (step >= 0) && (step < maxstep))
+	{
+		ui->padSurface.focusText.setText
+		(
+			"Row: " + std::to_string (row + 1) + "\n" +
+			"Step: " + std::to_string (step + 1) + "\n" +
+			"Level: " + BUtilities::to_string (ui->pattern.getPad (row, step).level, "%1.2f")
+		);
 	}
 }
 

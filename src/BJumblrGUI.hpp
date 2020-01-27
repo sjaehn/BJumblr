@@ -95,6 +95,7 @@ private:
 	static void edit2ChangedCallback(BEvents::Event* event);
 	static void padsPressedCallback (BEvents::Event* event);
 	static void padsScrolledCallback (BEvents::Event* event);
+	static void padsFocusedCallback (BEvents::Event* event);
 	static void syncButtonClickedCallback(BEvents::Event* event);
 	virtual void resize () override;
 	bool validatePad ();

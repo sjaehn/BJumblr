@@ -68,9 +68,5 @@ dragging will result in a replacement of the original pad. Note: Deletion of pad
 REPLACE mode results in their replacement by default pads.
 
 
-## TODO
-
-* Hover effect: show pad properties
-
 ## Links
 * Preview video: https://www.youtube.com/watch?v=n3LrpOD8MrI
