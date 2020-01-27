@@ -54,7 +54,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i] = HaloToggleButton (128 + i * 30, 588, 24, 24, "widget", editLabels[i]);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i] = HaloButton (298 + i * 30, 588, 24, 24, "widget", editLabels[i + EDIT_RESET]);
 
-	for (int i = 0; i < 5; ++i) levelButtons[i] = HaloToggleButton (958, 368 + i * 30, 44, 22, "widget", std::to_string (1.0 - 0.25 * double(i)));
+	for (int i = 0; i < 5; ++i) levelButtons[i] = HaloToggleButton (958, 368 + i * 30, 44, 22, "widget", BUtilities::to_string (1.0 - 0.25 * double(i), "%1.2f"));
 	levelButtons[0].setValue (1.0);
 
 	// Link controllerWidgets
