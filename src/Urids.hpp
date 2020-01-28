@@ -60,6 +60,9 @@ struct BJumblrURIs
 	LV2_URID notify_cursor;
 	LV2_URID notify_messageEvent;
 	LV2_URID notify_message;
+	LV2_URID notify_waveformEvent;
+	LV2_URID notify_waveformStart;
+	LV2_URID notify_waveformData;
 };
 
 void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
@@ -91,6 +94,9 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->notify_cursor = m->map(m->handle, BJUMBLR_URI "#NOTIFYcursor");
 	uris->notify_messageEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYmessageEvent");
 	uris->notify_message = m->map(m->handle, BJUMBLR_URI "#NOTIFYmessage");
+	uris->notify_waveformEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYwaveformEvent");
+	uris->notify_waveformStart = m->map(m->handle, BJUMBLR_URI "#NOTIFYwaveformStart");
+	uris->notify_waveformData = m->map(m->handle, BJUMBLR_URI "#NOTIFYwaveformData");
 }
 
 #endif /* URIDS_HPP_ */

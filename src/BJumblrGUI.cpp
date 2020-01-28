@@ -32,6 +32,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer (0, 0, 1020, 620, "main"),
 	messageLabel (440, 45, 380, 20, "ctlabel", ""),
 	padSurface (18, 88, 924, 484, "box"),
+	monitorWidget (20, 90, 920, 480, "monitor"),
 	playButton (18, 588, 24, 24, "widget", "Play"),
 	bypassButton (48, 588, 24, 24, "widget", "Bypass"),
 	stopButton (78, 588, 24, 24, "widget", "Stop"),
@@ -122,6 +123,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (stepBaseListBox);
 	mContainer.add (padSizeListBox);
 	mContainer.add (padSurface);
+	mContainer.add (monitorWidget);
 	for (int i = 0; i < 5; ++i) mContainer.add (levelButtons[i]);
 	mContainer.add (levelDial);
 
@@ -309,6 +311,34 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 					drawPad ();
 				}
 			}
+
+			// Monitor notification
+			if (obj->body.otype == uris.notify_waveformEvent)
+			{
+				int start = -1;
+
+				const LV2_Atom *oStart = NULL, *oData = NULL;
+				lv2_atom_object_get (obj,
+						     uris.notify_waveformStart, &oStart,
+						     uris.notify_waveformData, &oData,
+						     NULL);
+				if (oStart && (oStart->type == uris.atom_Int)) start = ((LV2_Atom_Int*)oStart)->body;
+
+				if (oData && (oData->type == uris.atom_Vector))
+				{
+					const LV2_Atom_Vector* vec = (const LV2_Atom_Vector*) oData;
+					if (vec->body.child_type == uris.atom_Float)
+					{
+						uint32_t size = (uint32_t) ((oData->size - sizeof(LV2_Atom_Vector_Body)) / sizeof (float));
+						float* data = (float*) (&vec->body + 1);
+						if ((start >= 0) && (size > 0))
+						{
+							monitorWidget.addData (start, size, data);
+							monitorWidget.redrawRange (start, size);
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -344,6 +374,7 @@ void BJumblrGUI::resize ()
 	RESIZE (mContainer, 0, 0, 1020, 620, sz);
 	RESIZE (messageLabel, 440, 45, 380, 20, sz);
 	RESIZE (padSurface, 18, 88, 924, 484, sz);
+	RESIZE (monitorWidget, 20, 90, 920, 480, sz);
 	RESIZE (playButton, 18, 588, 24, 24, sz);
 	RESIZE (bypassButton, 48, 588, 24, 24, sz);
 	RESIZE (stopButton, 78, 588, 24, 24, sz);
@@ -383,6 +414,7 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	mContainer.applyTheme (theme);
 	messageLabel.applyTheme (theme);
 	padSurface.applyTheme (theme);
+	monitorWidget.applyTheme (theme);
 	playButton.applyTheme (theme);
 	bypassButton.applyTheme (theme);
 	stopButton.applyTheme (theme);
@@ -1138,7 +1170,6 @@ void BJumblrGUI::drawPad (cairo_t* cr, int row, int step)
 	const double yr = round (y);
 	const double wr = round (x + w) - xr;
 	const double hr = round (y + h) - yr;
-
 
 	// Draw background
 	// Odd or even?

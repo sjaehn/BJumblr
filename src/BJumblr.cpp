@@ -28,6 +28,7 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	audioOutput1 (nullptr), audioOutput2 (nullptr),
 	notifyForge (), notifyFrame (),
 	padMessageBuffer {PadMessage()},
+	waveform {0.0f}, waveformCounter (0), lastWaveformCounter (0),
 	new_controllers {nullptr}, controllers {0},
 	editMode (0), pads {Pad()},
 	rate (samplerate), bpm (120.0f), beatsPerBar (4.0f), beatUnit (0),
@@ -191,12 +192,21 @@ void BJumblr::runSequencer (const int start, const int end)
 			// Mix audio and store into output
 			audioOutput1[i] = fade * audio1 + (1 - fade) * prevAudio1;
 			audioOutput2[i] = fade * audio2 + (1 - fade) * prevAudio2;
+
+			waveformCounter = int ((pos + controllers[STEP_OFFSET] / controllers[NR_OF_STEPS]) * WAVEFORMSIZE) % WAVEFORMSIZE;
+			waveform[waveformCounter] = (audioInput1[i] + audioInput2[i]) / 2;
 		}
 
 		else if (controllers[PLAY] == 2.0f)
 		{
+			double relpos = getPositionFromFrames (i - refFrame);	// Position relative to reference frame
+			double pos = floorfrac (position + relpos);		// 0..1 position
+
 			audioOutput1[i] = audioInput1[i];
 			audioOutput2[i] = audioInput2[i];
+
+			waveformCounter = int ((pos + controllers[STEP_OFFSET] / controllers[NR_OF_STEPS]) * WAVEFORMSIZE) % WAVEFORMSIZE;
+			waveform[waveformCounter] = (audioInput1[i] + audioInput2[i]) / 2;
 		}
 
 		else
@@ -305,6 +315,19 @@ void BJumblr::run (uint32_t n_samples)
 				controllers[i] = val;
 				uint64_t size = getFramesFromValue (controllers[STEP_SIZE] * controllers[NR_OF_STEPS]);
 				audioBufferSize = LIMIT (size, 0, maxBufferSize);
+
+				// Also re-calculate waveform buffer for GUI
+				if (i != PLAY)
+				{
+					for (size_t i = 0; i < WAVEFORMSIZE; ++i)
+					{
+						double di = double (i) / WAVEFORMSIZE;
+						int wcount = size_t ((position + di + controllers[STEP_OFFSET] / controllers[NR_OF_STEPS]) * WAVEFORMSIZE) % WAVEFORMSIZE;
+						size_t acount = (maxBufferSize + audioBufferCounter - audioBufferSize + (i * audioBufferSize) / WAVEFORMSIZE) % maxBufferSize;
+						waveform[wcount] = (audioBuffer1[acount] + (audioBuffer2[acount])) / 2;
+					}
+					notifyWaveformToGui ((waveformCounter + 1) % WAVEFORMSIZE, waveformCounter);
+				}
 			}
 		}
 	}
@@ -465,15 +488,24 @@ void BJumblr::run (uint32_t n_samples)
 	// Update position in case of no new barBeat submitted on next call
 	double relpos = getPositionFromFrames (n_samples - refFrame);	// Position relative to reference frame
 	position = floorfrac (position + relpos);
-	if (controllers[PLAY]) cursor = int (position * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET]) % int (controllers[NR_OF_STEPS]);
 	refFrame = 0;
 
+	if (controllers[PLAY])
+	{
+		cursor = int (position * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET]) % int (controllers[NR_OF_STEPS]);
+	}
+
 	scheduleNotifyStatusToGui = true;
+	if (waveformCounter != lastWaveformCounter) scheduleNotifyWaveformToGui = true;
 
 	// Send notifications to GUI
-	if (ui_on && scheduleNotifyStatusToGui) notifyStatusToGui ();
-	if (ui_on && scheduleNotifyPadsToGui) notifyPadsToGui ();
-	if (ui_on && message.isScheduled ()) notifyMessageToGui ();
+	if (ui_on)
+	{
+		if (scheduleNotifyStatusToGui) notifyStatusToGui();
+		if (scheduleNotifyPadsToGui) notifyPadsToGui();
+		if (scheduleNotifyWaveformToGui) notifyWaveformToGui (lastWaveformCounter, waveformCounter);
+		if (message.isScheduled ()) notifyMessageToGui();
+	}
 	lv2_atom_forge_pop(&notifyForge, &notifyFrame);
 }
 
@@ -720,6 +752,37 @@ void BJumblr::notifyStatusToGui ()
 	lv2_atom_forge_pop(&notifyForge, &frame);
 
 	scheduleNotifyStatusToGui = false;
+}
+
+void BJumblr::notifyWaveformToGui (const int start, const int end)
+{
+	int p1 = (start <= end ? end : WAVEFORMSIZE - 1);
+
+	// Notify shapeBuffer (position to end)
+	LV2_Atom_Forge_Frame frame;
+	lv2_atom_forge_frame_time(&notifyForge, 0);
+	lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_waveformEvent);
+	lv2_atom_forge_key(&notifyForge, uris.notify_waveformStart);
+	lv2_atom_forge_int(&notifyForge, start);
+	lv2_atom_forge_key(&notifyForge, uris.notify_waveformData);
+	lv2_atom_forge_vector(&notifyForge, sizeof(float), uris.atom_Float, (uint32_t) (p1 + 1 - start), &waveform[start]);
+	lv2_atom_forge_pop(&notifyForge, &frame);
+
+	// Additional notification if position exceeds end
+	if (start > waveformCounter)
+	{
+		LV2_Atom_Forge_Frame frame;
+		lv2_atom_forge_frame_time(&notifyForge, 0);
+		lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_waveformEvent);
+		lv2_atom_forge_key(&notifyForge, uris.notify_waveformStart);
+		lv2_atom_forge_int(&notifyForge, 0);
+		lv2_atom_forge_key(&notifyForge, uris.notify_waveformData);
+		lv2_atom_forge_vector(&notifyForge, sizeof(float), uris.atom_Float, (uint32_t) (end), &waveform[0]);
+		lv2_atom_forge_pop(&notifyForge, &frame);
+	}
+
+	scheduleNotifyWaveformToGui = false;
+	lastWaveformCounter = end;
 }
 
 void BJumblr::notifyMessageToGui()

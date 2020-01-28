@@ -22,6 +22,7 @@
 #define DEFINITIONS_H_
 
 #define MAXSTEPS 32
+#define WAVEFORMSIZE 1024
 #define BJUMBLR_URI "https://www.jahnichen.de/plugins/lv2/BJumblr"
 #define BJUMBLR_GUI_URI "https://www.jahnichen.de/plugins/lv2/BJumblr#gui"
 

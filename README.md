@@ -52,6 +52,12 @@ sent to the audio output. Use the default diagonal line pattern for live playbac
 one step to the right results in a one step delayed playback of the respective piece of the audio
 input stream. Each pad (and thus each piece) can be levelled up or down by mouse wheel scrolling.
 
+### Pattern matrix
+
+* **Left click**: Set (or delete) pad level
+* **Right click**: Pick pad level
+* **Scroll**: Increase or decrease pad value
+
 ### Step sync
 
 B.Jumblr time line automatically synchronizes with the host time/position. Use the button - and +

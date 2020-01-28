@@ -74,6 +74,7 @@ private:
 	void padMessageBufferAllPads ();
 	void notifyPadsToGui ();
 	void notifyStatusToGui ();
+	void notifyWaveformToGui (const int start, const int end);
 	void notifyMessageToGui();
 
 	// URIs
@@ -93,6 +94,10 @@ private:
 	LV2_Atom_Forge_Frame notifyFrame;
 
 	PadMessage padMessageBuffer[MAXSTEPS * MAXSTEPS];
+
+	float waveform[WAVEFORMSIZE];
+	int waveformCounter;
+	int lastWaveformCounter;
 
 	// Controllers
 	float* new_controllers [MAXCONTROLLERS];
@@ -136,6 +141,7 @@ private:
 	bool ui_on;
 	bool scheduleNotifyPadsToGui;
 	bool scheduleNotifyStatusToGui;
+	bool scheduleNotifyWaveformToGui;
 	Message message;
 };
 

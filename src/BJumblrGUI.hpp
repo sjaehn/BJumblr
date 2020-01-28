@@ -52,6 +52,7 @@
 #include "Pad.hpp"
 #include "PadMessage.hpp"
 #include "Journal.hpp"
+#include "MonitorWidget.hpp"
 
 #define BG_FILE "inc/surface.png"
 #define MAXUNDO 20
@@ -159,6 +160,7 @@ private:
 	BWidgets::Widget mContainer;
 	BWidgets::Label messageLabel;
 	PadSurface padSurface;
+	MonitorWidget monitorWidget;
 	HaloToggleButton playButton;
 	HaloToggleButton bypassButton;
 	HaloButton stopButton;
@@ -184,6 +186,7 @@ private:
 	BColors::ColorSet bgColors = {{{0.15, 0.15, 0.15, 1.0}, {0.3, 0.3, 0.3, 1.0}, {0.05, 0.05, 0.05, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
 	BColors::ColorSet tgBgColors = {{{0.0, 0.03, 0.06, 1.0}, {0.3, 0.3, 0.3, 1.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
 	BColors::ColorSet ltColors = {{{1.0, 1.0, 1.0, 1.0}, {1.0, 1.0, 1.0, 1.0}, {0.25, 0.25, 0.25, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
+	BColors::ColorSet wvColors = {{{1.0, 1.0, 1.0, 0.15}, {1.0, 1.0, 1.0, 0.15}, {0.25, 0.25, 0.25, 0.15}, {0.0, 0.0, 0.0, 0.15}}};
 	BColors::Color ink = {0.0, 0.25, 0.5, 1.0};
 	BColors::Color light = {1.0, 1.0, 1.0, 1.0};
 	BColors::Color evenPadBgColor = {0.0, 0.03, 0.06, 1.0};
@@ -223,6 +226,8 @@ private:
 					 {"border", STYLEPTR (&BStyles::noBorder)}}},
 		{"main", 		{{"background", STYLEPTR (&widgetBg)},
 					 {"border", STYLEPTR (&BStyles::noBorder)}}},
+ 		{"monitor", 		{{"uses", STYLEPTR (&defaultStyles)},
+ 					 {"fgcolors", STYLEPTR (&wvColors)}}},
 		{"widget", 		{{"uses", STYLEPTR (&defaultStyles)}}},
 		{"widget/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
 		{"screen", 		{{"background", STYLEPTR (&screenBg)}}},
