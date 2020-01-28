@@ -880,7 +880,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 					// Set (or unset) pad
 					else
 					{
-						if (!ui->padPressed) ui->deleteMode = ((oldPad.level == ui->levelDial.getValue()) && (ui->editMode != 1));
+						if (!ui->padPressed) ui->deleteMode = ((oldPad.level == float (ui->levelDial.getValue())) && (ui->editMode != 1));
 						Pad newPad = (ui->deleteMode ? Pad (0.0) : Pad (ui->levelDial.getValue()));
 						if (!ui->validatePad (row, step, newPad)) ui->drawPad();
 						else ui->drawPad (row,step);
