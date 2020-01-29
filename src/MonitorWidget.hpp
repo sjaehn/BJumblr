@@ -89,6 +89,12 @@ public:
         	}
         }
 
+        virtual void onWheelScrolled (BEvents::WheelEvent* event) override
+        {
+        	double step = getZoom() * 0.01;
+        	setZoom (getZoom() + event->getDelta ().y * step);
+        }
+
 protected:
         void drawData (const unsigned int start, const unsigned int end)
         {

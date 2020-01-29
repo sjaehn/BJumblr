@@ -129,6 +129,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 
 	drawPad();
 	add (mContainer);
+	getKeyGrabStack()->add (this);
 
 	pattern.clear ();
 
@@ -439,6 +440,22 @@ void BJumblrGUI::onConfigureRequest (BEvents::ExposeEvent* event)
 
 	sz = (getWidth() / 1020 > getHeight() / 620 ? getHeight() / 620 : getWidth() / 1020);
 	resize ();
+}
+
+void BJumblrGUI::onKeyPressed (BEvents::KeyEvent* event)
+{
+	if ((event) && (event->getKey() == BDevices::KEY_SHIFT))
+	{
+		monitorWidget.setScrollable (true);
+	}
+}
+
+void BJumblrGUI::onKeyReleased (BEvents::KeyEvent* event)
+{
+	if ((event) && (event->getKey() == BDevices::KEY_SHIFT))
+	{
+		monitorWidget.setScrollable (false);
+	}
 }
 
 void BJumblrGUI::send_ui_on ()

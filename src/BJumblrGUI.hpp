@@ -84,6 +84,8 @@ public:
 	void send_ui_off ();
 	void send_pad (int row, int step);
 	virtual void onConfigureRequest (BEvents::ExposeEvent* event) override;
+	virtual void onKeyPressed (BEvents::KeyEvent* event) override;
+	virtual void onKeyReleased (BEvents::KeyEvent* event) override;
 	void applyTheme (BStyles::Theme& theme) override;
 
 	LV2UI_Controller controller;

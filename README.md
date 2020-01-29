@@ -57,6 +57,7 @@ input stream. Each pad (and thus each piece) can be levelled up or down by mouse
 * **Left click**: Set (or delete) pad level
 * **Right click**: Pick pad level
 * **Scroll**: Increase or decrease pad value
+* **Shift scroll**: Resize waveform
 
 ### Step sync
 
