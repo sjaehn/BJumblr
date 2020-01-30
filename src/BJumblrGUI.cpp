@@ -51,8 +51,9 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	padSizeListBox (850, 590, 90, 20, 0, -240, 100, 240, "menu",
 		     BItems::ItemList ({{2, "2 Steps"}, {3, "3 Steps"}, {4, "4 Steps"}, {6, "6 Steps"}, {8, "8 Steps"}, {9, "9 Steps"},
 		     			{12, "12 Steps"}, {16, "16 Steps"}, {18, "18 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16),
-	levelDial (960, 520, 40, 48, "dial", 1.0, 0.0, 1.0, 0.01, "%1.2f")
-
+	levelDial (960, 520, 40, 48, "dial", 1.0, 0.0, 1.0, 0.01, "%1.2f"),
+	helpButton (958, 588, 24, 24, "widget", "Help"),
+	ytButton (988, 588, 24, 24, "widget", "Video")
 {
 	// Init editButtons
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i] = HaloToggleButton (128 + i * 30, 588, 24, 24, "widget", editLabels[i]);
@@ -85,6 +86,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i].setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, edit2ChangedCallback);
 	for (int i = 0; i < 5; ++i) levelButtons[i].setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, levelChangedCallback);
 	levelDial.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, levelChangedCallback);
+	helpButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, helpButtonClickedCallback);
+	ytButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, ytButtonClickedCallback);
 
 	padSurface.setDraggable (true);
 	padSurface.setCallbackFunction (BEvents::BUTTON_PRESS_EVENT, padsPressedCallback);
@@ -129,6 +132,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (monitorWidget);
 	for (int i = 0; i < 5; ++i) mContainer.add (levelButtons[i]);
 	mContainer.add (levelDial);
+	mContainer.add (helpButton);
+	mContainer.add (ytButton);
 
 	drawPad();
 	add (mContainer);
@@ -406,6 +411,8 @@ void BJumblrGUI::resize ()
 	padSizeListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
 	for (int i = 0; i < 5; ++i) RESIZE (levelButtons[i], 958, 368 + 30 * i, 44, 22, sz);
 	RESIZE (levelDial, 960, 520, 40, 48, sz);
+	RESIZE (helpButton, 958, 588, 24, 24, sz);
+	RESIZE (ytButton, 988, 588, 24, 24, sz);
 
 	applyTheme (theme);
 	drawPad ();
@@ -434,6 +441,8 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	padSizeListBox.applyTheme (theme);
 	for (int i = 0; i < 5; ++i) levelButtons[i].applyTheme (theme);
 	levelDial.applyTheme (theme);
+	helpButton.applyTheme (theme);
+	ytButton.applyTheme (theme);
 }
 
 void BJumblrGUI::onConfigureRequest (BEvents::ExposeEvent* event)
@@ -1149,6 +1158,9 @@ void BJumblrGUI::syncButtonClickedCallback(BEvents::Event* event)
 
 	ui->syncWidget.setValue (offset);
 }
+
+void BJumblrGUI::helpButtonClickedCallback (BEvents::Event* event) {system(OPEN_CMD " " HELP_URL);}
+void BJumblrGUI::ytButtonClickedCallback (BEvents::Event* event) {system(OPEN_CMD " " YT_URL);}
 
 void BJumblrGUI::drawPad ()
 {

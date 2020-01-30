@@ -78,6 +78,18 @@ In contrast, there is only (exactly) one pad per step allowed in the **REPLACE**
 dragging will result in a replacement of the original pad. Note: Deletion of pads (cut) in the
 REPLACE mode results in their replacement by default pads.
 
+### Step size
+
+Defines the duration of each step. You can select between 1/16 and 4 seconds or beats or bars.
+Alternatively, you can enter any value between 0.01 and 4.0 in a host provided generic GUI.
+Note: Jack transport is required in the beats mode and in the bars mode.
+
+### Pattern size
+
+Defines the total pattern size (= number of steps, = number of rows). You predefined pattern sizes
+between 2 and 32 steps. Alternatively, you can enter any value between 2 and 32 in a host
+provided generic GUI.  
+
 
 ## Links
 * Preview video: https://www.youtube.com/watch?v=n3LrpOD8MrI

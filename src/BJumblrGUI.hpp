@@ -55,6 +55,9 @@
 #include "MonitorWidget.hpp"
 
 #define BG_FILE "inc/surface.png"
+#define HELP_URL "https://github.com/sjaehn/BJumblr/blob/master/README.md"
+#define YT_URL "https://www.youtube.com/watch?v=n3LrpOD8MrI"
+#define OPEN_CMD "xdg-open"
 #define MAXUNDO 20
 
 #define RESIZE(widget, x, y, w, h, sz) {widget.moveTo ((x) * (sz), (y) * (sz)); widget.resize ((w) * (sz), (h) * (sz));}
@@ -99,7 +102,9 @@ private:
 	static void padsPressedCallback (BEvents::Event* event);
 	static void padsScrolledCallback (BEvents::Event* event);
 	static void padsFocusedCallback (BEvents::Event* event);
-	static void syncButtonClickedCallback(BEvents::Event* event);
+	static void syncButtonClickedCallback (BEvents::Event* event);
+	static void helpButtonClickedCallback (BEvents::Event* event);
+	static void ytButtonClickedCallback (BEvents::Event* event);
 	virtual void resize () override;
 	bool validatePad ();
 	bool validatePad (int row, int step, Pad& pad);
@@ -179,6 +184,8 @@ private:
 	BWidgets::PopupListBox padSizeListBox;
 	std::array<HaloToggleButton, 5> levelButtons;
 	BWidgets::DialValue levelDial;
+	HaloButton helpButton;
+	HaloButton ytButton;
 
 
 	// Definition of styles
