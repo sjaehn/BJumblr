@@ -183,15 +183,13 @@ private:
 
 	// Definition of styles
 	BColors::ColorSet fgColors = {{{0.75, 0.75, 0.0, 1.0}, {1.0, 1.0, 0.25, 1.0}, {0.1, 0.1, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
-	BColors::ColorSet txColors = {{{0.75, 0.75, 0.0, 1.0}, {1.0, 1.0, 0.0, 1.0}, {0.1, 0.1, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
 	BColors::ColorSet tgColors = {{BColors::grey, BColors::white, BColors::grey, BColors::darkgrey}};
 	BColors::ColorSet bgColors = {{{0.15, 0.15, 0.15, 1.0}, {0.3, 0.3, 0.3, 1.0}, {0.05, 0.05, 0.05, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
 	BColors::ColorSet tgBgColors = {{{0.0, 0.03, 0.06, 1.0}, {0.3, 0.3, 0.3, 1.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
 	BColors::ColorSet ltColors = {{{1.0, 1.0, 1.0, 1.0}, {1.0, 1.0, 1.0, 1.0}, {0.25, 0.25, 0.25, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
 	BColors::ColorSet wvColors = {{{1.0, 1.0, 1.0, 0.15}, {1.0, 1.0, 1.0, 0.15}, {0.25, 0.25, 0.25, 0.15}, {0.0, 0.0, 0.0, 0.15}}};
 	BColors::Color ink = {0.0, 0.25, 0.5, 1.0};
-	BColors::Color light = {1.0, 1.0, 1.0, 1.0};
-	BColors::Color evenPadBgColor = {0.0, 0.03, 0.06, 1.0};
+	BColors::Color evenPadBgColor = {0.0, 0.05, 0.1, 1.0};
 	BColors::Color oddPadBgColor = {0.0, 0.0, 0.0, 1.0};
 
 	BStyles::Border border = {{ink, 1.0}, 0.0, 2.0, 0.0};
@@ -206,8 +204,6 @@ private:
 						   BStyles::TEXT_ALIGN_CENTER, BStyles::TEXT_VALIGN_MIDDLE);
 	BStyles::Font tgLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 12.0,
 						   BStyles::TEXT_ALIGN_CENTER, BStyles::TEXT_VALIGN_MIDDLE);
-	BStyles::Font iLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD, 18.0,
-						  BStyles::TEXT_ALIGN_CENTER, BStyles::TEXT_VALIGN_MIDDLE);
 	BStyles::Font lfLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 12.0,
 						   BStyles::TEXT_ALIGN_LEFT, BStyles::TEXT_VALIGN_MIDDLE);
 	BStyles::StyleSet defaultStyles = {"default", {{"background", STYLEPTR (&BStyles::noFill)},
@@ -232,7 +228,6 @@ private:
  					 {"fgcolors", STYLEPTR (&wvColors)}}},
 		{"widget", 		{{"uses", STYLEPTR (&defaultStyles)}}},
 		{"widget/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
-		{"screen", 		{{"background", STYLEPTR (&screenBg)}}},
 		{"box", 		{{"background", STYLEPTR (&boxBg)},
 					{"border", STYLEPTR (&border)}}},
 		{"box/focus",		{{"uses", STYLEPTR (&focusStyles)}}},
