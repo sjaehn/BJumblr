@@ -43,11 +43,14 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	incStepOffsetButton (75, 0, 20, 20, "menu/button"),
 	editModeListBox (530, 590, 90, 20, 0, -60, 90, 60, "menu",
 			 BItems::ItemList ({{0, "Add"}, {1, "Replace"}}), 0),
-	stepSizeListBox (650, 590, 70, 20, 0, -160, 70, 160, "menu",
-			 BItems::ItemList ({{0.0625, "1/16"}, {0.125, "1/8"}, {0.25, "1/4"}, {0.5, "1/2"}, {1, "1"}, {2, "2"}, {4, "4"}}), 1),
+	stepSizeListBox (650, 590, 70, 20, 0, -280, 70, 280, "menu",
+			 BItems::ItemList ({{0.0625, "1/16"}, {0.83333333, "1/12"}, {0.125, "1/8"}, {0.1666667, "1/6"},
+			 		    {0.25, "1/4"}, {0.3333333, "1/3"}, {0.5, "1/2"}, {0.666666667, "2/3"}, {0.75, "3/4"},
+					    {1, "1"}, {2, "2"}, {2, "3"}, {4, "4"}}), 1),
 	stepBaseListBox (730, 590, 90, 20, 0, -80, 90, 80, "menu", BItems::ItemList ({{0, "Seconds"}, {1, "Beats"}, {2, "Bars"}}), 1),
-	padSizeListBox (850, 590, 90, 20, 0, -140, 100, 140, "menu",
-		     BItems::ItemList ({{4, "4 Steps"}, {8, "8 Steps"}, {12, "12 Steps"}, {16, "16 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16),
+	padSizeListBox (850, 590, 90, 20, 0, -240, 100, 240, "menu",
+		     BItems::ItemList ({{2, "2 Steps"}, {3, "3 Steps"}, {4, "4 Steps"}, {6, "6 Steps"}, {8, "8 Steps"}, {9, "9 Steps"},
+		     			{12, "12 Steps"}, {16, "16 Steps"}, {18, "18 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16),
 	levelDial (960, 520, 40, 48, "dial", 1.0, 0.0, 1.0, 0.01, "%1.2f")
 
 {
@@ -358,7 +361,6 @@ void BJumblrGUI::resize ()
 	//Scale fonts
 	ctLabelFont.setFontSize (12 * sz);
 	tgLabelFont.setFontSize (12 * sz);
-	iLabelFont.setFontSize (18 * sz);
 	lfLabelFont.setFontSize (12 * sz);
 
 	//Background
@@ -391,16 +393,16 @@ void BJumblrGUI::resize ()
 	editModeListBox.moveListBox(BUtilities::Point (0, -60 * sz));
 	editModeListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
 	RESIZE (stepSizeListBox, 650, 590, 70, 20, sz);
-	stepSizeListBox.resizeListBox(BUtilities::Point (70 * sz, 160 * sz));
-	stepSizeListBox.moveListBox(BUtilities::Point (0, -160 * sz));
+	stepSizeListBox.resizeListBox(BUtilities::Point (70 * sz, 280 * sz));
+	stepSizeListBox.moveListBox(BUtilities::Point (0, -280 * sz));
 	stepSizeListBox.resizeListBoxItems(BUtilities::Point (70 * sz, 20 * sz));
 	RESIZE (stepBaseListBox, 730, 590, 90, 20, sz);
 	stepBaseListBox.resizeListBox(BUtilities::Point (90 * sz, 80 * sz));
 	stepBaseListBox.moveListBox(BUtilities::Point (0, -80 * sz));
 	stepBaseListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
 	RESIZE (padSizeListBox, 850, 590, 90, 20, sz);
-	padSizeListBox.resizeListBox(BUtilities::Point (90 * sz, 140 * sz));
-	padSizeListBox.moveListBox(BUtilities::Point (0, -140 * sz));
+	padSizeListBox.resizeListBox(BUtilities::Point (90 * sz, 240 * sz));
+	padSizeListBox.moveListBox(BUtilities::Point (0, -240 * sz));
 	padSizeListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
 	for (int i = 0; i < 5; ++i) RESIZE (levelButtons[i], 958, 368 + 30 * i, 44, 22, sz);
 	RESIZE (levelDial, 960, 520, 40, 48, sz);

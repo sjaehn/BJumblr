@@ -85,15 +85,9 @@
                 lv2:index 7 ;
                 lv2:symbol "nr_of_steps" ;
                 lv2:name "Nr of steps" ;
-                lv2:portProperty lv2:integer, lv2:enumeration ;
-		lv2:scalePoint [ rdfs:label "4"; rdf:value 4 ] ;
-		lv2:scalePoint [ rdfs:label "8"; rdf:value 8 ] ;
-		lv2:scalePoint [ rdfs:label "12"; rdf:value 12 ] ;
-		lv2:scalePoint [ rdfs:label "16"; rdf:value 16 ] ;
-		lv2:scalePoint [ rdfs:label "24"; rdf:value 24 ] ;
-		lv2:scalePoint [ rdfs:label "32"; rdf:value 32 ] ;
+                lv2:portProperty lv2:integer;
                 lv2:default 16 ;
-                lv2:minimum 4 ;
+                lv2:minimum 2 ;
                 lv2:maximum 32 ;
         ] , [
 		a lv2:InputPort , lv2:ControlPort ;
