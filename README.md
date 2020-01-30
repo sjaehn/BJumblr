@@ -8,7 +8,11 @@ Description: B.Jumblr is a pattern-controlled audio stream re-sequencer LV2 plug
 
 ## Installation
 
-Build your own binaries in the following three steps.
+a) Install the bjumblr package for your system
+* [Arch user repository](https://aur.archlinux.org/packages/bjumblr.lv2-git) by Milk Brewster
+* Check https://repology.org/project/bjumblr/versions for other systems
+
+b) Build your own binaries in the following three steps.
 
 Step 1: Clone or download this repository.
 
