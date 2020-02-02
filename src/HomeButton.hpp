@@ -72,6 +72,10 @@ protected:
 				cairo_move_to (cr, x0 + w/2 + 0.3 * size, y0 + h/2 - 0.075 * size);
 				cairo_line_to (cr, x0 + w/2 + 0.3 * size, y0 + h/2 + 0.375 * size);
 				cairo_line_to (cr, x0 + w/2 + 0.3 * size, y0 + h/2 + 0.375 * size);
+				cairo_line_to (cr, x0 + w/2, y0 + h/2 + 0.375 * size);
+				cairo_line_to (cr, x0 + w/2, y0 + h/2 + 0.125 * size);
+				cairo_line_to (cr, x0 + w/2 - 0.15 * size, y0 + h/2 + 0.125 * size);
+				cairo_line_to (cr, x0 + w/2 - 0.15 * size, y0 + h/2 + 0.375 * size);
 				cairo_line_to (cr, x0 + w/2 - 0.3 * size, y0 + h/2 + 0.375 * size);
 				cairo_line_to (cr, x0 + w/2 - 0.3 * size, y0 + h/2 - 0.075 * size);
 
