@@ -29,10 +29,14 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	sz (1.0), bgImageSurface (nullptr),
 	uris (), forge (), editMode (0), clipBoard (),
 	cursor (0), wheelScrolled (false), padPressed (false), deleteMode (false),
+	samplePath ("."),
 	mContainer (0, 0, 1020, 620, "main"),
 	messageLabel (440, 45, 380, 20, "ctlabel", ""),
-	padSurface (18, 88, 924, 484, "box"),
-	monitorWidget (20, 90, 920, 480, "monitor"),
+	padSurface (18, 118, 924, 454, "box"),
+	monitorWidget (20, 120, 920, 450, "monitor"),
+	sourceListBox (60, 90, 120, 20, 120, 60, "menu", BItems::ItemList ({{0, "Audio stream"}, {1, "Sample"}}), 0),
+	loadButton (200, 90, 20, 20, "menu/button"),
+	sampleNameLabel (230, 90, 180, 20, "boxlabel", ""),
 	playButton (18, 588, 24, 24, "widget", "Play"),
 	bypassButton (48, 588, 24, 24, "widget", "Bypass"),
 	stopButton (78, 588, 24, 24, "widget", "Stop"),
@@ -53,7 +57,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 		     			{12, "12 Steps"}, {16, "16 Steps"}, {18, "18 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16),
 	levelDial (960, 520, 40, 48, "dial", 1.0, 0.0, 1.0, 0.01, "%1.2f"),
 	helpButton (958, 588, 24, 24, "widget", "Help"),
-	ytButton (988, 588, 24, 24, "widget", "Video")
+	ytButton (988, 588, 24, 24, "widget", "Video"),
+	fileChooser (nullptr)
 {
 	// Init editButtons
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i] = HaloToggleButton (128 + i * 30, 588, 24, 24, "widget", editLabels[i]);
@@ -63,6 +68,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	levelButtons[0].setValue (1.0);
 
 	// Link controllerWidgets
+	controllerWidgets[SOURCE] = (BWidgets::ValueWidget*) &sourceListBox;
 	controllerWidgets[PLAY] = (BWidgets::ValueWidget*) &playButton;
 	controllerWidgets[NR_OF_STEPS] = (BWidgets::ValueWidget*) &padSizeListBox;
 	controllerWidgets[STEP_SIZE] = (BWidgets::ValueWidget*) &stepSizeListBox;
@@ -88,6 +94,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	levelDial.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, levelChangedCallback);
 	helpButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, helpButtonClickedCallback);
 	ytButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, ytButtonClickedCallback);
+	loadButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, loadButtonClickedCallback);
+	sampleNameLabel.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, loadButtonClickedCallback);
 
 	padSurface.setDraggable (true);
 	padSurface.setCallbackFunction (BEvents::BUTTON_PRESS_EVENT, padsPressedCallback);
@@ -100,6 +108,10 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	padSurface.setFocusable (true);
 	padSurface.setCallbackFunction (BEvents::FOCUS_IN_EVENT, padsFocusedCallback);
 	padSurface.setCallbackFunction (BEvents::FOCUS_OUT_EVENT, padsFocusedCallback);
+
+	// Configure widgets
+	loadButton.hide();
+	sampleNameLabel.hide();
 
 	// Load background & apply theme
 	bgImageSurface = cairo_image_surface_create_from_png ((pluginPath + BG_FILE).c_str());
@@ -131,6 +143,9 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (padSurface);
 	mContainer.add (monitorWidget);
 	for (int i = 0; i < 5; ++i) mContainer.add (levelButtons[i]);
+	mContainer.add (sourceListBox);
+	mContainer.add (loadButton);
+	mContainer.add (sampleNameLabel);
 	mContainer.add (levelDial);
 	mContainer.add (helpButton);
 	mContainer.add (ytButton);
@@ -161,6 +176,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 
 BJumblrGUI::~BJumblrGUI ()
 {
+	if (fileChooser) delete fileChooser;
 	send_ui_off ();
 }
 
@@ -256,7 +272,7 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 						    uris.notify_pad, &oPad,
 						    NULL);
 
-				if (oEdit && (oEdit->type == uris.atom_Int) && (editMode != ((LV2_Atom_Int*)oEdit)->body))
+				if (oEdit && (oEdit->type == uris.atom_Int))
 				{
 					editModeListBox.setValue (((LV2_Atom_Int*)oEdit)->body);
 				}
@@ -300,6 +316,18 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 					const int messageNr = ((LV2_Atom_Int*)data)->body;
 					std::string msg = ((messageNr >= NO_MSG) && (messageNr < MAXMESSAGES) ? messageStrings[messageNr] : "");
 					messageLabel.setText (msg);
+				}
+			}
+
+			// Path notification
+			else if (obj->body.otype == uris.notify_pathEvent)
+			{
+				const LV2_Atom* data = NULL;
+				lv2_atom_object_get(obj, uris.notify_samplePath, &data, 0);
+				if (data && (data->type == uris.atom_Path))
+				{
+					sampleNameLabel.setText ((const char*)LV2_ATOM_BODY_CONST(data));
+					// TODO Split to path and file name
 				}
 			}
 
@@ -381,8 +409,13 @@ void BJumblrGUI::resize ()
 	//Scale widgets
 	RESIZE (mContainer, 0, 0, 1020, 620, sz);
 	RESIZE (messageLabel, 440, 45, 380, 20, sz);
-	RESIZE (padSurface, 18, 88, 924, 484, sz);
-	RESIZE (monitorWidget, 20, 90, 920, 480, sz);
+	RESIZE (padSurface, 18, 118, 924, 454, sz);
+	RESIZE (monitorWidget, 20, 120, 920, 450, sz);
+	RESIZE (sourceListBox, 60, 90, 120, 20, sz);
+	sourceListBox.resizeListBox (BUtilities::Point (120 * sz, 60 * sz));
+	sourceListBox.resizeListBoxItems (BUtilities::Point (120 * sz, 20 * sz));
+	RESIZE (loadButton, 200, 90, 20, 20, sz);
+	RESIZE (sampleNameLabel, 230, 90, 180, 20, sz);
 	RESIZE (playButton, 18, 588, 24, 24, sz);
 	RESIZE (bypassButton, 48, 588, 24, 24, sz);
 	RESIZE (stopButton, 78, 588, 24, 24, sz);
@@ -413,6 +446,7 @@ void BJumblrGUI::resize ()
 	RESIZE (levelDial, 960, 520, 40, 48, sz);
 	RESIZE (helpButton, 958, 588, 24, 24, sz);
 	RESIZE (ytButton, 988, 588, 24, 24, sz);
+	if (fileChooser) RESIZE ((*fileChooser), 200, 120, 300, 400, sz);
 
 	applyTheme (theme);
 	drawPad ();
@@ -425,6 +459,9 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	messageLabel.applyTheme (theme);
 	padSurface.applyTheme (theme);
 	monitorWidget.applyTheme (theme);
+	sourceListBox.applyTheme (theme);
+	loadButton.applyTheme (theme);
+	sampleNameLabel.applyTheme (theme);
 	playButton.applyTheme (theme);
 	bypassButton.applyTheme (theme);
 	stopButton.applyTheme (theme);
@@ -443,6 +480,7 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	levelDial.applyTheme (theme);
 	helpButton.applyTheme (theme);
 	ytButton.applyTheme (theme);
+	if (fileChooser) fileChooser->applyTheme (theme);
 }
 
 void BJumblrGUI::onConfigureRequest (BEvents::ExposeEvent* event)
@@ -451,6 +489,31 @@ void BJumblrGUI::onConfigureRequest (BEvents::ExposeEvent* event)
 
 	sz = (getWidth() / 1020 > getHeight() / 620 ? getHeight() / 620 : getWidth() / 1020);
 	resize ();
+}
+
+void BJumblrGUI::onCloseRequest (BEvents::WidgetEvent* event)
+{
+	if (!event) return;
+	Widget* requestWidget = event->getRequestWidget ();
+	if (!requestWidget) return;
+
+	if (requestWidget == fileChooser)
+	{
+		if (fileChooser->getValue() == 1.0)
+		{
+			sampleNameLabel.setText (fileChooser->getFileName());
+			samplePath = fileChooser->getPath();
+			send_samplePath ();
+		}
+
+		// Close fileChooser
+		mContainer.release (fileChooser);	// TODO Check why this is required
+		delete fileChooser;
+		fileChooser = nullptr;
+		return;
+	}
+
+	Window::onCloseRequest (event);
 }
 
 void BJumblrGUI::onKeyPressed (BEvents::KeyEvent* event)
@@ -487,6 +550,33 @@ void BJumblrGUI::send_ui_off ()
 
 	LV2_Atom_Forge_Frame frame;
 	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.ui_off);
+	lv2_atom_forge_pop(&forge, &frame);
+	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
+}
+
+void BJumblrGUI::send_samplePath ()
+{
+	std::string path = samplePath + "/" + sampleNameLabel.getText();
+	uint8_t obj_buf[1024];
+	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
+
+	LV2_Atom_Forge_Frame frame;
+	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_pathEvent);
+	lv2_atom_forge_key(&forge, uris.notify_samplePath);
+	lv2_atom_forge_path (&forge, path.c_str(), path.size() + 1);
+	lv2_atom_forge_pop(&forge, &frame);
+	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
+}
+
+void BJumblrGUI::send_editMode ()
+{
+	uint8_t obj_buf[128];
+	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
+
+	LV2_Atom_Forge_Frame frame;
+	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_padEvent);
+	lv2_atom_forge_key(&forge, uris.notify_editMode);
+	lv2_atom_forge_int(&forge, editMode);
 	lv2_atom_forge_pop(&forge, &frame);
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }
@@ -615,16 +705,35 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 		ui->controllers[controllerNr] = value;
 		ui->write_function(ui->controller, CONTROLLERS + controllerNr, sizeof(float), 0, &ui->controllers[controllerNr]);
 
-		// Layout changed
-		if (controllerNr == NR_OF_STEPS) ui->drawPad ();
+		switch (controllerNr)
+		{
+			case SOURCE:		if (value == 0.0)
+						{
+							ui->loadButton.hide();
+							ui->sampleNameLabel.hide();
+						}
+						else
+						{
+							ui->loadButton.show();
+							ui->sampleNameLabel.show();
+						}
+						break;
 
-		else if (controllerNr == PLAY) ui->bypassButton.setValue (value == 2.0 ? 1 : 0);
+			case NR_OF_STEPS:	ui->drawPad ();
+						break;
+
+			case PLAY:		ui->bypassButton.setValue (value == 2.0 ? 1 : 0);
+						break;
+
+			default:		break;
+		}
 	}
 
 	// Other widgets
 	else if (widget == &ui->editModeListBox)
 	{
 		ui->editMode = ui->editModeListBox.getValue();
+		ui->send_editMode();
 		if (!ui->validatePad())
 		{
 			ui->drawPad();
@@ -1157,6 +1266,23 @@ void BJumblrGUI::syncButtonClickedCallback(BEvents::Event* event)
 	else return;
 
 	ui->syncWidget.setValue (offset);
+}
+
+void BJumblrGUI::loadButtonClickedCallback (BEvents::Event* event)
+{
+	if (!event) return;
+	BWidgets::Widget* widget = event->getWidget ();
+	if (!widget) return;
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	if (ui->fileChooser) delete ui->fileChooser;
+	ui->fileChooser = new BWidgets::FileChooser (200, 120, 300, 400, "filechooser", ui->samplePath, {}, "Open");
+	if (ui->fileChooser)
+	{
+		RESIZE ((*ui->fileChooser), 200, 120, 300, 400, ui->sz);
+		ui->mContainer.add (*ui->fileChooser);
+	}
 }
 
 void BJumblrGUI::helpButtonClickedCallback (BEvents::Event* event) {system(OPEN_CMD " " HELP_URL);}

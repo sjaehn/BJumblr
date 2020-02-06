@@ -39,12 +39,14 @@
 #include "BWidgets/LeftButton.hpp"
 #include "BWidgets/PlusButton.hpp"
 #include "BWidgets/MinusButton.hpp"
+#include "BWidgets/FileChooser.hpp"
 #include "screen.h"
 
 #include "drawbutton.hpp"
 #include "HaloButton.hpp"
 #include "HaloToggleButton.hpp"
 #include "HomeButton.hpp"
+#include "LoadButton.hpp"
 #include "PadSurface.hpp"
 #include "definitions.h"
 #include "Ports.hpp"
@@ -85,8 +87,11 @@ public:
 	void port_event (uint32_t port_index, uint32_t buffer_size, uint32_t format, const void *buffer);
 	void send_ui_on ();
 	void send_ui_off ();
+	void send_samplePath ();
+	void send_editMode ();
 	void send_pad (int row, int step);
 	virtual void onConfigureRequest (BEvents::ExposeEvent* event) override;
+	virtual void onCloseRequest (BEvents::WidgetEvent* event) override;
 	virtual void onKeyPressed (BEvents::KeyEvent* event) override;
 	virtual void onKeyReleased (BEvents::KeyEvent* event) override;
 	void applyTheme (BStyles::Theme& theme) override;
@@ -102,6 +107,7 @@ private:
 	static void padsPressedCallback (BEvents::Event* event);
 	static void padsScrolledCallback (BEvents::Event* event);
 	static void padsFocusedCallback (BEvents::Event* event);
+	static void loadButtonClickedCallback (BEvents::Event* event);
 	static void syncButtonClickedCallback (BEvents::Event* event);
 	static void helpButtonClickedCallback (BEvents::Event* event);
 	static void ytButtonClickedCallback (BEvents::Event* event);
@@ -163,11 +169,16 @@ private:
 	bool padPressed;
 	bool deleteMode;
 
+	std::string samplePath;
+
 	//Widgets
 	BWidgets::Widget mContainer;
 	BWidgets::Label messageLabel;
 	PadSurface padSurface;
 	MonitorWidget monitorWidget;
+	BWidgets::PopupListBox sourceListBox;
+	LoadButton loadButton;
+	BWidgets::Label sampleNameLabel;
 	HaloToggleButton playButton;
 	HaloToggleButton bypassButton;
 	HaloButton stopButton;
@@ -186,12 +197,14 @@ private:
 	BWidgets::DialValue levelDial;
 	HaloButton helpButton;
 	HaloButton ytButton;
+	BWidgets::FileChooser* fileChooser;
 
 
 	// Definition of styles
 	BColors::ColorSet fgColors = {{{0.75, 0.75, 0.0, 1.0}, {1.0, 1.0, 0.25, 1.0}, {0.1, 0.1, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.0}}};
 	BColors::ColorSet tgColors = {{BColors::grey, BColors::white, BColors::grey, BColors::darkgrey}};
-	BColors::ColorSet bgColors = {{{0.15, 0.15, 0.15, 1.0}, {0.3, 0.3, 0.3, 1.0}, {0.05, 0.05, 0.05, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
+	BColors::ColorSet buttonBgColors = {{{0.4, 0.4, 0.4, 1.0}, {0.6, 0.6, 0.6, 1.0}, {0.05, 0.05, 0.05, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
+	BColors::ColorSet knobBgColors = {{{0.15, 0.15, 0.15, 1.0}, {0.3, 0.3, 0.3, 1.0}, {0.05, 0.05, 0.05, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
 	BColors::ColorSet tgBgColors = {{{0.0, 0.03, 0.06, 1.0}, {0.3, 0.3, 0.3, 1.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
 	BColors::ColorSet ltColors = {{{1.0, 1.0, 1.0, 1.0}, {1.0, 1.0, 1.0, 1.0}, {0.25, 0.25, 0.25, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
 	BColors::ColorSet wvColors = {{{1.0, 1.0, 1.0, 0.15}, {1.0, 1.0, 1.0, 0.15}, {0.25, 0.25, 0.25, 0.15}, {0.0, 0.0, 0.0, 0.15}}};
@@ -200,8 +213,9 @@ private:
 	BColors::Color oddPadBgColor = {0.0, 0.0, 0.0, 1.0};
 
 	BStyles::Border border = {{ink, 1.0}, 0.0, 2.0, 0.0};
-	BStyles::Border menuBorder = {{BColors::darkgrey, 1.0}, 0.0, 0.0, 0.0};
+	BStyles::Border menuBorder = {{BColors::grey, 1.0}, 0.0, 0.0, 0.0};
 	BStyles::Border labelborder = {BStyles::noLine, 4.0, 0.0, 0.0};
+	BStyles::Border boxlabelborder = {{BColors::grey, 1.0}, 0.0, 3.0, 0.0};
 	BStyles::Border focusborder = BStyles::Border (BStyles::Line (BColors::Color (0.0, 0.0, 0.0, 0.5), 2.0));
 	BStyles::Fill widgetBg = BStyles::noFill;
 	BStyles::Fill menuBg = BStyles::Fill (BColors::Color (0.0, 0.0, 0.05, 1.0));
@@ -238,6 +252,10 @@ private:
 		{"box", 		{{"background", STYLEPTR (&boxBg)},
 					{"border", STYLEPTR (&border)}}},
 		{"box/focus",		{{"uses", STYLEPTR (&focusStyles)}}},
+		{"boxlabel",		{{"background", STYLEPTR (&boxBg)},
+					 {"border", STYLEPTR (&boxlabelborder)},
+					 {"textcolors", STYLEPTR (&BColors::whites)},
+ 					 {"font", STYLEPTR (&lfLabelFont)}}},
 		{"button", 		{{"background", STYLEPTR (&BStyles::blackFill)},
 					 {"border", STYLEPTR (&border)}}},
 		{"tgbutton", 		{{"border", STYLEPTR (&BStyles::noBorder)},
@@ -247,7 +265,7 @@ private:
 		{"tgbutton/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
 		{"dial", 		{{"uses", STYLEPTR (&defaultStyles)},
 					 {"fgcolors", STYLEPTR (&fgColors)},
-					 {"bgcolors", STYLEPTR (&bgColors)},
+					 {"bgcolors", STYLEPTR (&knobBgColors)},
 					 {"textcolors", STYLEPTR (&fgColors)},
 					 {"font", STYLEPTR (&ctLabelFont)}}},
 		{"dial/focus", 		{{"uses", STYLEPTR (&focusStyles)}}},
@@ -262,16 +280,16 @@ private:
 					 {"font", STYLEPTR (&lfLabelFont)}}},
 		{"menu/button",	 	{{"border", STYLEPTR (&menuBorder)},
 					 {"background", STYLEPTR (&menuBg)},
-					 {"bgcolors", STYLEPTR (&bgColors)}}},
+					 {"bgcolors", STYLEPTR (&buttonBgColors)}}},
 		{"menu/listbox",	{{"border", STYLEPTR (&menuBorder)},
 					 {"background", STYLEPTR (&menuBg)}}},
 		{"menu/listbox/item",	{{"uses", STYLEPTR (&defaultStyles)},
 					 {"border", STYLEPTR (&labelborder)},
 					 {"textcolors", STYLEPTR (&BColors::whites)},
 					 {"font", STYLEPTR (&lfLabelFont)}}},
-		{"menu/listbox//button",{{"border", STYLEPTR (&menuBorder)},
+		{"menu/listbox/button",	{{"border", STYLEPTR (&menuBorder)},
 					 {"background", STYLEPTR (&menuBg)},
-					 {"bgcolors", STYLEPTR (&bgColors)}}}
+					 {"bgcolors", STYLEPTR (&buttonBgColors)}}}
 	});
 };
 

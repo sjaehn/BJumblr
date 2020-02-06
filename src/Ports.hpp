@@ -30,12 +30,13 @@ enum PortIndex {
 	AUDIO_OUT_2		= 5,
 
 	CONTROLLERS		= 6,
-	PLAY			= 0,
-	NR_OF_STEPS		= 1,
-	STEP_BASE		= 2,
-	STEP_SIZE		= 3,
-	STEP_OFFSET		= 4,
-	MAXCONTROLLERS		= 5
+	SOURCE			= 0,
+	PLAY			= 1,
+	NR_OF_STEPS		= 2,
+	STEP_BASE		= 3,
+	STEP_SIZE		= 4,
+	STEP_OFFSET		= 5,
+	MAXCONTROLLERS		= 6
 };
 
 enum BaseIndex

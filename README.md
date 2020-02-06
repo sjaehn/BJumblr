@@ -1,7 +1,7 @@
 # B.Jumblr
 Repository: BJumblr
 
-Description: B.Jumblr is a pattern-controlled audio stream re-sequencer LV2 plugin.
+Description: B.Jumblr is a pattern-controlled audio stream / sample re-sequencer LV2 plugin.
 
 ![screenshot](https://raw.githubusercontent.com/sjaehn/BJumblr/master/doc/screenshot.png "Screenshot from B.Jumblr")
 
@@ -16,10 +16,10 @@ b) Build your own binaries in the following three steps.
 
 Step 1: Clone or download this repository.
 
-Step 2: Install pkg-config and the development packages for x11, cairo, and lv2 if not done yet. On
-Debian-based systems you may run:
+Step 2: Install pkg-config and the development packages for sndfile, x11, cairo, and lv2 if not
+done yet. On Debian-based systems you may run:
 ```
-sudo apt-get install pkg-config libx11-dev libcairo2-dev lv2-dev
+sudo apt-get install pkg-config libsndfile-dev libx11-dev libcairo2-dev lv2-dev
 ```
 
 Step 3: Building and installing into the default lv2 directory (/usr/lib/lv2/) is easy. Simply call:
@@ -56,6 +56,9 @@ sent to the audio output. Use the default diagonal line pattern for live playbac
 one step to the right results in a one step delayed playback of the respective piece of the audio
 input stream. Each pad (and thus each piece) can be levelled up or down by mouse wheel scrolling.
 
+### Source
+Select between (live) audio stream or a sample file as source.
+
 ### Pattern matrix
 
 * **Left click**: Set (or delete) pad level
@@ -86,9 +89,9 @@ Note: Jack transport is required in the beats mode and in the bars mode.
 
 ### Pattern size
 
-Defines the total pattern size (= number of steps, = number of rows). You predefined pattern sizes
-between 2 and 32 steps. Alternatively, you can enter any value between 2 and 32 in a host
-provided generic GUI.  
+Defines the total pattern size (= number of steps, = number of rows). You can choose between
+predefined pattern sizes from 2 to 32 steps. Alternatively, you can enter any value between 2 and 32
+in a host provided generic GUI.  
 
 
 ## Links

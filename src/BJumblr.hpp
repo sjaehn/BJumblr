@@ -38,12 +38,14 @@
 #include <lv2/lv2plug.in/ns/ext/time/time.h>
 #include <lv2/lv2plug.in/ns/ext/midi/midi.h>
 #include <lv2/lv2plug.in/ns/ext/state/state.h>
+#include "lv2/lv2plug.in/ns/ext/worker/worker.h"
 #include "definitions.h"
 #include "Ports.hpp"
 #include "Urids.hpp"
 #include "Pad.hpp"
 #include "PadMessage.hpp"
 #include "Message.hpp"
+#include "sndfile.h"
 
 struct Limit
 {
@@ -60,6 +62,8 @@ public:
 	void run(uint32_t n_samples);
 	LV2_State_Status state_save(LV2_State_Store_Function store, LV2_State_Handle handle, uint32_t flags, const LV2_Feature* const* features);
 	LV2_State_Status state_restore(LV2_State_Retrieve_Function retrieve, LV2_State_Handle handle, uint32_t flags, const LV2_Feature* const* features);
+	LV2_Worker_Status work (LV2_Worker_Respond_Function respond, LV2_Worker_Respond_Handle handle, uint32_t size, const void* data);
+	LV2_Worker_Status work_response (uint32_t size, const void* data);
 
 private:
 
@@ -76,11 +80,14 @@ private:
 	void notifyStatusToGui ();
 	void notifyWaveformToGui (const int start, const int end);
 	void notifyMessageToGui();
+	void notifySamplePathToGui ();
 
 	// URIs
 	BJumblrURIs uris;
 	LV2_URID_Map* map;
 	LV2_URID_Unmap* unmap;
+
+	LV2_Worker_Schedule* workerSchedule;
 
 	// DSP <-> GUI communication
 	const LV2_Atom_Sequence* controlPort;
@@ -104,6 +111,7 @@ private:
 	float controllers [MAXCONTROLLERS];
 	Limit controllerLimits [MAXCONTROLLERS] =
 	{
+		{0, 1, 1},	// SOURCE
 		{0, 2, 1},	// PLAY
 		{2, 32, 1}, 	// NR_OF_STEPS
 		{0, 2, 1},	// STEP_BASE
@@ -111,9 +119,29 @@ private:
 		{0, 31, 1}	// STEP_OFFSET
 	};
 
-	//Pads
+	// Pads
 	int editMode;
 	Pad pads [MAXSTEPS] [MAXSTEPS];
+
+	// Sample
+	struct Sample
+	{
+		Sample ();
+		Sample (const char* samplepath);
+		~Sample();
+		//void load (const char* samplepath);
+		float get (const sf_count_t frame, const int channel, const int rate);
+		SF_INFO  info;      // Info about sample from sndfile
+	        float*   data;      // Sample data in float
+	        char*    path;      // Path of file
+	};
+	Sample* sample;
+
+	struct WorkerMessage
+	{
+		LV2_Atom atom;
+        	Sample*  sample;
+	};
 
 	// Host communicated data
 	double rate;
@@ -142,6 +170,7 @@ private:
 	bool scheduleNotifyPadsToGui;
 	bool scheduleNotifyStatusToGui;
 	bool scheduleNotifyWaveformToGui;
+	bool scheduleNotifySamplePathToGui;
 	Message message;
 };
 

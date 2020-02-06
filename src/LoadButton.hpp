@@ -17,23 +17,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BWIDGETS_HOMEBUTTON_HPP_
-#define BWIDGETS_HOMEBUTTON_HPP_
+#ifndef BWIDGETS_LOADBUTTON_HPP_
+#define BWIDGETS_LOADBUTTON_HPP_
 
 #include "BWidgets/Button.hpp"
 
-class HomeButton : public BWidgets::Button
+class LoadButton : public BWidgets::Button
 {
 public:
-	HomeButton () : HomeButton (0.0, 0.0, BWIDGETS_DEFAULT_BUTTON_WIDTH, BWIDGETS_DEFAULT_BUTTON_HEIGHT, "homebutton", 0.0) {}
-	HomeButton (const double x, const double y, const double width, const double height, const std::string& name, double defaultValue = 0.0) :
+	LoadButton () : LoadButton (0.0, 0.0, BWIDGETS_DEFAULT_BUTTON_WIDTH, BWIDGETS_DEFAULT_BUTTON_HEIGHT, "loadbutton", 0.0) {}
+	LoadButton (const double x, const double y, const double width, const double height, const std::string& name, double defaultValue = 0.0) :
 		Button (x, y, width, height, name, defaultValue) {}
 
 	/**
 	 * Pattern cloning. Creates a new instance of the widget and copies all
 	 * its properties.
 	 */
-	virtual Widget* clone () const override {return new HomeButton (*this);}
+	virtual Widget* clone () const override {return new LoadButton (*this);}
 
 protected:
 	virtual void draw (const BUtilities::RectArea& area) override
@@ -66,24 +66,20 @@ protected:
 				// Symbol
 				cairo_set_line_width (cr, BWIDGETS_DEFAULT_BUTTON_BORDER);
 				cairo_move_to (cr, x0 + w/2, y0 + h/2 - 0.375 * size);
-				cairo_line_to (cr, x0 + w/2 + 0.375 * size, y0 + h/2);
+				cairo_line_to (cr, x0 + w/2 + 0.25 * size, y0 + h/2 - 0.125 * size);
+				cairo_line_to (cr, x0 + w/2 + 0.15 * size, y0 + h/2 - 0.125 * size);
+				cairo_line_to (cr, x0 + w/2 + 0.15 * size, y0 + h/2 + 0.25 * size);
+				cairo_line_to (cr, x0 + w/2 - 0.15 * size, y0 + h/2 + 0.25 * size);
+				cairo_line_to (cr, x0 + w/2 - 0.15 * size, y0 + h/2 - 0.125 * size);
+				cairo_line_to (cr, x0 + w/2 - 0.25 * size, y0 + h/2 - 0.125 * size);
+				cairo_close_path (cr);
 
-				cairo_move_to (cr, x0 + w/2 + 0.3 * size, y0 + h/2 - 0.075 * size);
-				cairo_line_to (cr, x0 + w/2 + 0.3 * size, y0 + h/2 + 0.375 * size);
-				cairo_line_to (cr, x0 + w/2 + 0.3 * size, y0 + h/2 + 0.375 * size);
-				cairo_line_to (cr, x0 + w/2, y0 + h/2 + 0.375 * size);
-				cairo_line_to (cr, x0 + w/2, y0 + h/2 + 0.125 * size);
-				cairo_line_to (cr, x0 + w/2 - 0.15 * size, y0 + h/2 + 0.125 * size);
-				cairo_line_to (cr, x0 + w/2 - 0.15 * size, y0 + h/2 + 0.375 * size);
-				cairo_line_to (cr, x0 + w/2 - 0.3 * size, y0 + h/2 + 0.375 * size);
-				cairo_line_to (cr, x0 + w/2 - 0.3 * size, y0 + h/2 - 0.075 * size);
-
-				cairo_move_to (cr, x0 + w/2, y0 + h/2 - 0.375 * size);
-				cairo_line_to (cr, x0 + w/2 - 0.15 * size, y0 + h/2 - 0.225 * size);
-				cairo_line_to (cr, x0 + w/2 - 0.15 * size, y0 + h/2 - 0.375 * size);
-				cairo_line_to (cr, x0 + w/2 - 0.2 * size, y0 + h/2 - 0.375 * size);
-				cairo_line_to (cr, x0 + w/2 - 0.2 * size, y0 + h/2 - 0.175 * size);
-				cairo_line_to (cr, x0 + w/2 - 0.375 * size, y0 + h/2);
+				cairo_move_to (cr, x0 + w/2 + 0.25 * size, y0 + h/2 + 0.125 * size);
+				cairo_line_to (cr, x0 + w/2 + 0.375 * size, y0 + h/2 + 0.125 * size);
+				cairo_line_to (cr, x0 + w/2 + 0.375 * size, y0 + h/2 + 0.375 * size);
+				cairo_line_to (cr, x0 + w/2 - 0.375 * size, y0 + h/2 + 0.375 * size);
+				cairo_line_to (cr, x0 + w/2 - 0.375 * size, y0 + h/2 + 0.125 * size);
+				cairo_line_to (cr, x0 + w/2 - 0.25 * size, y0 + h/2 + 0.125 * size);
 
 				cairo_set_source_rgba (cr, CAIRO_RGBA (frColor));
 				cairo_stroke (cr);
@@ -94,4 +90,4 @@ protected:
 	}
 };
 
-#endif /* BWIDGETS_HOMEBUTTON_HPP_ */
+#endif /* BWIDGETS_LOADBUTTON_HPP_ */

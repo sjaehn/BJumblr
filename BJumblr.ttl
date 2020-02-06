@@ -7,6 +7,7 @@
 @prefix time: <http://lv2plug.in/ns/ext/time#> .
 @prefix urid: <http://lv2plug.in/ns/ext/urid#> .
 @prefix state: <http://lv2plug.in/ns/ext/state#> .
+@prefix work:  <http://lv2plug.in/ns/ext/worker#> .
 @prefix ui: <http://lv2plug.in/ns/extensions/ui#> .
 @prefix rsz: <http://lv2plug.in/ns/ext/resize-port#> .
 
@@ -23,15 +24,15 @@
 
 <https://www.jahnichen.de/plugins/lv2/BJumblr>
         a lv2:Plugin , lv2:DelayPlugin, doap:Project ;
-        rdfs:comment "B.Jumblr is a pattern-controlled audio stream re-sequencer LV2 plugin." ;
+        rdfs:comment "B.Jumblr is a pattern-controlled audio stream / sample re-sequencer LV2 plugin." ;
 	doap:name "B.Jumblr" ;
 	doap:license <http://usefulinc.com/doap/licenses/gpl>;
-#	lv2:microVersion 1 ;
-#	lv2:minorVersion 2 ;
+#	lv2:microVersion 0 ;
+#	lv2:minorVersion 0 ;
         doap:maintainer <http://www.jahnichen.de/sjaehn#me> ;
         lv2:optionalFeature lv2:hardRTCapable ;
-        lv2:extensionData state:interface ;
-	lv2:requiredFeature urid:map ;
+        lv2:extensionData state:interface , work:interface ;
+	lv2:requiredFeature urid:map , work:schedule ;
 	ui:ui <https://www.jahnichen.de/plugins/lv2/BJumblr#gui> ;
 	lv2:port [
 		a lv2:InputPort , atom:AtomPort ;
@@ -71,6 +72,17 @@
 	] , [
                 a lv2:InputPort , lv2:ControlPort ;
                 lv2:index 6 ;
+                lv2:symbol "source" ;
+                lv2:name "Source" ;
+                lv2:portProperty lv2:integer, lv2:enumeration ;
+		lv2:scalePoint [ rdfs:label "Audio stream"; rdf:value 0 ] ;
+		lv2:scalePoint [ rdfs:label "Sample"; rdf:value 1 ] ;
+                lv2:default 0 ;
+                lv2:minimum 0 ;
+                lv2:maximum 1 ;
+        ] , [
+                a lv2:InputPort , lv2:ControlPort ;
+                lv2:index 7 ;
                 lv2:symbol "play" ;
                 lv2:name "Play" ;
                 lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -82,7 +94,7 @@
                 lv2:maximum 2 ;
         ] , [
                 a lv2:InputPort , lv2:ControlPort ;
-                lv2:index 7 ;
+                lv2:index 8 ;
                 lv2:symbol "nr_of_steps" ;
                 lv2:name "Nr of steps" ;
                 lv2:portProperty lv2:integer;
@@ -91,7 +103,7 @@
                 lv2:maximum 32 ;
         ] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 8 ;
+		lv2:index 9 ;
 		lv2:symbol "stepbase" ;
 		lv2:name "Step base" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -103,7 +115,7 @@
 		lv2:maximum 2 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 9 ;
+		lv2:index 10 ;
 		lv2:symbol "stepsize" ;
 		lv2:name "Step size" ;
 		lv2:default 1.0 ;
@@ -111,7 +123,7 @@
 		lv2:maximum 4.0 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 10 ;
+		lv2:index 11 ;
 		lv2:symbol "stepoffset" ;
 		lv2:name "Step offset" ;
 		lv2:portProperty lv2:integer ;

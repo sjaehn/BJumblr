@@ -42,6 +42,7 @@ struct BJumblrURIs
 	LV2_URID atom_Vector;
 	LV2_URID atom_Long;
 	LV2_URID atom_String;
+	LV2_URID atom_Path;
 	LV2_URID midi_Event;
 	LV2_URID time_Position;
 	LV2_URID time_bar;
@@ -56,6 +57,9 @@ struct BJumblrURIs
 	LV2_URID notify_padEvent;
 	LV2_URID notify_pad;
 	LV2_URID notify_editMode;
+	LV2_URID notify_sampleFreeEvent;
+	LV2_URID notify_pathEvent;
+	LV2_URID notify_samplePath;
 	LV2_URID notify_statusEvent;
 	LV2_URID notify_cursor;
 	LV2_URID notify_messageEvent;
@@ -77,6 +81,7 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->atom_Vector = m->map(m->handle, LV2_ATOM__Vector);
 	uris->atom_Long = m->map (m->handle, LV2_ATOM__Long);
 	uris->atom_String = m->map (m->handle, LV2_ATOM__String);
+	uris->atom_Path = m->map(m->handle, LV2_ATOM__Path);
 	uris->time_Position = m->map(m->handle, LV2_TIME__Position);
 	uris->time_bar = m->map(m->handle, LV2_TIME__bar);
 	uris->time_barBeat = m->map(m->handle, LV2_TIME__barBeat);
@@ -90,6 +95,9 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->notify_padEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadEvent");
 	uris->notify_pad = m->map(m->handle, BJUMBLR_URI "#NOTIFYpad");
 	uris->notify_editMode = m->map(m->handle, BJUMBLR_URI "#NOTIFYeditMode");
+	uris->notify_sampleFreeEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYsampleFreeEvent");
+	uris->notify_pathEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYpathEvent");
+	uris->notify_samplePath = m->map(m->handle, BJUMBLR_URI "#NOTIFYsamplePath");
 	uris->notify_statusEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYstatusEvent");
 	uris->notify_cursor = m->map(m->handle, BJUMBLR_URI "#NOTIFYcursor");
 	uris->notify_messageEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYmessageEvent");

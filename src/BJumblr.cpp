@@ -23,14 +23,15 @@
 inline double floorfrac (const double value) {return value - floor (value);}
 
 BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
-	map (NULL), unmap (NULL), controlPort (nullptr), notifyPort (nullptr),
+	map (NULL), unmap (NULL), workerSchedule (NULL),
+	controlPort (nullptr), notifyPort (nullptr),
 	audioInput1 (nullptr), audioInput2 (nullptr),
 	audioOutput1 (nullptr), audioOutput2 (nullptr),
 	notifyForge (), notifyFrame (),
 	padMessageBuffer {PadMessage()},
 	waveform {0.0f}, waveformCounter (0), lastWaveformCounter (0),
 	new_controllers {nullptr}, controllers {0},
-	editMode (0), pads {Pad()},
+	editMode (0), pads {Pad()}, sample (nullptr),
 	rate (samplerate), bpm (120.0f), beatsPerBar (4.0f), beatUnit (0),
 	speed (0.0f), bar (0), barBeat (0.0f),
 	outCapacity (0), position (0.0), cursor (0), offset (0.0), refFrame (0),
@@ -39,6 +40,7 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	audioBuffer2 (maxBufferSize, 0.0f),
 	audioBufferCounter (0), audioBufferSize (samplerate * 8),
 	ui_on (false), scheduleNotifyPadsToGui (false), scheduleNotifyStatusToGui (false),
+	scheduleNotifyWaveformToGui (false), scheduleNotifySamplePathToGui (false),
 	message ()
 
 {
@@ -51,9 +53,15 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 		{
 			m = (LV2_URID_Map*) features[i]->data;
 		}
+
 		else if (strcmp (features[i]->URI, LV2_URID__unmap) == 0)
 		{
 			u = (LV2_URID_Unmap*) features[i]->data;
+		}
+
+		else if (!strcmp(features[i]->URI, LV2_WORKER__schedule))
+		{
+                        workerSchedule = (LV2_Worker_Schedule*)features[i]->data;
 		}
 	}
 
@@ -63,11 +71,16 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 		return;
 	}
 
+	if (!workerSchedule)
+	{
+		fprintf (stderr, "BJumblr.lv2: Host does not support work:schedule.\n");
+		return;
+	}
+
 	//Map URIS
 	map = m;
 	unmap = u;
 	getURIs (m, &uris);
-	if (!map) fprintf(stderr, "BJumblr.lv2: Host does not support urid:map.\n");
 
 	// Initialize notify
 	lv2_atom_forge_init (&notifyForge, map);
@@ -85,6 +98,68 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 
 	ui_on = false;
 
+}
+
+BJumblr::Sample::Sample () : info {0, 0, 0, 0, 0, 0}, data (nullptr), path (nullptr) {}
+
+BJumblr::Sample::Sample (const char* samplepath) : info {0, 0, 0, 0, 0, 0}, data (nullptr), path (nullptr)
+{
+	if (!samplepath) return;
+
+	SNDFILE* const sndfile = sf_open (samplepath, SFM_READ, &info);
+
+        if (!sndfile || !info.frames)
+	{
+		fprintf (stderr, "BJumblr.lv2: Can't open %s.\n", samplepath);
+                // TODO Message to GUI
+		return;
+        }
+
+        // Read & render data
+        data = (float*) malloc (sizeof(float) * info.frames * info.channels);
+        if (!data)
+	{
+		fprintf (stderr, "BJumblr.lv2: Can't allocate memory to load sample %s.\n", path);
+                // TODO Message to GUI
+		return;
+        }
+
+        sf_seek (sndfile, 0, SEEK_SET);
+        sf_read_float (sndfile, data, info.frames);
+        sf_close (sndfile);
+
+	int len = strlen (samplepath);
+        path = (char*) malloc (len + 1);
+        if (path) memcpy(path, samplepath, len + 1);
+}
+
+BJumblr::Sample::~Sample ()
+{
+	if (data) free (data);
+	if (path) free (path);
+}
+
+float BJumblr::Sample::get (const sf_count_t frame, const int channel, const int rate)
+{
+	if (!data) return 0.0f;
+
+	// Direct access if same frame rate
+	if (info.samplerate == rate)
+	{
+		if (frame >= info.frames) return 0.0f;
+		else return data[frame * info.channels + channel];
+	}
+
+	// Linear rendering (TODO) if frame rates differ
+	double f = (frame * info.samplerate) / rate;
+	sf_count_t f1 = f;
+
+	if (f1 + 1 >= info.frames) return 0.0f;
+	if (f1 == f) return data[f1 * info.channels + channel];
+
+	float data1 = data[f1 * info.channels + channel];
+	float data2 = data[(f1 + 1) * info.channels + channel];
+	return data1 + (f - double (f1)) * (data2 - data1);
 }
 
 void BJumblr::connect_port (uint32_t port, void *data)
@@ -119,16 +194,35 @@ void BJumblr::runSequencer (const int start, const int end)
 {
 	for (int i = start; i < end; ++i)
 	{
-		// Store to buffers
-		audioBuffer1[audioBufferCounter] = audioInput1[i];
-		audioBuffer2[audioBufferCounter] = audioInput2[i];
+		// Interpolate position within the loop
+		double relpos = getPositionFromFrames (i - refFrame);	// Position relative to reference frame
+		double pos = floorfrac (position + relpos);		// 0..1 position
 
-		if (controllers[PLAY] == 1.0f)
+		float input1 = 0;
+		float input2 = 0;
+
+		// Store audio input signal to buffer
+		if (controllers[SOURCE] == 0)	// Audio stream
 		{
+			input1 = audioInput1[i];
+			input2 = audioInput2[i];
+		}
+		else	// Sample
+		{
+			if (sample)
+			{
+				uint64_t sampleframe = getFramesFromValue (pos * controllers[NR_OF_STEPS] * controllers[STEP_SIZE]);
+				input1 = sample->get (sampleframe, 0, rate);
+				input2 = sample->get (sampleframe, 1, rate);
+			}
+		}
 
-			// Interpolate position within the loop
-			double relpos = getPositionFromFrames (i - refFrame);	// Position relative to reference frame
-			double pos = floorfrac (position + relpos);		// 0..1 position
+		audioBuffer1[audioBufferCounter] = input1;
+		audioBuffer2[audioBufferCounter] = input2;
+
+		if (controllers[PLAY] == 1.0f)	// Play
+		{
+			// Calculate step
 			double step = fmod (pos * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET], controllers[NR_OF_STEPS]);	// 0..NR_OF_STEPS position
 			int iStep = step;
 			int iNrOfSteps = controllers[NR_OF_STEPS];
@@ -194,22 +288,19 @@ void BJumblr::runSequencer (const int start, const int end)
 			audioOutput2[i] = fade * audio2 + (1 - fade) * prevAudio2;
 
 			waveformCounter = int ((pos + controllers[STEP_OFFSET] / controllers[NR_OF_STEPS]) * WAVEFORMSIZE) % WAVEFORMSIZE;
-			waveform[waveformCounter] = (audioInput1[i] + audioInput2[i]) / 2;
+			waveform[waveformCounter] = (input1 + input2) / 2;
 		}
 
-		else if (controllers[PLAY] == 2.0f)
+		else if (controllers[PLAY] == 2.0f)	// Bypass
 		{
-			double relpos = getPositionFromFrames (i - refFrame);	// Position relative to reference frame
-			double pos = floorfrac (position + relpos);		// 0..1 position
-
-			audioOutput1[i] = audioInput1[i];
-			audioOutput2[i] = audioInput2[i];
+			audioOutput1[i] = input1;
+			audioOutput2[i] = input2;
 
 			waveformCounter = int ((pos + controllers[STEP_OFFSET] / controllers[NR_OF_STEPS]) * WAVEFORMSIZE) % WAVEFORMSIZE;
-			waveform[waveformCounter] = (audioInput1[i] + audioInput2[i]) / 2;
+			waveform[waveformCounter] = (input1 + input2) / 2;
 		}
 
-		else
+		else	// Stop
 		{
 			audioOutput1[i] = 0;
 			audioOutput2[i] = 0;
@@ -343,7 +434,6 @@ void BJumblr::run (uint32_t n_samples)
 			if (obj->body.otype == uris.ui_on)
 			{
 				ui_on = true;
-				//fprintf (stderr, "BJumblr.lv2: UI on received.\n");
 				padMessageBufferAllPads ();
 				scheduleNotifyPadsToGui = true;
 				scheduleNotifyStatusToGui = true;
@@ -352,7 +442,6 @@ void BJumblr::run (uint32_t n_samples)
 			// GUI off
 			else if (obj->body.otype == uris.ui_off)
 			{
-				//fprintf (stderr, "BJumblr.lv2: UI off received.\n");
 				ui_on = false;
 			}
 
@@ -396,6 +485,18 @@ void BJumblr::run (uint32_t n_samples)
 							}
 						}
 					}
+				}
+			}
+
+			// Sample path notification -> forward to worker
+			else if (obj->body.otype ==uris.notify_pathEvent)
+			{
+				LV2_Atom* oPath = NULL;
+				lv2_atom_object_get (obj, uris.notify_samplePath, &oPath, NULL);
+
+				if (oPath && (oPath->type == uris.atom_Path))
+				{
+					workerSchedule->schedule_work (workerSchedule->handle, lv2_atom_total_size(&ev->body), &ev->body);
 				}
 			}
 
@@ -504,6 +605,7 @@ void BJumblr::run (uint32_t n_samples)
 		if (scheduleNotifyStatusToGui) notifyStatusToGui();
 		if (scheduleNotifyPadsToGui) notifyPadsToGui();
 		if (scheduleNotifyWaveformToGui) notifyWaveformToGui (lastWaveformCounter, waveformCounter);
+		if (scheduleNotifySamplePathToGui) notifySamplePathToGui ();
 		if (message.isScheduled ()) notifyMessageToGui();
 	}
 	lv2_atom_forge_pop(&notifyForge, &notifyFrame);
@@ -512,12 +614,34 @@ void BJumblr::run (uint32_t n_samples)
 LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_Handle handle, uint32_t flags,
 			const LV2_Feature* const* features)
 {
+	// Store sample path
+	if (sample && sample->path && (controllers[SOURCE] == 1.0))
+	{
+		LV2_State_Map_Path* map_path = NULL;
+	        for (int i = 0; features[i]; ++i)
+		{
+	                if (!strcmp(features[i]->URI, LV2_STATE__mapPath))
+			{
+	                        map_path = (LV2_State_Map_Path*)features[i]->data;
+				break;
+	                }
+	        }
+
+		if (map_path)
+		{
+			char* abstrPath = map_path->abstract_path(map_path->handle, sample->path);
+			store(handle, uris.notify_samplePath, abstrPath, strlen (sample->path) + 1, uris.atom_Path, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+			free (abstrPath);
+		}
+		else fprintf (stderr, "BJumblr.lv2: Feature map_path not available! Can't save sample!\n" );
+	}
+
+	// Store edit mode
+	uint32_t em = editMode;
+	store (handle, uris.notify_editMode, &em, sizeof(uint32_t), uris.atom_Int, LV2_STATE_IS_POD);
+
 	// Store pads
-	char padDataString[0x8010] = "\nEdit mode:\n";
-	char emString[16];
-	snprintf (emString, 16, "em:%d;\n", editMode);
-	strcat (padDataString, emString);
-	strcat (padDataString, "\nMatrix data:\n");
+	char padDataString[0x8010] = "\nMatrix data:\n";
 
 	for (int step = 0; step < MAXSTEPS; ++step)
 	{
@@ -534,51 +658,49 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 	}
 	store (handle, uris.state_pad, padDataString, strlen (padDataString) + 1, uris.atom_String, LV2_STATE_IS_POD);
 
-	//fprintf (stderr, "BJumblr.lv2: State saved.\n");
 	return LV2_STATE_SUCCESS;
 }
 
 LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, LV2_State_Handle handle, uint32_t flags,
 			const LV2_Feature* const* features)
 {
-	//fprintf (stderr, "BJumblr.lv2: state_restore ()\n");
-
-	// Retrieve pad data
 	size_t   size;
 	uint32_t type;
 	uint32_t valflags;
+
+	// Retireve sample path
+	const void* pathData = retrieve (handle, uris.notify_samplePath, &size, &type, &valflags);
+        if (pathData)
+	{
+		const char* path = (const char*)pathData;
+		if (sample) delete sample;
+		sample = new Sample (path);
+		scheduleNotifySamplePathToGui = true;
+        }
+
+	// Retrieve edit mode
+	const void* modeData = retrieve (handle, uris.notify_editMode, &size, &type, &valflags);
+        if (modeData && (size == sizeof (uint32_t)) && (type == uris.atom_Int))
+	{
+		const uint32_t mode = *(const uint32_t*) modeData;
+		if ((mode < 0) || (mode > 1)) fprintf (stderr, "BJumblr.lv2: Invalid editMode data\n");
+		else editMode = mode;
+        }
+
+	// Retrieve pad data
 	const void* padData = retrieve(handle, uris.state_pad, &size, &type, &valflags);
 
 	if (padData && (type == uris.atom_String))
 	{
 		std::string padDataString = (char*) padData;
-		const std::string keywords[3] = {"em:","id:", "lv:"};
-
-		// Get editMode
-		{
-			size_t strPos = padDataString.find (keywords[0]);
-			size_t nextPos = 0;
-			if ((strPos != std::string::npos) && (strPos + 3 <= padDataString.length()))
-			{
-				padDataString.erase (0, strPos + 3);
-				int em;
-				try {em = std::stof (padDataString, &nextPos);}
-				catch  (const std::exception& e)
-				{
-					fprintf (stderr, "BJumblr.lv2: Invalid editMode data\n");
-				}
-
-				if (nextPos > 0) padDataString.erase (0, nextPos);
-				if ((em < 0) || (em > 1)) fprintf (stderr, "BJumblr.lv2: Invalid editMode data\n");
-			}
-		}
+		const std::string keywords[2] = {"id:", "lv:"};
 
 		// Restore pads
 		// Parse retrieved data
 		while (!padDataString.empty())
 		{
 			// Look for next "id:"
-			size_t strPos = padDataString.find (keywords[1]);
+			size_t strPos = padDataString.find (keywords[0]);
 			size_t nextPos = 0;
 			if (strPos == std::string::npos) break;	// No "id:" found => end
 			if (strPos + 3 > padDataString.length()) break;	// Nothing more after id => end
@@ -601,7 +723,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 			int step = id / MAXSTEPS;
 
 			// Look for pad data
-			for (int i = 2; i < 3; ++i)
+			for (int i = 1; i < 2; ++i)
 			{
 				strPos = padDataString.find (keywords[i]);
 				if (strPos == std::string::npos) continue;	// Keyword not found => next keyword
@@ -622,7 +744,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 
 				if (nextPos > 0) padDataString.erase (0, nextPos);
 				switch (i) {
-				case 2:	pads[row][step].level = val;
+				case 1:	pads[row][step].level = val;
 					break;
 				default:break;
 				}
@@ -655,6 +777,51 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 	scheduleNotifyStatusToGui = true;
 
 	return LV2_STATE_SUCCESS;
+}
+
+LV2_Worker_Status BJumblr::work (LV2_Worker_Respond_Function respond, LV2_Worker_Respond_Handle handle, uint32_t size, const void* data)
+{
+	const LV2_Atom* atom = (const LV2_Atom*)data;
+
+	// Free old sample
+        if (atom->type == uris.notify_sampleFreeEvent)
+	{
+		const WorkerMessage* workerMessage = (WorkerMessage*) atom;
+		if (workerMessage->sample) delete workerMessage->sample;
+        }
+
+	// Load sample
+	else
+	{
+                const LV2_Atom_Object* obj = (const LV2_Atom_Object*)data;
+
+		if (obj->body.otype == uris.notify_pathEvent)
+		{
+			const LV2_Atom* path = NULL;
+			lv2_atom_object_get(obj, uris.notify_samplePath, &path, 0);
+
+			if (path && (path->type == uris.atom_Path))
+			{
+				Sample* s = new Sample ((const char*)LV2_ATOM_BODY_CONST(path));
+				if (s) respond (handle, sizeof(s), &s);
+			}
+
+			else return LV2_WORKER_ERR_UNKNOWN;
+		}
+        }
+
+        return LV2_WORKER_SUCCESS;
+}
+
+LV2_Worker_Status BJumblr::work_response (uint32_t size, const void* data)
+{
+	// Schedule worker to free old sample
+	WorkerMessage workerMessage = {{sizeof (Sample*), uris.notify_sampleFreeEvent}, sample};
+	workerSchedule->schedule_work (workerSchedule->handle, sizeof (workerMessage), &workerMessage);
+
+	// Install new sample from data
+	sample = *(Sample* const*) data;
+	return LV2_WORKER_SUCCESS;
 }
 
 /*
@@ -798,6 +965,21 @@ void BJumblr::notifyMessageToGui()
 	lv2_atom_forge_pop(&notifyForge, &frame);
 }
 
+void BJumblr::notifySamplePathToGui ()
+{
+	if (sample && sample->path)
+	{
+		LV2_Atom_Forge_Frame frame;
+		lv2_atom_forge_frame_time(&notifyForge, 0);
+		lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_pathEvent);
+		lv2_atom_forge_key(&notifyForge, uris.notify_samplePath);
+		lv2_atom_forge_path (&notifyForge, sample->path, strlen (sample->path) + 1);
+		lv2_atom_forge_pop(&notifyForge, &frame);
+	}
+
+	scheduleNotifySamplePathToGui = false;
+}
+
 /*
  *
  *
@@ -828,7 +1010,7 @@ static void connect_port (LV2_Handle instance, uint32_t port, void *data)
 static void run (LV2_Handle instance, uint32_t n_samples)
 {
 	BJumblr* inst = (BJumblr*) instance;
-	inst->run (n_samples);
+	if (inst) inst->run (n_samples);
 }
 
 static LV2_State_Status state_save(LV2_Handle instance, LV2_State_Store_Function store, LV2_State_Handle handle, uint32_t flags,
@@ -837,31 +1019,48 @@ static LV2_State_Status state_save(LV2_Handle instance, LV2_State_Store_Function
 	BJumblr* inst = (BJumblr*)instance;
 	if (!inst) return LV2_STATE_SUCCESS;
 
-	inst->state_save (store, handle, flags, features);
-	return LV2_STATE_SUCCESS;
+	return inst->state_save (store, handle, flags, features);
 }
 
 static LV2_State_Status state_restore(LV2_Handle instance, LV2_State_Retrieve_Function retrieve, LV2_State_Handle handle, uint32_t flags,
            const LV2_Feature* const* features)
 {
 	BJumblr* inst = (BJumblr*)instance;
-	inst->state_restore (retrieve, handle, flags, features);
-	return LV2_STATE_SUCCESS;
+	if (!inst) return LV2_STATE_SUCCESS;
+
+	return inst->state_restore (retrieve, handle, flags, features);
+}
+
+static LV2_Worker_Status work (LV2_Handle instance, LV2_Worker_Respond_Function respond, LV2_Worker_Respond_Handle handle,
+	uint32_t size, const void* data)
+{
+	BJumblr* inst = (BJumblr*)instance;
+	if (!inst) return LV2_WORKER_SUCCESS;
+
+	return inst->work (respond, handle, size, data);
+}
+
+static LV2_Worker_Status work_response (LV2_Handle instance, uint32_t size,  const void* data)
+{
+	BJumblr* inst = (BJumblr*)instance;
+	if (!inst) return LV2_WORKER_SUCCESS;
+
+	return inst->work_response (size, data);
 }
 
 static void cleanup (LV2_Handle instance)
 {
 	BJumblr* inst = (BJumblr*) instance;
-	delete inst;
+	if (inst) delete inst;
 }
 
 
 static const void* extension_data(const char* uri)
 {
   static const LV2_State_Interface  state  = {state_save, state_restore};
-  if (!strcmp(uri, LV2_STATE__interface)) {
-    return &state;
-  }
+  static const LV2_Worker_Interface worker = {work, work_response, NULL};
+  if (!strcmp(uri, LV2_STATE__interface)) return &state;
+  if (!strcmp(uri, LV2_WORKER__interface)) return &worker;
   return NULL;
 }
 

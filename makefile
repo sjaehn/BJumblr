@@ -1,8 +1,8 @@
 SHELL = /bin/sh
 
 PKG_CONFIG ?= pkg-config
-GUI_LIBS += x11 cairo
-LV2_LIBS += lv2
+GUI_LIBS += lv2 x11 cairo
+LV2_LIBS += lv2 sndfile
 ifneq ($(shell $(PKG_CONFIG) --exists fontconfig || echo no), no)
   GUI_LIBS += fontconfig
   GUIPPFLAGS += -DPKG_HAVE_FONTCONFIG
@@ -26,7 +26,7 @@ DSPFLAGS =
 GUIPPFLAGS += -DPUGL_HAVE_CAIRO
 
 DSPFLAGS += `$(PKG_CONFIG) --cflags --libs $(LV2_LIBS)`
-GUIFLAGS += `$(PKG_CONFIG) --cflags --libs $(LV2_LIBS) $(GUI_LIBS)`
+GUIFLAGS += `$(PKG_CONFIG) --cflags --libs $(GUI_LIBS)`
 
 BUNDLE = BJumblr.lv2
 DSP = BJumblr
@@ -49,6 +49,7 @@ INCFILES = \
 B_FILES = $(addprefix $(BUNDLE)/, $(ROOTFILES) $(INCFILES))
 
 GUI_INCL = \
+	src/BWidgets/FileChooser.cpp \
 	src/BWidgets/PopupListBox.cpp \
 	src/BWidgets/ListBox.cpp \
 	src/BWidgets/ChoiceBox.cpp \
@@ -59,6 +60,7 @@ GUI_INCL = \
 	src/BWidgets/LeftButton.cpp \
 	src/BWidgets/PlusButton.cpp \
 	src/BWidgets/MinusButton.cpp \
+	src/BWidgets/TextButton.cpp \
 	src/BWidgets/Button.cpp \
 	src/BWidgets/DrawingSurface.cpp \
 	src/BWidgets/DialValue.cpp \
@@ -77,6 +79,10 @@ GUI_INCL = \
 	src/BWidgets/pugl/pugl_x11_cairo.c \
 	src/BWidgets/pugl/pugl_x11.c \
 	src/BUtilities/to_string.cpp
+
+ifeq ($(shell $(PKG_CONFIG) --exists sndfile || echo no), no)
+  $(error libsndfile not found. Please install libsndfile first.)
+endif
 
 ifeq ($(shell $(PKG_CONFIG) --exists lv2 || echo no), no)
   $(error LV2 not found. Please install LV2 first.)
