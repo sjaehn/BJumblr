@@ -1277,7 +1277,15 @@ void BJumblrGUI::loadButtonClickedCallback (BEvents::Event* event)
 	if (!ui) return;
 
 	if (ui->fileChooser) delete ui->fileChooser;
-	ui->fileChooser = new BWidgets::FileChooser (200, 120, 300, 400, "filechooser", ui->samplePath, {}, "Open");
+	ui->fileChooser = new BWidgets::FileChooser
+	(
+		200, 120, 300, 400, "filechooser", ui->samplePath,
+		std::vector<BWidgets::FileFilter>
+		{
+			BWidgets::FileFilter {"All files", std::regex (".*")},
+			BWidgets::FileFilter {"Audio files", std::regex (".*\\.((wav)|(wave)|(aif)|(aiff)|(au)|(sd2)|(flac)|(caf)|(ogg))$", std::regex_constants::icase)}
+		},
+		"Open");
 	if (ui->fileChooser)
 	{
 		RESIZE ((*ui->fileChooser), 200, 120, 300, 400, ui->sz);

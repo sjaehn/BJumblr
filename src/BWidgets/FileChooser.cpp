@@ -30,11 +30,11 @@ FileChooser::FileChooser (const double x, const double y, const double width, co
 		FileChooser (x, y, width, height, name, path, {}, "") {}
 
 FileChooser::FileChooser (const double x, const double y, const double width, const double height, const std::string& name,
-			  const std::string& path, const std::vector<std::string>& filters) :
+			  const std::string& path, const std::vector<FileFilter>& filters) :
 		FileChooser (x, y, width, height, name, path, filters, "") {}
 
 FileChooser::FileChooser (const double x, const double y, const double width, const double height, const std::string& name,
-			  const std::string& path, const std::vector<std::string>& filters, const std::string& buttonText) :
+			  const std::string& path, const std::vector<FileFilter>& filters, const std::string& buttonText) :
 		ValueWidget (x, y, width, height, name, 0.0),
 		filters (filters),
 		dirs (),
@@ -45,10 +45,12 @@ FileChooser::FileChooser (const double x, const double y, const double width, co
 		fileListBox (0, 0, 0, 0, name + "/listbox"),
 		fileNameLabel (0, 0, 0, 0, name + "/label", "File:"),
 		fileNameBox (0, 0, 0, 0, name + "/textbox", ""),
+		filterPopupListBox (),
 		cancelButton (0, 0, 0, 0, name + "/button", "Cancel"),
 		okButton (0, 0, 0, 0, name + "/button", buttonText),
 		fileFont ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 12.0, BStyles::TEXT_ALIGN_LEFT, BStyles::TEXT_VALIGN_MIDDLE),
-		dirFont ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD, 12.0, BStyles::TEXT_ALIGN_LEFT, BStyles::TEXT_VALIGN_MIDDLE)
+		dirFont ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD, 12.0, BStyles::TEXT_ALIGN_LEFT, BStyles::TEXT_VALIGN_MIDDLE),
+		filterFont ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 12.0, BStyles::TEXT_ALIGN_LEFT, BStyles::TEXT_VALIGN_MIDDLE)
 {
 	background_ = BWIDGETS_DEFAULT_MENU_BACKGROUND;
 	border_ = BWIDGETS_DEFAULT_MENU_BORDER;
@@ -73,12 +75,23 @@ FileChooser::FileChooser (const double x, const double y, const double width, co
 	cancelButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, cancelButtonClickedCallback);
 	okButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, okButtonClickedCallback);
 
+	BItems::ItemList items;
+	for (FileFilter const& f : filters)
+	{
+		items.push_back (f.name);
+		Widget* widget = items.back().getWidget();
+		((Label*)widget)->setFont (filterFont);
+	}
+	filterPopupListBox = PopupListBox (0, 0, 0, 0, 0, 0, name + "/popup", items, (items.size() > 0 ? 1.0 : 0.0));
+	filterPopupListBox.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, filterPopupListBoxClickedCallback);
+
 	add (pathNameBox);
 	add (fileListBox);
 	add (fileNameLabel);
 	add (fileNameBox);
 	add (cancelButton);
 	add (okButton);
+	add (filterPopupListBox);
 }
 
 FileChooser& FileChooser::operator= (const FileChooser& that)
@@ -90,10 +103,12 @@ FileChooser& FileChooser::operator= (const FileChooser& that)
 	bgColors = that.bgColors;
 	fileFont = that.fileFont;
 	dirFont = that.dirFont;
+	filterFont = that.filterFont;
 	pathNameBox = that.pathNameBox;
 	fileListBox = that.fileListBox;
 	fileNameLabel = that.fileNameLabel;
 	fileNameBox = that.fileNameBox;
+	filterPopupListBox = that.filterPopupListBox;
 	cancelButton = that.cancelButton;
 	okButton = that.okButton;
 	ValueWidget::operator= (that);
@@ -119,16 +134,25 @@ std::string FileChooser::getPath () const {return pathNameBox.getText();}
 
 std::string FileChooser::getFileName () const {return fileNameBox.getText();}
 
-void FileChooser::setFilters (const std::vector<std::string>& filters)
+void FileChooser::setFilters (const std::vector<FileFilter>& filters)
 {
-	if (filters != this->filters)
+	this->filters = filters;
+
+	BItems::ItemList items;
+	for (FileFilter const& f : filters)
 	{
-		this->filters = filters;
-		update ();
+		items.push_back (f.name);
+		Widget* widget = items.back().getWidget();
+		((Label*)widget)->setFont (filterFont);
 	}
+	filterPopupListBox = PopupListBox (0, 0, 0, 0, 0, 0, getName() + "/popup", items, (items.size() > 0 ? 1.0 : 0.0));
+	filterPopupListBox.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, filterPopupListBoxClickedCallback);
+
+	enterDir();
+	update ();
 }
 
-std::vector<std::string> FileChooser::getFilters () const {return filters;}
+std::vector<FileFilter> FileChooser::getFilters () const {return filters;}
 
 void FileChooser::setButtonText (const std::string& buttonText)
 {
@@ -179,7 +203,7 @@ void FileChooser::update ()
 		okButton.moveTo (x0 + w - okWidth - 10, y0 + h - okHeight - 10);
 		okButton.resize (okWidth, okHeight);
 
-		cancelButton.moveTo (x0 + 10, y0 + h - okHeight - 10);
+		cancelButton.moveTo (x0 + w - 2 * okWidth - 20, y0 + h - okHeight - 10);
 		cancelButton.resize (okWidth, okHeight);
 
 		fileNameLabel.moveTo (x0 + 10, y0 + h - okHeight - fileNameHeight - 20);
@@ -188,10 +212,16 @@ void FileChooser::update ()
 		fileNameBox.moveTo (x0 + fileNameWidth + 30, y0 + h - okHeight - fileNameHeight - 20);
 		fileNameBox.resize (w - fileNameWidth - 40, fileNameHeight);
 
+		filterPopupListBox.moveTo (x0 + 10, y0 + h - okHeight - 10);
+		filterPopupListBox.resize (w - 2 * okWidth - 40, okHeight);
+		filterPopupListBox.resizeListBox (BUtilities::Point (w - 2 * okWidth - 40, filters.size() * okHeight + 20)); // TODO Limit
+		filterPopupListBox.resizeListBoxItems (BUtilities::Point (w - 2 * okWidth - 40, okHeight));
+
 		okButton.show();
 		cancelButton.show();
 		fileNameLabel.show();
 		fileNameBox.show();
+		filterPopupListBox.show ();
 
 		if (h > pathNameHeight + okHeight + fileNameHeight + 50)
 		{
@@ -210,6 +240,7 @@ void FileChooser::update ()
 		fileListBox.hide();
 		fileNameLabel.hide();
 		fileNameBox.hide();
+		filterPopupListBox.hide ();
 	}
 
 	Widget::update();
@@ -222,6 +253,7 @@ void FileChooser::applyTheme (BStyles::Theme& theme, const std::string& name)
 	cancelButton.applyTheme (theme, name + "/button");
 	okButton.applyTheme (theme, name + "/button");
 	fileListBox.applyTheme (theme, name + "/listBox");
+	filterPopupListBox.applyTheme (theme, name + "/popup");
 	Widget::applyTheme (theme, name);
 
 	// Color
@@ -266,6 +298,18 @@ void FileChooser::fileListBoxClickedCallback (BEvents::Event* event)
 
 		fc->update();
 	}
+}
+
+void FileChooser::filterPopupListBoxClickedCallback (BEvents::Event* event)
+{
+	if (!event) return;
+	PopupListBox* w = (PopupListBox*)event->getWidget();
+	if (!w) return;
+	FileChooser* fc = (FileChooser*)w->getParent();
+	if (!fc) return;
+
+	fc->enterDir();
+	fc->update();
 }
 
 void FileChooser::cancelButtonClickedCallback (BEvents::Event* event)
@@ -343,24 +387,25 @@ void FileChooser::enterDir ()
 		{
 			if (entry->d_type == DT_DIR)
 			{
-				newDirs.push_back (entry->d_name);
+				std::string s = entry->d_name;
+				if ((std::regex_match (s, std::regex ("(\\.{1,2})|([^\\.].*)"))))	// Exclude hidden
+				{
+					newDirs.push_back (entry->d_name);
+				}
 			}
 
 			else
 			{
 				std::string s = entry->d_name;
-
-				if (filters.size() == 0) newFiles.push_back (s);
-				else
+				if (!std::regex_match (s, std::regex ("\\..*")))	// Exclude hidden
 				{
-					for (std::string const& f : filters)
+					int filterNr = LIMIT ((filterPopupListBox.getValue() - 1), 0, int (filters.size() - 1));
+
+					if  (filters.size() != 0)
 					{
-						if (s.find (f) != std::string::npos)
-						{
-							newFiles.push_back (s);
-							break;
-						}
+						if (std::regex_match (s, filters[filterNr].regex)) newFiles.push_back (s);
 					}
+					else newFiles.push_back (s);
 				}
 			}
 		}

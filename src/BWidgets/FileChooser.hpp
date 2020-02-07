@@ -21,11 +21,18 @@
 #define BWIDGETS_DEFAULT_FILECHOOSER_WIDTH 400
 #define BWIDGETS_DEFAULT_FILECHOOSER_HEIGHT 320
 
-#include "ListBox.hpp"
+#include "PopupListBox.hpp"
 #include "TextButton.hpp"
+#include <regex>
 
 namespace BWidgets
 {
+
+struct FileFilter
+{
+	std::string name;
+	std::regex regex;
+};
 
 /**
  * Class BWidgets::FileChooser
@@ -40,9 +47,9 @@ public:
 	FileChooser (const double x, const double y, const double width, const double height, const std::string& name,
 		     const std::string& path);
 	FileChooser (const double x, const double y, const double width, const double height, const std::string& name,
-		     const std::string& path, const std::vector<std::string>& filters);
+		     const std::string& path, const std::vector<FileFilter>& filters);
 	FileChooser (const double x, const double y, const double width, const double height, const std::string& name,
-		     const std::string& path, const std::vector<std::string>& filters, const std::string& buttonText);
+		     const std::string& path, const std::vector<FileFilter>& filters, const std::string& buttonText);
 
 
 	/**
@@ -81,13 +88,13 @@ public:
 	 * Sets the filters of the file chooser.
 	 * @param filters	File filters
 	 */
-	void setFilters (const std::vector<std::string>& filters);
+	void setFilters (const std::vector<FileFilter>& filters);
 
 	/**
 	 * Gets the file filters
 	 * @return	File filters
 	 */
-	std::vector<std::string> getFilters () const;
+	std::vector<FileFilter> getFilters () const;
 
 	/**
 	 * Sets the text of the OK button.
@@ -134,6 +141,7 @@ public:
 	virtual void applyTheme (BStyles::Theme& theme, const std::string& name) override;
 
 	static void fileListBoxClickedCallback (BEvents::Event* event);
+	static void filterPopupListBoxClickedCallback (BEvents::Event* event);
 	static void cancelButtonClickedCallback (BEvents::Event* event);
 	static void okButtonClickedCallback (BEvents::Event* event);
 
@@ -141,7 +149,7 @@ protected:
 
 	void enterDir ();
 
-	std::vector<std::string> filters;
+	std::vector<FileFilter> filters;
 	std::vector<std::string> dirs;
 	std::vector<std::string> files;
 	std::string okButtonText;
@@ -150,10 +158,12 @@ protected:
 	ListBox fileListBox;
 	Label fileNameLabel;
 	Label fileNameBox;
+	PopupListBox filterPopupListBox;
 	TextButton cancelButton;
 	TextButton okButton;
 	BStyles::Font fileFont;
 	BStyles::Font dirFont;
+	BStyles::Font filterFont;
 };
 
 }
