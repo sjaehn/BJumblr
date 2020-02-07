@@ -245,8 +245,13 @@ void FileChooser::fileListBoxClickedCallback (BEvents::Event* event)
 
 	if ((val != UNSELECTED) && (!fc->fileNameBox.getEditMode()))
 	{
-		// Directory selected
-		if (val <= fc->dirs.size()) fc->fileNameBox.setText ("");
+		// Directory selected -> one click chdir
+		if (val <= fc->dirs.size())
+		{
+			fc->fileNameBox.setText ("");
+			BEvents::ValueChangedEvent dummyEvent = BEvents::ValueChangedEvent (&fc->okButton, 1.0);
+			fc->okButtonClickedCallback (&dummyEvent);
+		}
 
 		// File selected
 		else
@@ -261,8 +266,6 @@ void FileChooser::fileListBoxClickedCallback (BEvents::Event* event)
 
 		fc->update();
 	}
-
-	// TODO Double clicked
 }
 
 void FileChooser::cancelButtonClickedCallback (BEvents::Event* event)
