@@ -65,17 +65,8 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 		}
 	}
 
-	if (!m)
-	{
-		fprintf (stderr, "BJumblr.lv2: Host does not support urid:map.\n");
-		return;
-	}
-
-	if (!workerSchedule)
-	{
-		fprintf (stderr, "BJumblr.lv2: Host does not support work:schedule.\n");
-		return;
-	}
+	if (!m) throw std::invalid_argument ("BJumblr.lv2: Host does not support urid:map.");
+	if (!workerSchedule) throw std::invalid_argument ("BJumblr.lv2: Host does not support work:schedule.");
 
 	//Map URIS
 	map = m;
@@ -108,21 +99,15 @@ BJumblr::Sample::Sample (const char* samplepath) : info {0, 0, 0, 0, 0, 0}, data
 
 	SNDFILE* const sndfile = sf_open (samplepath, SFM_READ, &info);
 
-        if (!sndfile || !info.frames)
-	{
-		fprintf (stderr, "BJumblr.lv2: Can't open %s.\n", samplepath);
-                // TODO Message to GUI
-		return;
-        }
+        if (!sndfile || !info.frames) throw std::invalid_argument("BJumblr.lv2: Can't open " + std::string(samplepath) + ".");
 
         // Read & render data
         data = (float*) malloc (sizeof(float) * info.frames * info.channels);
         if (!data)
 	{
-		fprintf (stderr, "BJumblr.lv2: Can't allocate memory to load sample %s.\n", path);
-                // TODO Message to GUI
-		return;
-        }
+		sf_close (sndfile);
+		throw std::bad_alloc();
+	}
 
         sf_seek (sndfile, 0, SEEK_SET);
         sf_read_float (sndfile, data, info.frames);
@@ -389,6 +374,8 @@ void BJumblr::run (uint32_t n_samples)
 
 			if (controllers[i] != val)
 			{
+				if ((i == SOURCE) && (val == 0.0)) message.deleteMessage (CANT_OPEN_SAMPLE);
+
 				if (i == STEP_BASE)
 				{
 					if (val == SECONDS)
@@ -672,9 +659,20 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 	const void* pathData = retrieve (handle, uris.notify_samplePath, &size, &type, &valflags);
         if (pathData)
 	{
+		message.deleteMessage (CANT_OPEN_SAMPLE);
 		const char* path = (const char*)pathData;
 		if (sample) delete sample;
-		sample = new Sample (path);
+		try {sample = new Sample (path);}
+		catch (std::bad_alloc &ba)
+		{
+			fprintf (stderr, "BJumblr.lv2: Can't allocate enoug memory to open sample file.\n");
+			message.setMessage (CANT_OPEN_SAMPLE);
+		}
+		catch (std::invalid_argument &ia)
+		{
+			fprintf (stderr, "%s\n", ia.what());
+			message.setMessage (CANT_OPEN_SAMPLE);
+		}
 		scheduleNotifySamplePathToGui = true;
         }
 
@@ -802,7 +800,21 @@ LV2_Worker_Status BJumblr::work (LV2_Worker_Respond_Function respond, LV2_Worker
 
 			if (path && (path->type == uris.atom_Path))
 			{
-				Sample* s = new Sample ((const char*)LV2_ATOM_BODY_CONST(path));
+				message.deleteMessage (CANT_OPEN_SAMPLE);
+				Sample* s = nullptr;
+				try {s = new Sample ((const char*)LV2_ATOM_BODY_CONST(path));}
+				catch (std::bad_alloc &ba)
+				{
+					fprintf (stderr, "BJumblr.lv2: Can't allocate enough memory to open sample file.\n");
+					message.setMessage (CANT_OPEN_SAMPLE);
+					return LV2_WORKER_ERR_NO_SPACE;
+				}
+				catch (std::invalid_argument &ia)
+				{
+					fprintf (stderr, "%s\n", ia.what());
+					message.setMessage (CANT_OPEN_SAMPLE);
+					return LV2_WORKER_ERR_UNKNOWN;
+				}
 				if (s) respond (handle, sizeof(s), &s);
 			}
 

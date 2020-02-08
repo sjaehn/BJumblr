@@ -23,18 +23,20 @@
 
 #include <string>
 
-#define MAXMESSAGES 2
+#define MAXMESSAGES 3
 
 enum MessageNr
 {
-	NO_MSG		= 0,
-	JACK_STOP_MSG	= 1
+	NO_MSG			= 0,
+	JACK_STOP_MSG		= 1,
+	CANT_OPEN_SAMPLE	= 2
 };
 
 const std::string messageStrings[MAXMESSAGES] =
 {
 	"",
-	"Msg: Jack transport off or halted. Plugin halted."
+	"Msg: Jack transport off or halted. Plugin halted.",
+	"Msg: Can't open sample file."
 };
 
 #endif /* MESSAGEDEFINITIONS_HPP_ */

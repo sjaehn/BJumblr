@@ -31,7 +31,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	cursor (0), wheelScrolled (false), padPressed (false), deleteMode (false),
 	samplePath ("."),
 	mContainer (0, 0, 1020, 620, "main"),
-	messageLabel (440, 45, 380, 20, "ctlabel", ""),
+	messageLabel (400, 45, 600, 20, "ctlabel", ""),
 	padSurface (18, 118, 924, 454, "box"),
 	monitorWidget (20, 120, 920, 450, "monitor"),
 	sourceListBox (60, 90, 120, 20, 120, 60, "menu", BItems::ItemList ({{0, "Audio stream"}, {1, "Sample"}}), 0),
@@ -408,7 +408,7 @@ void BJumblrGUI::resize ()
 
 	//Scale widgets
 	RESIZE (mContainer, 0, 0, 1020, 620, sz);
-	RESIZE (messageLabel, 440, 45, 380, 20, sz);
+	RESIZE (messageLabel, 400, 45, 600, 20, sz);
 	RESIZE (padSurface, 18, 118, 924, 454, sz);
 	RESIZE (monitorWidget, 20, 120, 920, 450, sz);
 	RESIZE (sourceListBox, 60, 90, 120, 20, sz);
