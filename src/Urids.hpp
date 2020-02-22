@@ -1,5 +1,5 @@
-/*  B.Jumblr
- * LV2 Plugin
+/* B.Jumblr
+ * Pattern-controlled audio stream / sample re-sequencer LV2 plugin
  *
  * Copyright (C) 2018, 2019 by Sven Jähnichen
  *
@@ -43,7 +43,6 @@ struct BJumblrURIs
 	LV2_URID atom_Long;
 	LV2_URID atom_String;
 	LV2_URID atom_Path;
-	LV2_URID midi_Event;
 	LV2_URID time_Position;
 	LV2_URID time_bar;
 	LV2_URID time_barBeat;
