@@ -1,5 +1,5 @@
-/*  B.Jumblr
- * LV2 Plugin
+/* B.Jumblr
+ * Pattern-controlled audio stream / sample re-sequencer LV2 plugin
  *
  * Copyright (C) 2018 by Sven Jähnichen
  *
@@ -110,7 +110,7 @@ BJumblr::Sample::Sample (const char* samplepath) : info {0, 0, 0, 0, 0, 0}, data
 	}
 
         sf_seek (sndfile, 0, SEEK_SET);
-        sf_read_float (sndfile, data, info.frames);
+        sf_read_float (sndfile, data, info.frames * info.channels);
         sf_close (sndfile);
 
 	int len = strlen (samplepath);
