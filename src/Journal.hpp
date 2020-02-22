@@ -1,5 +1,5 @@
-/* B.SEQuencer
- * MIDI Step Sequencer LV2 Plugin
+/* B.Jumblr
+ * Pattern-controlled audio stream / sample re-sequencer LV2 plugin
  *
  * Copyright (C) 2018, 2019 by Sven Jähnichen
  *
