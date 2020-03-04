@@ -51,7 +51,7 @@ to run it stand-alone and connect it to the JACK system.
 
 From the technical POV B.Jumblr is a sequencer pattern-controlled audio delay effect.
 
-The pattern defines at when (horizontal) and which (vertical) piece of the audio input stream is
+The pattern defines at when (vertical) and which (horizontal) piece of the audio input stream is
 sent to the audio output. Use the default diagonal line pattern for live playback. Moving a pad
 one step to the right results in a one step delayed playback of the respective piece of the audio
 input stream. Each pad (and thus each piece) can be levelled up or down by mouse wheel scrolling.
@@ -69,13 +69,13 @@ Select between (live) audio stream or a sample file as source.
 ### Step sync
 
 B.Jumblr time line automatically synchronizes with the host time/position. Use the button - and +
-to manually shift the time line to the left or the right, respectively. The button < sets the time
+to manually shift the time line down or up, respectively. The button < sets the time
 line to the start of the pattern. The home button can be used to re-synchronize with the host.
 
-### Column (step) edit mode
+### Step edit mode
 
-There are two edit modes. The **ADD** mode allows to place additional pads to a step (or to remove
-them). So you can also set more then one pad per row to produce echo effects or make a canon.
+There are two edit modes. The **ADD** mode allows to place additional pads to a step (row) or to remove
+them. So you can also set more than one pad per column to produce echo effects or make a canon.
 
 In contrast, there is only (exactly) one pad per step allowed in the **REPLACE** mode. Clicking or
 dragging will result in a replacement of the original pad. Note: Deletion of pads (cut) in the
@@ -89,9 +89,16 @@ Note: Jack transport is required in the beats mode and in the bars mode.
 
 ### Pattern size
 
-Defines the total pattern size (= number of steps, = number of rows). You can choose between
+Defines the total pattern size (= number of steps, = number of columns). You can choose between
 predefined pattern sizes from 2 to 32 steps. Alternatively, you can enter any value between 2 and 32
-in a host provided generic GUI.  
+in a host provided generic GUI.
+
+## What's new
+
+* Pattern orientation changed (progression from bottom to top)
+
+## TODO
+* External transport control
 
 
 ## Links

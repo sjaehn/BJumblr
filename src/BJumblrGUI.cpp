@@ -935,8 +935,8 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 		const double height = ui->padSurface.getEffectiveHeight ();
 
 		int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
-		int row = maxstep - 1 - int ((pointerEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
-		int step = (pointerEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
+		int step = maxstep - 1 - int ((pointerEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
+		int row = (pointerEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
 
 		if ((event->getEventType () == BEvents::BUTTON_PRESS_EVENT) || (event->getEventType () == BEvents::POINTER_DRAG_EVENT))
 		{
@@ -994,17 +994,17 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 									{
 										if
 										(
-											(row - r >= 0) &&
-											(row - r < maxstep) &&
-											(step + s >= 0) &&
-											(step + s < maxstep)
+											(row + r >= 0) &&
+											(row + r < maxstep) &&
+											(step - s >= 0) &&
+											(step - s < maxstep)
 										)
 										{
-											if (!ui->validatePad (row - r, step + s, ui->clipBoard.data.at(r).at(s)))
+											if (!ui->validatePad (row + r, step - s, ui->clipBoard.data.at(r).at(s)))
 											{
 												valid = false;
 											}
-											else if (valid) ui->drawPad (row - r, step + s);
+											else if (valid) ui->drawPad (row + r, step - s);
 										}
 									}
 								}
@@ -1059,8 +1059,26 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 					if (clipSMin > clipSMax) std::swap (clipSMin, clipSMax);
 
 					// XFLIP
-					// Validation required for REPLACE mode
+					// No need to validate
 					if (editNr == EDIT_XFLIP)
+					{
+						for (int dr = 0; dr < int ((clipRMax + 1 - clipRMin) / 2); ++dr)
+						{
+							for (int s = clipSMin; s <= clipSMax; ++s)
+							{
+								Pad pd = ui->pattern.getPad (clipRMin + dr, s);
+								ui->pattern.setPad (clipRMin + dr, s, ui->pattern.getPad (clipRMax -dr, s));
+								ui->send_pad (clipRMin + dr, s);
+								ui->pattern.setPad (clipRMax - dr, s, pd);
+								ui->send_pad (clipRMax - dr, s);
+							}
+						}
+						ui->pattern.store ();
+					}
+
+					// YFLIP
+					// Validation required for REPLACE mode
+					if (editNr == EDIT_YFLIP)
 					{
 						// Temp. copy selection
 						Pad pads[clipRMax + 1 - clipRMin][clipSMax + 1 - clipSMin];
@@ -1089,33 +1107,15 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 						ui->pattern.store ();
 					}
 
-					// YFLIP
-					// No need to validate
-					if (editNr == EDIT_YFLIP)
-					{
-						for (int dr = 0; dr < int ((clipRMax + 1 - clipRMin) / 2); ++dr)
-						{
-							for (int s = clipSMin; s <= clipSMax; ++s)
-							{
-								Pad pd = ui->pattern.getPad (clipRMin + dr, s);
-								ui->pattern.setPad (clipRMin + dr, s, ui->pattern.getPad (clipRMax -dr, s));
-								ui->send_pad (clipRMin + dr, s);
-								ui->pattern.setPad (clipRMax - dr, s, pd);
-								ui->send_pad (clipRMax - dr, s);
-							}
-						}
-						ui->pattern.store ();
-					}
-
 					// Store selected data in clipboard after flip (XFLIP, YFLIP)
 					// Or store selected data in clipboard before deletion (CUT)
 					// Or store selected data anyway (COPY)
 					ui->clipBoard.data.clear ();
-					for (int r = clipRMax; r >= clipRMin; --r)
+					for (int r = clipRMin; r <= clipRMax; ++r)
 					{
 						std::vector<Pad> padRow;
 						padRow.clear ();
-						for (int s = clipSMin; s <= clipSMax; ++s) padRow.push_back (ui->pattern.getPad (r, s));
+						for (int s = clipSMax; s >= clipSMin; --s) padRow.push_back (ui->pattern.getPad (r, s));
 						ui->clipBoard.data.push_back (padRow);
 					}
 
@@ -1127,7 +1127,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 						{
 							bool empty = false;
 
-							for (int r = clipRMax; r >= clipRMin; --r)
+							for (int r = clipRMin; r <= clipRMax; ++r)
 							{
 								// Limit action to not empty pads
 								if (ui->pattern.getPad (r, s) != Pad())
@@ -1192,8 +1192,8 @@ void BJumblrGUI::padsScrolledCallback (BEvents::Event* event)
 		const double height = ui->padSurface.getEffectiveHeight ();
 
 		int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
-		int row = (maxstep - 1) - ((int) ((wheelEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep)));
-		int step = (wheelEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
+		int step = maxstep - 1 - int ((wheelEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
+		int row = (wheelEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
 
 		if ((row >= 0) && (row < maxstep) && (step >= 0) && (step < maxstep))
 		{
@@ -1220,8 +1220,8 @@ void BJumblrGUI::padsFocusedCallback (BEvents::Event* event)
 	const double height = ui->padSurface.getEffectiveHeight ();
 
 	int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
-	int row = maxstep - 1 - int ((focusEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
-	int step = (focusEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
+	int step = maxstep - 1 - int ((focusEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
+	int row = (focusEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
 
 	if ((row >= 0) && (row < maxstep) && (step >= 0) && (step < maxstep))
 	{
@@ -1329,8 +1329,8 @@ void BJumblrGUI::drawPad (cairo_t* cr, int row, int step)
 	const double height = padSurface.getEffectiveHeight ();
 	const double w = width / maxstep;
 	const double h = height / maxstep;
-	const double x = step * w;
-	const double y = (maxstep - row - 1) * h;
+	const double x = row * w;
+	const double y = (maxstep - 1 - step) * h;
 	const double xr = round (x);
 	const double yr = round (y);
 	const double wr = round (x + w) - xr;
