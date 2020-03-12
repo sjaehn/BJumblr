@@ -55,7 +55,13 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	padSizeListBox (850, 590, 90, 20, 0, -240, 100, 240, "menu",
 		     BItems::ItemList ({{2, "2 Steps"}, {3, "3 Steps"}, {4, "4 Steps"}, {6, "6 Steps"}, {8, "8 Steps"}, {9, "9 Steps"},
 		     			{12, "12 Steps"}, {16, "16 Steps"}, {18, "18 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16),
-	levelDial (960, 520, 40, 48, "dial", 1.0, 0.0, 1.0, 0.01, "%1.2f"),
+	levelDial (960, 290, 40, 48, "dial", 1.0, 0.0, 1.0, 0.01, "%1.2f"),
+	delayDisplayLabel (960, 380, 40, 20, "smboxlabel", ""),
+	manualProgressionDelayWidget (0, 0, 0, 0, "widget", 0.0, -32.0, 32.0, 0.0),
+	resetDelayButton (958, 408, 44, 22, "widget", "Reset delay"),
+	increaseDelayButton (958, 438, 44, 22, "widget", "Increase delay"),
+	decreaseDelayButton (958, 468, 44, 22, "widget", "Decrease delay"),
+	speedDial (960, 520, 40, 48, "dial", 1.0, 0.0, 4.0, 0.25, "%1.2f"),
 	helpButton (958, 588, 24, 24, "widget", "Help"),
 	ytButton (988, 588, 24, 24, "widget", "Video"),
 	fileChooser (nullptr)
@@ -64,7 +70,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i] = HaloToggleButton (128 + i * 30, 588, 24, 24, "widget", editLabels[i]);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i] = HaloButton (298 + i * 30, 588, 24, 24, "widget", editLabels[i + EDIT_RESET]);
 
-	for (int i = 0; i < 5; ++i) levelButtons[i] = HaloToggleButton (958, 368 + i * 30, 44, 22, "widget", BUtilities::to_string (1.0 - 0.25 * double(i), "%1.2f"));
+	for (int i = 0; i < 5; ++i) levelButtons[i] = HaloToggleButton (958, 138 + i * 30, 44, 22, "widget", BUtilities::to_string (1.0 - 0.25 * double(i), "%1.2f"));
 	levelButtons[0].setValue (1.0);
 
 	// Link controllerWidgets
@@ -74,6 +80,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	controllerWidgets[STEP_SIZE] = (BWidgets::ValueWidget*) &stepSizeListBox;
 	controllerWidgets[STEP_BASE] = (BWidgets::ValueWidget*) &stepBaseListBox;
 	controllerWidgets[STEP_OFFSET] = (BWidgets::ValueWidget*) &syncWidget;
+	controllerWidgets[MANUAL_PROGRSSION_DELAY] = (BWidgets::ValueWidget*) &manualProgressionDelayWidget;
+	controllerWidgets[SPEED] = (BWidgets::ValueWidget*) &speedDial;
 
 	// Init controller values
 	for (int i = 0; i < MAXCONTROLLERS; ++i) controllers[i] = controllerWidgets[i]->getValue ();
@@ -92,6 +100,9 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i].setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, edit2ChangedCallback);
 	for (int i = 0; i < 5; ++i) levelButtons[i].setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, levelChangedCallback);
 	levelDial.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, levelChangedCallback);
+	resetDelayButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, delayButtonsClickedCallback);
+	increaseDelayButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, delayButtonsClickedCallback);
+	decreaseDelayButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, delayButtonsClickedCallback);
 	helpButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, helpButtonClickedCallback);
 	ytButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, ytButtonClickedCallback);
 	loadButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, loadButtonClickedCallback);
@@ -119,8 +130,15 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	{
 		BColors::Color col = BColors::yellow;
 		col.applyBrightness (- 0.25 * double(i));
-		drawButton (bgImageSurface, 960, 370 + i * 30, 40, 18, col);
+		drawButton (bgImageSurface, 960, 140 + i * 30, 40, 18, col);
 	}
+
+	BColors::Color col = BColors::white;
+	col.applyBrightness (- 0.25);
+	drawButton (bgImageSurface, 960, 410, 40, 18, col, BUTTON_HOME_SYMBOL);
+	drawButton (bgImageSurface, 960, 440, 40, 18, col, BUTTON_UP_SYMBOL);
+	drawButton (bgImageSurface, 960, 470, 40, 18, col, BUTTON_DOWN_SYMBOL);
+
 	widgetBg.loadFillFromCairoSurface (bgImageSurface);
 	applyTheme (theme);
 
@@ -147,6 +165,12 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (loadButton);
 	mContainer.add (sampleNameLabel);
 	mContainer.add (levelDial);
+	mContainer.add (delayDisplayLabel);
+	mContainer.add (manualProgressionDelayWidget);
+	mContainer.add (resetDelayButton);
+	mContainer.add (increaseDelayButton);
+	mContainer.add (decreaseDelayButton);
+	mContainer.add (speedDial);
 	mContainer.add (helpButton);
 	mContainer.add (ytButton);
 
@@ -334,10 +358,12 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 			// Status notifications
 			else if (obj->body.otype == uris.notify_statusEvent)
 			{
-				LV2_Atom *oCursor = NULL;
+				LV2_Atom *oCursor = NULL, *oDelay = NULL;
 				lv2_atom_object_get
 				(
-					obj, uris.notify_cursor, &oCursor,
+					obj,
+					uris.notify_cursor, &oCursor,
+					 uris.notify_progressionDelay, &oDelay,
 					NULL
 				);
 
@@ -346,6 +372,14 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 				{
 					cursor = ((LV2_Atom_Int*)oCursor)->body;
 					drawPad ();
+				}
+
+				// Delay notifications
+				if (oDelay && (oDelay->type == uris.atom_Float))
+				{
+					float delay = ((LV2_Atom_Float*)oDelay)->body;
+					std::string delaytxt = BUtilities::to_string (delay, "%5.2f");
+					if (delaytxt != delayDisplayLabel.getText()) delayDisplayLabel.setText (delaytxt);
 				}
 			}
 
@@ -395,6 +429,7 @@ void BJumblrGUI::resize ()
 	ctLabelFont.setFontSize (12 * sz);
 	tgLabelFont.setFontSize (12 * sz);
 	lfLabelFont.setFontSize (12 * sz);
+	smLabelFont.setFontSize (8 * sz);
 
 	//Background
 	cairo_surface_t* surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 1020 * sz, 620 * sz);
@@ -442,8 +477,13 @@ void BJumblrGUI::resize ()
 	padSizeListBox.resizeListBox(BUtilities::Point (90 * sz, 240 * sz));
 	padSizeListBox.moveListBox(BUtilities::Point (0, -240 * sz));
 	padSizeListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
-	for (int i = 0; i < 5; ++i) RESIZE (levelButtons[i], 958, 368 + 30 * i, 44, 22, sz);
-	RESIZE (levelDial, 960, 520, 40, 48, sz);
+	for (int i = 0; i < 5; ++i) RESIZE (levelButtons[i], 958, 138 + 30 * i, 44, 22, sz);
+	RESIZE (levelDial, 960, 290, 40, 48, sz);
+	RESIZE (delayDisplayLabel, 960, 380, 40, 20, sz);
+	RESIZE (increaseDelayButton, 958, 408, 44, 22, sz);
+	RESIZE (increaseDelayButton, 958, 438, 44, 22, sz);
+	RESIZE (decreaseDelayButton, 958, 468, 44, 22, sz);
+	RESIZE (speedDial, 960, 520, 40, 48, sz);
 	RESIZE (helpButton, 958, 588, 24, 24, sz);
 	RESIZE (ytButton, 988, 588, 24, 24, sz);
 	if (fileChooser) RESIZE ((*fileChooser), 200, 120, 300, 400, sz);
@@ -478,6 +518,12 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	padSizeListBox.applyTheme (theme);
 	for (int i = 0; i < 5; ++i) levelButtons[i].applyTheme (theme);
 	levelDial.applyTheme (theme);
+	delayDisplayLabel.applyTheme (theme);
+	manualProgressionDelayWidget.applyTheme (theme);
+	resetDelayButton.applyTheme (theme);
+	increaseDelayButton.applyTheme (theme);
+	decreaseDelayButton.applyTheme (theme);
+	speedDial.applyTheme (theme);
 	helpButton.applyTheme (theme);
 	ytButton.applyTheme (theme);
 	if (fileChooser) fileChooser->applyTheme (theme);
@@ -1291,6 +1337,21 @@ void BJumblrGUI::loadButtonClickedCallback (BEvents::Event* event)
 		RESIZE ((*ui->fileChooser), 200, 120, 300, 400, ui->sz);
 		ui->mContainer.add (*ui->fileChooser);
 	}
+}
+
+void BJumblrGUI::delayButtonsClickedCallback (BEvents::Event* event)
+{
+	if (!event) return;
+	HaloButton* widget = (HaloButton*) event->getWidget ();
+	if (!widget) return;
+	double val = widget->getValue();
+	if (!val) return;
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	if (widget == &ui->resetDelayButton) ui->manualProgressionDelayWidget.setValue (0.0);
+	else if (widget == &ui->increaseDelayButton) ui->manualProgressionDelayWidget.setValue (ui->manualProgressionDelayWidget.getValue() + 1.0);
+	else if (widget == &ui->decreaseDelayButton) ui->manualProgressionDelayWidget.setValue (ui->manualProgressionDelayWidget.getValue() - 1.0);
 }
 
 void BJumblrGUI::helpButtonClickedCallback (BEvents::Event* event) {system(OPEN_CMD " " HELP_URL);}

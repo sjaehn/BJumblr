@@ -61,6 +61,7 @@ struct BJumblrURIs
 	LV2_URID notify_samplePath;
 	LV2_URID notify_statusEvent;
 	LV2_URID notify_cursor;
+	LV2_URID notify_progressionDelay;
 	LV2_URID notify_messageEvent;
 	LV2_URID notify_message;
 	LV2_URID notify_waveformEvent;
@@ -99,6 +100,7 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->notify_samplePath = m->map(m->handle, BJUMBLR_URI "#NOTIFYsamplePath");
 	uris->notify_statusEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYstatusEvent");
 	uris->notify_cursor = m->map(m->handle, BJUMBLR_URI "#NOTIFYcursor");
+	uris->notify_progressionDelay = m->map(m->handle, BJUMBLR_URI "#NOTIFYplaybackDelay");
 	uris->notify_messageEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYmessageEvent");
 	uris->notify_message = m->map(m->handle, BJUMBLR_URI "#NOTIFYmessage");
 	uris->notify_waveformEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYwaveformEvent");

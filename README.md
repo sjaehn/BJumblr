@@ -49,7 +49,8 @@ to run it stand-alone and connect it to the JACK system.
 
 ## Usage
 
-From the technical POV B.Jumblr is a sequencer pattern-controlled audio delay effect.
+B.Jumblr is neither a sample slicer nor a step sequencer. From the technical POV B.Jumblr is a
+sequencer pattern-controlled audio delay effect.
 
 The pattern defines at when (vertical) and which (horizontal) piece of the audio input stream is
 sent to the audio output. Use the default diagonal line pattern for live playback. Moving a pad
@@ -98,7 +99,10 @@ in a host provided generic GUI.
 * Pattern orientation changed (progression from bottom to top)
 
 ## TODO
-* External transport control
+
+* Jump to the start / end of the respective step if playback delay buttons pressed
+* Optional playback delay control via CV port
+* Optimize runSequencer code
 
 
 ## Links

@@ -4,6 +4,14 @@
 #include "BWidgets/cairoplus.h"
 #include "BWidgets/BColors.hpp"
 
+enum ButtonSymbol
+{
+	BUTTON_NO_SYMBOL,
+	BUTTON_UP_SYMBOL,
+	BUTTON_DOWN_SYMBOL,
+	BUTTON_HOME_SYMBOL,
+};
+
 void drawButton (cairo_t* cr, double x, double y, double width, double height, BColors::Color color)
 {
 	if ((width <= 0) || (height <= 0)) return;
@@ -27,6 +35,55 @@ void drawButton (cairo_surface_t* surface, double x, double y, double width, dou
 {
 	cairo_t* cr = cairo_create (surface);
 	drawButton (cr, x, y, width, height, color);
+	cairo_destroy (cr);
+}
+
+void drawButton (cairo_surface_t* surface, double x, double y, double width, double height, BColors::Color color, const ButtonSymbol symbol)
+{
+	cairo_t* cr = cairo_create (surface);
+	drawButton (cr, x, y, width, height, color);
+
+	cairo_set_line_width (cr, 1.0);
+	cairo_set_source_rgba (cr, CAIRO_RGBA (BColors::black));
+
+	switch (symbol)
+	{
+		case BUTTON_UP_SYMBOL:		cairo_move_to (cr, x + width * 0.375, y + height * 0.625);
+						cairo_line_to (cr, x + width * 0.5, y + height * 0.375);
+						cairo_line_to (cr, x + width * 0.625, y + height * 0.625);
+						cairo_stroke (cr);
+						break;
+
+		case BUTTON_DOWN_SYMBOL:	cairo_move_to (cr, x + width * 0.375, y + height * 0.375);
+						cairo_line_to (cr, x + width * 0.5, y + height * 0.625);
+						cairo_line_to (cr, x + width * 0.625, y + height * 0.375);
+						cairo_stroke (cr);
+						break;
+
+		case BUTTON_HOME_SYMBOL:	cairo_move_to (cr, x + width/2, y + height/2 - 0.375 * height);
+						cairo_line_to (cr, x + width/2 + 0.375 * height, y + height/2);
+
+						cairo_move_to (cr, x + width/2 + 0.3 * height, y + height/2 - 0.075 * height);
+						cairo_line_to (cr, x + width/2 + 0.3 * height, y + height/2 + 0.375 * height);
+						cairo_line_to (cr, x + width/2 + 0.3 * height, y + height/2 + 0.375 * height);
+						cairo_line_to (cr, x + width/2, y + height/2 + 0.375 * height);
+						cairo_line_to (cr, x + width/2, y + height/2 + 0.125 * height);
+						cairo_line_to (cr, x + width/2 - 0.15 * height, y + height/2 + 0.125 * height);
+						cairo_line_to (cr, x + width/2 - 0.15 * height, y + height/2 + 0.375 * height);
+						cairo_line_to (cr, x + width/2 - 0.3 * height, y + height/2 + 0.375 * height);
+						cairo_line_to (cr, x + width/2 - 0.3 * height, y + height/2 - 0.075 * height);
+
+						cairo_move_to (cr, x + width/2, y + height/2 - 0.375 * height);
+						cairo_line_to (cr, x + width/2 - 0.15 * height, y + height/2 - 0.225 * height);
+						cairo_line_to (cr, x + width/2 - 0.15 * height, y + height/2 - 0.375 * height);
+						cairo_line_to (cr, x + width/2 - 0.2 * height, y + height/2 - 0.375 * height);
+						cairo_line_to (cr, x + width/2 - 0.2 * height, y + height/2 - 0.175 * height);
+						cairo_line_to (cr, x + width/2 - 0.375 * height, y + height/2);
+						cairo_stroke (cr);
+						break;
+
+		default:			break;
+	}
 	cairo_destroy (cr);
 }
 

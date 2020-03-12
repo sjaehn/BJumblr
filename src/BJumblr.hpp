@@ -111,12 +111,14 @@ private:
 	float controllers [MAXCONTROLLERS];
 	Limit controllerLimits [MAXCONTROLLERS] =
 	{
-		{0, 1, 1},	// SOURCE
-		{0, 2, 1},	// PLAY
-		{2, 32, 1}, 	// NR_OF_STEPS
-		{0, 2, 1},	// STEP_BASE
-		{0.01, 4, 0},	// STEP_SIZE
-		{0, 31, 1}	// STEP_OFFSET
+		{0, 1, 1},		// SOURCE
+		{0, 2, 1},		// PLAY
+		{2, 32, 1}, 		// NR_OF_STEPS
+		{0, 2, 1},		// STEP_BASE
+		{0.01, 4, 0},		// STEP_SIZE
+		{0, 31, 1},		// STEP_OFFSET
+		{-32, 32, 0},		// MANUAL_PROGRSSION_DELAY
+		{0, 4, 0}		// SPEED
 	};
 
 	// Pads
@@ -158,6 +160,8 @@ private:
 	int cursor;
 	double offset;
 	uint64_t refFrame;
+	float progressionDelay;
+	float progressionDelayFrac;
 
 	size_t maxBufferSize;
 	std::vector<float> audioBuffer1;

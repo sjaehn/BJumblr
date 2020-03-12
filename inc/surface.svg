@@ -916,9 +916,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.979899"
-     inkscape:cx="751.73949"
-     inkscape:cy="96.56681"
+     inkscape:zoom="1.1294118"
+     inkscape:cx="510"
+     inkscape:cy="310"
      inkscape:document-units="px"
      inkscape:current-layer="layer2"
      showgrid="true"
@@ -1457,12 +1457,12 @@
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11666656px;line-height:6.61458302px;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffff00;fill-opacity:1;stroke:none;stroke-width:0.26458332;enable-background:new"
        x="255.14928"
-       y="94.810745"
+       y="33.956589"
        id="text922-3-36"><tspan
          sodipodi:role="line"
          id="tspan920-6-7"
          x="255.14928"
-         y="94.810745"
+         y="33.956589"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11666656px;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';fill:#ffff00;stroke-width:0.26458332">Pad level</tspan></text>
     <path
        style="opacity:1;fill:#808080;fill-opacity:1;stroke:none;stroke-width:0.23812498;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
@@ -1559,5 +1559,27 @@
          x="5.1955485"
          y="27.341999"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11666656px;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';fill:#ffff00;stroke-width:0.26458332">Source</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11666656px;line-height:6.61458302px;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffff00;fill-opacity:1;stroke:none;stroke-width:0.26458332;enable-background:new"
+       x="255.14928"
+       y="97.456581"
+       id="text922-3-36-3"><tspan
+         sodipodi:role="line"
+         id="tspan920-6-7-6"
+         x="255.14928"
+         y="97.456581"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11666656px;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';fill:#ffff00;stroke-width:0.26458332">Playback</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11666656px;line-height:6.61458302px;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffff00;fill-opacity:1;stroke:none;stroke-width:0.26458332;enable-background:new"
+       x="256.02054"
+       y="134.49825"
+       id="text922-3-36-3-7"><tspan
+         sodipodi:role="line"
+         id="tspan920-6-7-6-5"
+         x="256.02054"
+         y="134.49825"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11666656px;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans';fill:#ffff00;stroke-width:0.26458332">Speed</tspan></text>
   </g>
 </svg>

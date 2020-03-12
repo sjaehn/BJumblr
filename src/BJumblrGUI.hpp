@@ -109,6 +109,7 @@ private:
 	static void padsFocusedCallback (BEvents::Event* event);
 	static void loadButtonClickedCallback (BEvents::Event* event);
 	static void syncButtonClickedCallback (BEvents::Event* event);
+	static void delayButtonsClickedCallback (BEvents::Event* event);
 	static void helpButtonClickedCallback (BEvents::Event* event);
 	static void ytButtonClickedCallback (BEvents::Event* event);
 	virtual void resize () override;
@@ -195,6 +196,12 @@ private:
 	BWidgets::PopupListBox padSizeListBox;
 	std::array<HaloToggleButton, 5> levelButtons;
 	BWidgets::DialValue levelDial;
+	BWidgets::Label delayDisplayLabel;
+	BWidgets::RangeWidget manualProgressionDelayWidget;
+	HaloButton resetDelayButton;
+	HaloButton increaseDelayButton;
+	HaloButton decreaseDelayButton;
+	BWidgets::DialValue speedDial;
 	HaloButton helpButton;
 	HaloButton ytButton;
 	BWidgets::FileChooser* fileChooser;
@@ -227,6 +234,8 @@ private:
 						   BStyles::TEXT_ALIGN_CENTER, BStyles::TEXT_VALIGN_MIDDLE);
 	BStyles::Font lfLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 12.0,
 						   BStyles::TEXT_ALIGN_LEFT, BStyles::TEXT_VALIGN_MIDDLE);
+	BStyles::Font smLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 8.0,
+						   BStyles::TEXT_ALIGN_CENTER, BStyles::TEXT_VALIGN_MIDDLE);
 	BStyles::StyleSet defaultStyles = {"default", {{"background", STYLEPTR (&BStyles::noFill)},
 					  {"border", STYLEPTR (&BStyles::noBorder)}}};
 	BStyles::StyleSet labelStyles = {"labels", {{"background", STYLEPTR (&BStyles::noFill)},
@@ -256,6 +265,10 @@ private:
 					 {"border", STYLEPTR (&boxlabelborder)},
 					 {"textcolors", STYLEPTR (&BColors::whites)},
  					 {"font", STYLEPTR (&lfLabelFont)}}},
+ 		{"smboxlabel",		{{"background", STYLEPTR (&boxBg)},
+ 					 {"border", STYLEPTR (&boxlabelborder)},
+ 					 {"textcolors", STYLEPTR (&BColors::whites)},
+  					 {"font", STYLEPTR (&smLabelFont)}}},
 		{"button", 		{{"background", STYLEPTR (&BStyles::blackFill)},
 					 {"border", STYLEPTR (&border)}}},
 		{"tgbutton", 		{{"border", STYLEPTR (&BStyles::noBorder)},

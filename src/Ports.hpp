@@ -1,7 +1,7 @@
 /* B.Jumblr
  * Pattern-controlled audio stream / sample re-sequencer LV2 plugin
  *
- * Copyright (C) 2018, 2019 by Sven Jähnichen
+ * Copyright (C) 2018 - 2020 by Sven Jähnichen
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,9 @@ enum PortIndex {
 	STEP_BASE		= 3,
 	STEP_SIZE		= 4,
 	STEP_OFFSET		= 5,
-	MAXCONTROLLERS		= 6
+	MANUAL_PROGRSSION_DELAY	= 6,
+	SPEED			= 7,
+	MAXCONTROLLERS		= 8
 };
 
 enum BaseIndex

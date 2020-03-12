@@ -21,6 +21,7 @@
 #include "BJumblr.hpp"
 
 inline double floorfrac (const double value) {return value - floor (value);}
+inline double floormod (const double numer, const double denom) {return numer - floor(numer / denom) * denom;}
 
 BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	map (NULL), unmap (NULL), workerSchedule (NULL),
@@ -35,6 +36,7 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	rate (samplerate), bpm (120.0f), beatsPerBar (4.0f), beatUnit (0),
 	speed (0.0f), bar (0), barBeat (0.0f),
 	outCapacity (0), position (0.0), cursor (0), offset (0.0), refFrame (0),
+	progressionDelay (0), progressionDelayFrac (0),
 	maxBufferSize (samplerate * 24 * 32),
 	audioBuffer1 (maxBufferSize, 0.0f),
 	audioBuffer2 (maxBufferSize, 0.0f),
@@ -177,11 +179,19 @@ void BJumblr::connect_port (uint32_t port, void *data)
 
 void BJumblr::runSequencer (const int start, const int end)
 {
+
+	int iNrOfSteps = controllers[NR_OF_STEPS];
+	double delay = progressionDelay + controllers[MANUAL_PROGRSSION_DELAY];
+
 	for (int i = start; i < end; ++i)
 	{
 		// Interpolate position within the loop
 		double relpos = getPositionFromFrames (i - refFrame);	// Position relative to reference frame
 		double pos = floorfrac (position + relpos);		// 0..1 position
+
+		// Calculate step
+		double step = floormod (pos * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET] + delay, controllers[NR_OF_STEPS]);	// 0..NR_OF_STEPS position
+		int iStep = step;
 
 		float input1 = 0;
 		float input2 = 0;
@@ -207,10 +217,6 @@ void BJumblr::runSequencer (const int start, const int end)
 
 		if (controllers[PLAY] == 1.0f)	// Play
 		{
-			// Calculate step
-			double step = fmod (pos * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET], controllers[NR_OF_STEPS]);	// 0..NR_OF_STEPS position
-			int iStep = step;
-			int iNrOfSteps = controllers[NR_OF_STEPS];
 			double fracTime = 0;					// Time from start of step
 			switch (int (controllers[STEP_BASE]))
 			{
@@ -242,7 +248,7 @@ void BJumblr::runSequencer (const int start, const int end)
 					float factor = pads[r][iPrevStep].level;
 					if (factor != 0.0)
 					{
-						int stepDiff = (r <= iPrevStep ? iPrevStep - r : iPrevStep + iNrOfSteps - r);
+						int stepDiff = floormod (iPrevStep - r - delay, iNrOfSteps);
 						size_t frame = size_t (maxBufferSize + audioBufferCounter - audioBufferSize * (double (stepDiff) / double (iNrOfSteps))) % maxBufferSize;
 						prevAudio1 += factor * audioBuffer1[frame];
 						prevAudio2 += factor * audioBuffer2[frame];
@@ -259,7 +265,7 @@ void BJumblr::runSequencer (const int start, const int end)
 				float factor = pads[r][iStep].level;
 				if (factor != 0.0)
 				{
-					int stepDiff = (r <= iStep ? iStep - r : iStep + iNrOfSteps - r);
+					int stepDiff = floormod (iStep - r - delay, iNrOfSteps);
 					size_t frame = size_t (maxBufferSize + audioBufferCounter - audioBufferSize * (double (stepDiff) / double (iNrOfSteps))) % maxBufferSize;
 					audio1 += factor * audioBuffer1[frame];
 					audio2 += factor * audioBuffer2[frame];
@@ -289,6 +295,20 @@ void BJumblr::runSequencer (const int start, const int end)
 		{
 			audioOutput1[i] = 0;
 			audioOutput2[i] = 0;
+		}
+
+		// Change step ? Update delaySteps
+		double nextRelpos = getPositionFromFrames (i + 1 - refFrame);
+		double nextPos = floorfrac (position + nextRelpos);
+		double nextStep = floormod (nextPos * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET] + delay, controllers[NR_OF_STEPS]);
+		int nextiStep = nextStep;
+		if (nextiStep != iStep)
+		{
+			progressionDelayFrac += controllers[SPEED] - 1;
+			double floorDelayFrac = floor (progressionDelayFrac);
+			progressionDelay += floorDelayFrac;
+			progressionDelayFrac -= floorDelayFrac;
+			scheduleNotifyStatusToGui = true;
 		}
 
 		// Increment counter
@@ -374,9 +394,17 @@ void BJumblr::run (uint32_t n_samples)
 
 			if (controllers[i] != val)
 			{
-				if ((i == SOURCE) && (val == 0.0)) message.deleteMessage (CANT_OPEN_SAMPLE);
 
-				if (i == STEP_BASE)
+				controllers[i] = val;
+				uint64_t size = getFramesFromValue (controllers[STEP_SIZE] * controllers[NR_OF_STEPS]);
+				audioBufferSize = LIMIT (size, 0, maxBufferSize);
+
+				if (i == SOURCE)
+				{
+					if (val == 0.0) message.deleteMessage (CANT_OPEN_SAMPLE);
+				}
+
+				else if (i == STEP_BASE)
 				{
 					if (val == SECONDS)
 					{
@@ -390,12 +418,8 @@ void BJumblr::run (uint32_t n_samples)
 					}
 				}
 
-				controllers[i] = val;
-				uint64_t size = getFramesFromValue (controllers[STEP_SIZE] * controllers[NR_OF_STEPS]);
-				audioBufferSize = LIMIT (size, 0, maxBufferSize);
-
 				// Also re-calculate waveform buffer for GUI
-				if (i != PLAY)
+				if ((i == SOURCE) || (i == NR_OF_STEPS) || (i == STEP_BASE) || (i == STEP_SIZE) || (i == STEP_OFFSET))
 				{
 					for (size_t i = 0; i < WAVEFORMSIZE; ++i)
 					{
@@ -580,13 +604,17 @@ void BJumblr::run (uint32_t n_samples)
 
 	if (controllers[PLAY])
 	{
-		cursor = int (position * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET]) % int (controllers[NR_OF_STEPS]);
+
+		cursor = floormod
+		(
+			position * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET] + progressionDelay + controllers[MANUAL_PROGRSSION_DELAY],
+			controllers[NR_OF_STEPS]
+		);
+		scheduleNotifyStatusToGui = true;
 	}
 
-	scheduleNotifyStatusToGui = true;
 	if (waveformCounter != lastWaveformCounter) scheduleNotifyWaveformToGui = true;
 
-	// Send notifications to GUI
 	if (ui_on)
 	{
 		if (scheduleNotifyStatusToGui) notifyStatusToGui();
@@ -928,6 +956,10 @@ void BJumblr::notifyStatusToGui ()
 	lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_statusEvent);
 	lv2_atom_forge_key(&notifyForge, uris.notify_cursor);
 	lv2_atom_forge_int(&notifyForge, cursor);
+
+	float delay = progressionDelay + controllers[MANUAL_PROGRSSION_DELAY];
+	lv2_atom_forge_key(&notifyForge, uris.notify_progressionDelay);
+	lv2_atom_forge_float(&notifyForge, delay);
 	lv2_atom_forge_pop(&notifyForge, &frame);
 
 	scheduleNotifyStatusToGui = false;
