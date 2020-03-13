@@ -56,7 +56,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 		     BItems::ItemList ({{2, "2 Steps"}, {3, "3 Steps"}, {4, "4 Steps"}, {6, "6 Steps"}, {8, "8 Steps"}, {9, "9 Steps"},
 		     			{12, "12 Steps"}, {16, "16 Steps"}, {18, "18 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16),
 	levelDial (960, 290, 40, 48, "dial", 1.0, 0.0, 1.0, 0.01, "%1.2f"),
-	delayDisplayLabel (960, 380, 40, 20, "smboxlabel", ""),
+	delayDisplayLabel (958, 380, 44, 20, "smboxlabel", ""),
 	manualProgressionDelayWidget (0, 0, 0, 0, "widget", 0.0, -32.0, 32.0, 0.0),
 	resetDelayButton (958, 408, 44, 22, "widget", "Reset delay"),
 	increaseDelayButton (958, 438, 44, 22, "widget", "Increase delay"),
@@ -479,7 +479,7 @@ void BJumblrGUI::resize ()
 	padSizeListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
 	for (int i = 0; i < 5; ++i) RESIZE (levelButtons[i], 958, 138 + 30 * i, 44, 22, sz);
 	RESIZE (levelDial, 960, 290, 40, 48, sz);
-	RESIZE (delayDisplayLabel, 960, 380, 40, 20, sz);
+	RESIZE (delayDisplayLabel, 958, 380, 44, 20, sz);
 	RESIZE (increaseDelayButton, 958, 408, 44, 22, sz);
 	RESIZE (increaseDelayButton, 958, 438, 44, 22, sz);
 	RESIZE (decreaseDelayButton, 958, 468, 44, 22, sz);
