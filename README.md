@@ -57,6 +57,9 @@ sent to the audio output. Use the default diagonal line pattern for live playbac
 one step to the right results in a one step delayed playback of the respective piece of the audio
 input stream. Each pad (and thus each piece) can be levelled up or down by mouse wheel scrolling.
 
+In addidion, the user can control the playback progession using the playback buttons or the speed
+dial. This is facilitated via the progression delay.
+
 ### Source
 Select between (live) audio stream or a sample file as source.
 
@@ -94,9 +97,18 @@ Defines the total pattern size (= number of steps, = number of columns). You can
 predefined pattern sizes from 2 to 32 steps. Alternatively, you can enter any value between 2 and 32
 in a host provided generic GUI.
 
+### Playback and speed
+
+Controls the progression of the playback. The white buttons reset, increase or decrease the position
+of the white progression line. The speed dial controls the speed of progression. These kinds of
+manipulation of the playback progression are facilitated via the progression delay. The total amount
+of the progression delay is displayed in the panel above the buttons.
+
 ## What's new
 
 * Pattern orientation changed (progression from bottom to top)
+* Control playback progression
+* Control playback progression speed
 
 ## TODO
 
