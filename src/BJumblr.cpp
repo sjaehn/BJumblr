@@ -428,7 +428,7 @@ void BJumblr::run (uint32_t n_samples)
 						size_t acount = (maxBufferSize + audioBufferCounter - audioBufferSize + (i * audioBufferSize) / WAVEFORMSIZE) % maxBufferSize;
 						waveform[wcount] = (audioBuffer1[acount] + (audioBuffer2[acount])) / 2;
 					}
-					notifyWaveformToGui ((waveformCounter + 1) % WAVEFORMSIZE, waveformCounter);
+					if (ui_on) notifyWaveformToGui ((waveformCounter + 1) % WAVEFORMSIZE, waveformCounter);
 				}
 			}
 		}
