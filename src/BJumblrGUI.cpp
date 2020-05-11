@@ -381,11 +381,15 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 				// Cursor notifications
 				if (oCursor && (oCursor->type == uris.atom_Float) && (cursor != ((LV2_Atom_Float*)oCursor)->body))
 				{
+					const int iOldCursor = cursor;
 					cursor = ((LV2_Atom_Float*)oCursor)->body;
-					const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
-					markerFwd.moveTo (0, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10) * sz);
-					markerRev.moveTo (940 * sz, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10) *sz);
-					drawPad ();
+					if (int (cursor) != iOldCursor)
+					{
+						const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
+						markerFwd.moveTo (0, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10) * sz);
+						markerRev.moveTo (940 * sz, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10) *sz);
+						drawPad ();
+					}
 				}
 
 				// Delay notifications
