@@ -183,14 +183,14 @@ void BJumblr::runSequencer (const int start, const int end)
 	int iNrOfSteps = controllers[NR_OF_STEPS];
 	double delay = progressionDelay + controllers[MANUAL_PROGRSSION_DELAY];
 
+	// Calculate start position data
+	double relpos = getPositionFromFrames (start - refFrame);	// Position relative to reference frame
+	double pos = floorfrac (position + relpos);			// 0..1 position
+	double step = floormod (pos * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET] + delay, controllers[NR_OF_STEPS]);	// 0..NR_OF_STEPS position
+
+
 	for (int i = start; i < end; ++i)
 	{
-		// Interpolate position within the loop
-		double relpos = getPositionFromFrames (i - refFrame);	// Position relative to reference frame
-		double pos = floorfrac (position + relpos);		// 0..1 position
-
-		// Calculate step
-		double step = floormod (pos * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET] + delay, controllers[NR_OF_STEPS]);	// 0..NR_OF_STEPS position
 		int iStep = step;
 
 		float input1 = 0;
@@ -297,11 +297,13 @@ void BJumblr::runSequencer (const int start, const int end)
 			audioOutput2[i] = 0;
 		}
 
+		// Calculate next position
+		relpos = getPositionFromFrames (i + 1 - refFrame);
+		pos = floorfrac (position + relpos);
+		step = floormod (pos * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET] + delay, controllers[NR_OF_STEPS]);
+
 		// Change step ? Update delaySteps
-		double nextRelpos = getPositionFromFrames (i + 1 - refFrame);
-		double nextPos = floorfrac (position + nextRelpos);
-		double nextStep = floormod (nextPos * controllers[NR_OF_STEPS] + controllers[STEP_OFFSET] + delay, controllers[NR_OF_STEPS]);
-		int nextiStep = nextStep;
+		int nextiStep = step;
 		if (nextiStep != iStep)
 		{
 			progressionDelayFrac += controllers[SPEED] - 1;
