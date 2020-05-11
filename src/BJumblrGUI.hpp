@@ -55,6 +55,7 @@
 #include "PadMessage.hpp"
 #include "Journal.hpp"
 #include "MonitorWidget.hpp"
+#include "MarkerWidget.hpp"
 
 #define BG_FILE "inc/surface.png"
 #define HELP_URL "https://github.com/sjaehn/BJumblr/blob/master/README.md"
@@ -176,6 +177,8 @@ private:
 	BWidgets::Widget mContainer;
 	BWidgets::Label messageLabel;
 	PadSurface padSurface;
+	MarkerWidget markerFwd;
+	MarkerWidget markerRev;
 	MonitorWidget monitorWidget;
 	BWidgets::PopupListBox sourceListBox;
 	LoadButton loadButton;

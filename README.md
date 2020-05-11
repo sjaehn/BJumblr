@@ -9,7 +9,7 @@ Description: B.Jumblr is a pattern-controlled audio stream / sample re-sequencer
 ## Installation
 
 a) Install the bjumblr package for your system
-* [Arch user repository](https://aur.archlinux.org/packages/bjumblr.lv2-git) by Milk Brewster
+* [Arch user repository](https://aur.archlinux.org/packages/bjumblr.lv2-git) by Milkii Brewster
 * Check https://repology.org/project/bjumblr/versions for other systems
 
 b) Build your own binaries in the following three steps.
@@ -55,7 +55,7 @@ sequencer pattern-controlled audio delay effect.
 The pattern defines at when (vertical) and which (horizontal) piece of the audio input stream is
 sent to the audio output. Use the default diagonal line pattern for live playback. Moving a pad
 one step to the right results in a one step delayed playback of the respective piece of the audio
-input stream. Each pad (and thus each piece) can be levelled up or down by mouse wheel scrolling.
+input stream. Each pad (and thus each piece) can be leveled up or down by mouse wheel scrolling.
 
 In addidion, the user can control the playback progession using the playback buttons or the speed
 dial. This is facilitated via the progression delay.
@@ -73,8 +73,9 @@ Select between (live) audio stream or a sample file as source.
 ### Step sync
 
 B.Jumblr time line automatically synchronizes with the host time/position. Use the button - and +
-to manually shift the time line down or up, respectively. The button < sets the time
-line to the start of the pattern. The home button can be used to re-synchronize with the host.
+to manually shift the time line (shown by the yellow markers left and right to the pattern)
+down or up, respectively. The button < sets the time line to the start of the pattern. The home
+button can be used to re-synchronize with the host.
 
 ### Step edit mode
 
@@ -99,22 +100,29 @@ in a host provided generic GUI.
 
 ### Playback and speed
 
-Controls the progression of the playback. The white buttons reset, increase or decrease the position
-of the white progression line. The speed dial controls the speed of progression. These kinds of
-manipulation of the playback progression are facilitated via the progression delay. The total amount
-of the progression delay is displayed in the panel above the buttons.
+Controls the progression of the pattern. The white buttons reset, increase or decrease the position
+of the progression line represented by the yellow markers left and right to the pattern. The speed
+dial controls the speed of progression. These kinds of manipulation of the pattern progression are
+facilitated via the progression delay. The total amount of the progression delay is displayed in the
+panel above the buttons.
 
 ## What's new
 
 * Pattern orientation changed (progression from bottom to top)
-* Control playback progression
-* Control playback progression speed
+* Distinguish between pattern progression (horizontal yellow markers) and playback (vertical white line)
+* Control pattern progression
+* Control pattern progression speed
 
 ## TODO
 
 * Jump to the start / end of the respective step if playback delay buttons pressed
-* Optional playback delay control via CV port
 * Optimize runSequencer code
+
+
+## Acknowledgments
+
+* Milkii Brewster for ideas about principle and features
+* Rob van den Berg for the idea of the plugin name
 
 
 ## Links

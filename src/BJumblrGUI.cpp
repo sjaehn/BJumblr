@@ -33,6 +33,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer (0, 0, 1020, 620, "main"),
 	messageLabel (400, 45, 600, 20, "ctlabel", ""),
 	padSurface (18, 118, 924, 454, "box"),
+	markerFwd (0, 120 + 15.5 * (450.0 / 16.0) - 10, 20, 20, "widget", MARKER_FWD),
+	markerRev (940, 120 + 15.5 * (450.0 / 16.0) - 10, 20, 20, "widget", MARKER_REV),
 	monitorWidget (20, 120, 920, 450, "monitor"),
 	sourceListBox (60, 90, 120, 20, 120, 60, "menu", BItems::ItemList ({{0, "Audio stream"}, {1, "Sample"}}), 0),
 	loadButton (200, 90, 20, 20, "menu/button"),
@@ -159,6 +161,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (stepBaseListBox);
 	mContainer.add (padSizeListBox);
 	mContainer.add (padSurface);
+	mContainer.add (markerFwd);
+	mContainer.add (markerRev);
 	mContainer.add (monitorWidget);
 	for (int i = 0; i < 5; ++i) mContainer.add (levelButtons[i]);
 	mContainer.add (sourceListBox);
@@ -371,6 +375,9 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 				if (oCursor && (oCursor->type == uris.atom_Int) && (cursor != ((LV2_Atom_Int*)oCursor)->body))
 				{
 					cursor = ((LV2_Atom_Int*)oCursor)->body;
+					const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
+					markerFwd.moveTo (0, (120 + (maxstep - 0.5 - cursor) * (450.0 / maxstep) - 10) * sz);
+					markerRev.moveTo (940 * sz, (120 + (maxstep - 0.5 - cursor) * (450.0 / maxstep) - 10) *sz);
 					drawPad ();
 				}
 
@@ -445,6 +452,9 @@ void BJumblrGUI::resize ()
 	RESIZE (mContainer, 0, 0, 1020, 620, sz);
 	RESIZE (messageLabel, 400, 45, 600, 20, sz);
 	RESIZE (padSurface, 18, 118, 924, 454, sz);
+	const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
+	RESIZE (markerFwd, 0, (120 + (maxstep - 0.5 - cursor) * (450.0 / maxstep) - 10), 20, 20, sz);
+	RESIZE (markerRev, 940, (120 + (maxstep - 0.5 - cursor) * (450.0 / maxstep) - 10), 20, 20, sz);
 	RESIZE (monitorWidget, 20, 120, 920, 450, sz);
 	RESIZE (sourceListBox, 60, 90, 120, 20, sz);
 	sourceListBox.resizeListBox (BUtilities::Point (120 * sz, 60 * sz));
@@ -498,6 +508,8 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	mContainer.applyTheme (theme);
 	messageLabel.applyTheme (theme);
 	padSurface.applyTheme (theme);
+	markerFwd.applyTheme (theme);
+	markerRev.applyTheme (theme);
 	monitorWidget.applyTheme (theme);
 	sourceListBox.applyTheme (theme);
 	loadButton.applyTheme (theme);
@@ -1417,9 +1429,10 @@ void BJumblrGUI::drawPad (cairo_t* cr, int row, int step)
 
 	// Draw pad
 	Pad pd = pattern.getPad (row, step);
+	Pad pdc = pattern.getPad (row, cursor);
 	BColors::Color color = BColors::yellow;
 	color.applyBrightness (pd.level - 1.0);
-	if (cursor == step) color.applyBrightness (0.75);
+	if (pdc.level != 0.0) color.applyBrightness (pdc.level * 0.75);
 	drawButton (cr, xr + 1, yr + 1, wr - 2, hr - 2, color);
 }
 
