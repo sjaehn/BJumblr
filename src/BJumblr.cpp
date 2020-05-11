@@ -35,7 +35,7 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	editMode (0), pads {Pad()}, sample (nullptr),
 	rate (samplerate), bpm (120.0f), beatsPerBar (4.0f), beatUnit (0),
 	speed (0.0f), bar (0), barBeat (0.0f),
-	outCapacity (0), position (0.0), cursor (0), offset (0.0), refFrame (0),
+	outCapacity (0), position (0.0), cursor (0.0f), offset (0.0), refFrame (0),
 	progressionDelay (0), progressionDelayFrac (0),
 	maxBufferSize (samplerate * 24 * 32),
 	audioBuffer1 (maxBufferSize, 0.0f),
@@ -955,7 +955,7 @@ void BJumblr::notifyStatusToGui ()
 	lv2_atom_forge_frame_time(&notifyForge, 0);
 	lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_statusEvent);
 	lv2_atom_forge_key(&notifyForge, uris.notify_cursor);
-	lv2_atom_forge_int(&notifyForge, cursor);
+	lv2_atom_forge_float(&notifyForge, cursor);
 
 	float delay = progressionDelay + controllers[MANUAL_PROGRSSION_DELAY];
 	lv2_atom_forge_key(&notifyForge, uris.notify_progressionDelay);

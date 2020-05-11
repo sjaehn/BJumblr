@@ -22,6 +22,9 @@
 #include "BUtilities/to_string.hpp"
 #include "MessageDefinitions.hpp"
 
+inline double floorfrac (const double value) {return value - floor (value);}
+inline double floormod (const double numer, const double denom) {return numer - floor(numer / denom) * denom;}
+
 BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow) :
 	Window (1020, 620, "B.Jumblr", parentWindow, true),
 	controller (NULL), write_function (NULL),
@@ -58,12 +61,13 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 		     BItems::ItemList ({{2, "2 Steps"}, {3, "3 Steps"}, {4, "4 Steps"}, {6, "6 Steps"}, {8, "8 Steps"}, {9, "9 Steps"},
 		     			{12, "12 Steps"}, {16, "16 Steps"}, {18, "18 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16),
 	levelDial (960, 290, 40, 48, "dial", 1.0, 0.0, 1.0, 0.01, "%1.2f"),
-	delayDisplayLabel (958, 380, 44, 20, "smboxlabel", ""),
+	delayDisplayLabel (958, 370, 44, 20, "smboxlabel", ""),
 	manualProgressionDelayWidget (0, 0, 0, 0, "widget", 0.0, -32.0, 32.0, 0.0),
-	resetDelayButton (958, 408, 44, 22, "widget", "Reset delay"),
-	increaseDelayButton (958, 438, 44, 22, "widget", "Increase delay"),
-	decreaseDelayButton (958, 468, 44, 22, "widget", "Decrease delay"),
-	speedDial (960, 520, 40, 48, "dial", 1.0, 0.0, 4.0, 0.25, "%1.2f"),
+	resetDelayButton (958, 398, 44, 22, "widget", "Reset delay"),
+	increaseDelayButton (958, 428, 44, 22, "widget", "Increase delay"),
+	decreaseDelayButton (958, 488, 44, 22, "widget", "Decrease delay"),
+	setStartDelayButton (958, 458, 44, 22, "widget", "Delay to start"),
+	speedDial (960, 530, 40, 48, "dial", 1.0, 0.0, 4.0, 0.25, "%1.2f"),
 	helpButton (958, 588, 24, 24, "widget", "Help"),
 	ytButton (988, 588, 24, 24, "widget", "Video"),
 	fileChooser (nullptr)
@@ -105,6 +109,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	resetDelayButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, delayButtonsClickedCallback);
 	increaseDelayButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, delayButtonsClickedCallback);
 	decreaseDelayButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, delayButtonsClickedCallback);
+	setStartDelayButton.setCallbackFunction (BEvents::VALUE_CHANGED_EVENT, delayButtonsClickedCallback);
 	helpButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, helpButtonClickedCallback);
 	ytButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, ytButtonClickedCallback);
 	loadButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, loadButtonClickedCallback);
@@ -137,9 +142,10 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 
 	BColors::Color col = BColors::white;
 	col.applyBrightness (- 0.25);
-	drawButton (bgImageSurface, 960, 410, 40, 18, col, BUTTON_HOME_SYMBOL);
-	drawButton (bgImageSurface, 960, 440, 40, 18, col, BUTTON_UP_SYMBOL);
-	drawButton (bgImageSurface, 960, 470, 40, 18, col, BUTTON_DOWN_SYMBOL);
+	drawButton (bgImageSurface, 960, 400, 40, 18, col, BUTTON_HOME_SYMBOL);
+	drawButton (bgImageSurface, 960, 430, 40, 18, col, BUTTON_UP_SYMBOL);
+	drawButton (bgImageSurface, 960, 490, 40, 18, col, BUTTON_DOWN_SYMBOL);
+	drawButton (bgImageSurface, 960, 460, 40, 18, col, BUTTON_BOTTOM_SYMBOL);
 
 	widgetBg.loadFillFromCairoSurface (bgImageSurface);
 	applyTheme (theme);
@@ -174,6 +180,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (resetDelayButton);
 	mContainer.add (increaseDelayButton);
 	mContainer.add (decreaseDelayButton);
+	mContainer.add (setStartDelayButton);
 	mContainer.add (speedDial);
 	mContainer.add (helpButton);
 	mContainer.add (ytButton);
@@ -367,17 +374,17 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 				(
 					obj,
 					uris.notify_cursor, &oCursor,
-					 uris.notify_progressionDelay, &oDelay,
+					uris.notify_progressionDelay, &oDelay,
 					NULL
 				);
 
 				// Cursor notifications
-				if (oCursor && (oCursor->type == uris.atom_Int) && (cursor != ((LV2_Atom_Int*)oCursor)->body))
+				if (oCursor && (oCursor->type == uris.atom_Float) && (cursor != ((LV2_Atom_Float*)oCursor)->body))
 				{
-					cursor = ((LV2_Atom_Int*)oCursor)->body;
+					cursor = ((LV2_Atom_Float*)oCursor)->body;
 					const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
-					markerFwd.moveTo (0, (120 + (maxstep - 0.5 - cursor) * (450.0 / maxstep) - 10) * sz);
-					markerRev.moveTo (940 * sz, (120 + (maxstep - 0.5 - cursor) * (450.0 / maxstep) - 10) *sz);
+					markerFwd.moveTo (0, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10) * sz);
+					markerRev.moveTo (940 * sz, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10) *sz);
 					drawPad ();
 				}
 
@@ -453,8 +460,8 @@ void BJumblrGUI::resize ()
 	RESIZE (messageLabel, 400, 45, 600, 20, sz);
 	RESIZE (padSurface, 18, 118, 924, 454, sz);
 	const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
-	RESIZE (markerFwd, 0, (120 + (maxstep - 0.5 - cursor) * (450.0 / maxstep) - 10), 20, 20, sz);
-	RESIZE (markerRev, 940, (120 + (maxstep - 0.5 - cursor) * (450.0 / maxstep) - 10), 20, 20, sz);
+	RESIZE (markerFwd, 0, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10), 20, 20, sz);
+	RESIZE (markerRev, 940, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10), 20, 20, sz);
 	RESIZE (monitorWidget, 20, 120, 920, 450, sz);
 	RESIZE (sourceListBox, 60, 90, 120, 20, sz);
 	sourceListBox.resizeListBox (BUtilities::Point (120 * sz, 60 * sz));
@@ -489,11 +496,12 @@ void BJumblrGUI::resize ()
 	padSizeListBox.resizeListBoxItems(BUtilities::Point (90 * sz, 20 * sz));
 	for (int i = 0; i < 5; ++i) RESIZE (levelButtons[i], 958, 138 + 30 * i, 44, 22, sz);
 	RESIZE (levelDial, 960, 290, 40, 48, sz);
-	RESIZE (delayDisplayLabel, 958, 380, 44, 20, sz);
-	RESIZE (increaseDelayButton, 958, 408, 44, 22, sz);
-	RESIZE (increaseDelayButton, 958, 438, 44, 22, sz);
-	RESIZE (decreaseDelayButton, 958, 468, 44, 22, sz);
-	RESIZE (speedDial, 960, 520, 40, 48, sz);
+	RESIZE (delayDisplayLabel, 958, 370, 44, 20, sz);
+	RESIZE (increaseDelayButton, 958, 398, 44, 22, sz);
+	RESIZE (increaseDelayButton, 958, 428, 44, 22, sz);
+	RESIZE (decreaseDelayButton, 958, 488, 44, 22, sz);
+	RESIZE (setStartDelayButton, 958, 458, 44, 22, sz);
+	RESIZE (speedDial, 960, 530, 40, 48, sz);
 	RESIZE (helpButton, 958, 588, 24, 24, sz);
 	RESIZE (ytButton, 988, 588, 24, 24, sz);
 	if (fileChooser) RESIZE ((*fileChooser), 200, 120, 300, 400, sz);
@@ -535,6 +543,7 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	resetDelayButton.applyTheme (theme);
 	increaseDelayButton.applyTheme (theme);
 	decreaseDelayButton.applyTheme (theme);
+	setStartDelayButton.applyTheme (theme);
 	speedDial.applyTheme (theme);
 	helpButton.applyTheme (theme);
 	ytButton.applyTheme (theme);
@@ -1306,7 +1315,7 @@ void BJumblrGUI::syncButtonClickedCallback(BEvents::Event* event)
 
 	if (widget == &ui->zeroStepOffsetButton)
 	{
-		offset = (int (ui->controllers[NR_OF_STEPS] - ui->cursor + ui->controllers[STEP_OFFSET])) % int (ui->controllers[NR_OF_STEPS]);
+		offset = (int (ui->controllers[NR_OF_STEPS] - int (ui->cursor) + ui->controllers[STEP_OFFSET])) % int (ui->controllers[NR_OF_STEPS]);
 	}
 
 	else if (widget == &ui->decStepOffsetButton)
@@ -1364,6 +1373,17 @@ void BJumblrGUI::delayButtonsClickedCallback (BEvents::Event* event)
 	if (widget == &ui->resetDelayButton) ui->manualProgressionDelayWidget.setValue (0.0);
 	else if (widget == &ui->increaseDelayButton) ui->manualProgressionDelayWidget.setValue (ui->manualProgressionDelayWidget.getValue() + 1.0);
 	else if (widget == &ui->decreaseDelayButton) ui->manualProgressionDelayWidget.setValue (ui->manualProgressionDelayWidget.getValue() - 1.0);
+	else if (widget == &ui->setStartDelayButton)
+	{
+		ui->manualProgressionDelayWidget.setValue
+		(
+			floormod
+			(
+				ui->manualProgressionDelayWidget.getValue() - floorfrac (ui->cursor),
+				ui->controllerWidgets[NR_OF_STEPS]->getValue ()
+			)
+		);
+	}
 }
 
 void BJumblrGUI::helpButtonClickedCallback (BEvents::Event* event) {system(OPEN_CMD " " HELP_URL);}

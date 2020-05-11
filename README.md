@@ -70,12 +70,11 @@ Select between (live) audio stream or a sample file as source.
 * **Scroll**: Increase or decrease pad value
 * **Shift scroll**: Resize waveform
 
-### Step sync
+### Calibration
 
 B.Jumblr time line automatically synchronizes with the host time/position. Use the button - and +
-to manually shift the time line (shown by the yellow markers left and right to the pattern)
-down or up, respectively. The button < sets the time line to the start of the pattern. The home
-button can be used to re-synchronize with the host.
+to manually shift the whole sample /stream. The button < sets the current sample to the start of
+the pattern. The home button can be used to re-synchronize with the host.
 
 ### Step edit mode
 
@@ -100,22 +99,21 @@ in a host provided generic GUI.
 
 ### Playback and speed
 
-Controls the progression of the pattern. The white buttons reset, increase or decrease the position
-of the progression line represented by the yellow markers left and right to the pattern. The speed
-dial controls the speed of progression. These kinds of manipulation of the pattern progression are
-facilitated via the progression delay. The total amount of the progression delay is displayed in the
+Controls the progression of the pattern. These buttons do not shift the sample /stream (in contrast to
+calibration). The white buttons modify the position (reset, increase, difference to start of the step,
+or increase) of the pattern progression represented by the yellow markers left and right to the pattern.
+The speed dial controls the speed of progression. These kinds of manipulation of the pattern progression
+are facilitated via the progression delay. The total amount of the progression delay is displayed in the
 panel above the buttons.
 
 ## What's new
 
-* Pattern orientation changed (progression from bottom to top)
 * Distinguish between pattern progression (horizontal yellow markers) and playback (vertical white line)
-* Control pattern progression
-* Control pattern progression speed
+* Jump to the start of the respective step if "delay to start" button pressed
+
 
 ## TODO
 
-* Jump to the start / end of the respective step if playback delay buttons pressed
 * Optimize runSequencer code
 
 

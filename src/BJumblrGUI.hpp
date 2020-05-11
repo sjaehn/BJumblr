@@ -166,7 +166,7 @@ private:
 	ClipBoard clipBoard;
 
 	// Cursor
-	int cursor;
+	float cursor;
 	bool wheelScrolled;
 	bool padPressed;
 	bool deleteMode;
@@ -204,6 +204,7 @@ private:
 	HaloButton resetDelayButton;
 	HaloButton increaseDelayButton;
 	HaloButton decreaseDelayButton;
+	HaloButton setStartDelayButton;
 	BWidgets::DialValue speedDial;
 	HaloButton helpButton;
 	HaloButton ytButton;

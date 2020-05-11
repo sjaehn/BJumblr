@@ -3,12 +3,14 @@
 
 #include "BWidgets/cairoplus.h"
 #include "BWidgets/BColors.hpp"
+#include <cmath>
 
 enum ButtonSymbol
 {
 	BUTTON_NO_SYMBOL,
 	BUTTON_UP_SYMBOL,
 	BUTTON_DOWN_SYMBOL,
+	BUTTON_BOTTOM_SYMBOL,
 	BUTTON_HOME_SYMBOL,
 };
 
@@ -57,6 +59,15 @@ void drawButton (cairo_surface_t* surface, double x, double y, double width, dou
 		case BUTTON_DOWN_SYMBOL:	cairo_move_to (cr, x + width * 0.375, y + height * 0.375);
 						cairo_line_to (cr, x + width * 0.5, y + height * 0.625);
 						cairo_line_to (cr, x + width * 0.625, y + height * 0.375);
+						cairo_stroke (cr);
+						break;
+
+		case BUTTON_BOTTOM_SYMBOL:	cairo_move_to (cr, x + width * 0.375, y + height * 0.375);
+						cairo_arc (cr, x + width * 0.5, y + height * 0.5, 0.125 * height, - 0.5 * M_PI, 0.5 * M_PI);
+						cairo_line_to (cr, x + width * 0.375, y + height * 0.625);
+						cairo_move_to (cr, x + width * 0.5, y + height * 0.5);
+						cairo_line_to (cr, x + width * 0.375, y + height * 0.625);
+						cairo_line_to (cr, x + width * 0.5, y + height * 0.75);
 						cairo_stroke (cr);
 						break;
 

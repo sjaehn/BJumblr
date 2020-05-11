@@ -157,7 +157,7 @@ private:
 
 	// Position data
 	double position;
-	int cursor;
+	float cursor;
 	double offset;
 	uint64_t refFrame;
 	float progressionDelay;
