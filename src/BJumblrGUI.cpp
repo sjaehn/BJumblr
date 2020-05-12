@@ -1435,7 +1435,12 @@ void BJumblrGUI::drawPad (cairo_t* cr, int row, int step)
 
 	// Draw background
 	// Odd or even?
-	BColors::Color bg = ((int (step / 4) % 2) ? oddPadBgColor : evenPadBgColor);
+	BColors::Color bg =
+	(
+		int (cursor) == step ?
+		BColors::Color (0.25, 0.25, 0.0, 1.0) :
+		((int (row / 4) % 2) ? oddPadBgColor : evenPadBgColor)
+	);
 
 	// Highlight selection
 	int clipRMin = clipBoard.origin.first;
