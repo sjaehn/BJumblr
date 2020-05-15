@@ -10,6 +10,7 @@ Description: B.Jumblr is a pattern-controlled audio stream / sample re-sequencer
 
 a) Install the bjumblr package for your system
 * [Arch user repository](https://aur.archlinux.org/packages/bjumblr.lv2-git) by Milkii Brewster
+* [FreeBSD](https://www.freshports.org/audio/bjumblr-lv2) by yurivict
 * Check https://repology.org/project/bjumblr/versions for other systems
 
 b) Build your own binaries in the following three steps.
@@ -53,9 +54,10 @@ B.Jumblr is neither a sample slicer nor a step sequencer. From the technical POV
 sequencer pattern-controlled audio delay effect.
 
 The pattern defines at when (vertical) and which (horizontal) piece of the audio input stream is
-sent to the audio output. Use the default diagonal line pattern for live playback. Moving a pad
-one step to the right results in a one step delayed playback of the respective piece of the audio
-input stream. Each pad (and thus each piece) can be leveled up or down by mouse wheel scrolling.
+sent to the audio output. Use the default diagonal line (zero delay line) pattern for live
+playback. Moving a pad one step to the right results in a one step delayed playback of the
+respective piece of the audio input stream. Each pad (and thus each piece) can be leveled up or
+down by mouse wheel scrolling.
 
 In addidion, the user can control the playback progession using the playback buttons or the speed
 dial. This is facilitated via the progression delay.
@@ -103,8 +105,8 @@ Controls the progression of the pattern. These buttons do not shift the sample /
 calibration). The white buttons modify the position (reset, increase, difference to start of the step,
 or increase) of the pattern progression represented by the yellow markers left and right to the pattern.
 The speed dial controls the speed of progression. These kinds of manipulation of the pattern progression
-are facilitated via the progression delay. The total amount of the progression delay is displayed in the
-panel above the buttons.
+are facilitated via the progression delay. The total amount of the progression delay (= delay buttons +
+speed-induced delay) is displayed in the panel above the buttons.
 
 ## What's new
 
@@ -112,15 +114,10 @@ panel above the buttons.
 * Jump to the start of the respective step if "delay to start" button pressed
 
 
-## TODO
-
-* Optimize runSequencer code
-
-
 ## Acknowledgments
 
 * Milkii Brewster for ideas about principle and features
-* Rob van den Berg for the idea of the plugin name
+* Rob van den Berg for the plugin name
 
 
 ## Links

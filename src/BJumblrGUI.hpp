@@ -59,7 +59,7 @@
 
 #define BG_FILE "inc/surface.png"
 #define HELP_URL "https://github.com/sjaehn/BJumblr/blob/master/README.md"
-#define YT_URL "https://www.youtube.com/watch?v=n3LrpOD8MrI"
+#define YT_URL "https://www.youtube.com/watch?v=DFSi7TMqvMw"
 #define OPEN_CMD "xdg-open"
 #define MAXUNDO 20
 

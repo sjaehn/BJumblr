@@ -69,7 +69,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	setStartDelayButton (958, 458, 44, 22, "widget", "Delay to start"),
 	speedDial (960, 530, 40, 48, "dial", 1.0, 0.0, 4.0, 0.25, "%1.2f"),
 	helpButton (958, 588, 24, 24, "widget", "Help"),
-	ytButton (988, 588, 24, 24, "widget", "Video"),
+	ytButton (988, 588, 24, 24, "widget", "Tutorial"),
 	fileChooser (nullptr)
 {
 	// Init editButtons
