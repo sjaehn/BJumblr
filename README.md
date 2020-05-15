@@ -121,4 +121,4 @@ speed-induced delay) is displayed in the panel above the buttons.
 
 
 ## Links
-* Preview video: https://www.youtube.com/watch?v=n3LrpOD8MrI
+* Tutorial video: https://www.youtube.com/watch?v=DFSi7TMqvMw
