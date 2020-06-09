@@ -19,6 +19,7 @@
  */
 
 #include "BJumblr.hpp"
+#include <stdexcept>
 
 inline double floorfrac (const double value) {return value - floor (value);}
 inline double floormod (const double numer, const double denom) {return numer - floor(numer / denom) * denom;}
