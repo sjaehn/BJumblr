@@ -27,7 +27,7 @@
         rdfs:comment "B.Jumblr is a pattern-controlled audio stream / sample re-sequencer LV2 plugin." ;
 	doap:name "B.Jumblr" ;
 	doap:license <http://usefulinc.com/doap/licenses/gpl>;
-	lv2:microVersion 1 ;
+	lv2:microVersion 2 ;
 	lv2:minorVersion 2 ;
         doap:maintainer <http://www.jahnichen.de/sjaehn#me> ;
         lv2:optionalFeature lv2:hardRTCapable ;

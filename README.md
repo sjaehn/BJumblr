@@ -112,6 +112,7 @@ speed-induced delay) is displayed in the panel above the buttons.
 
 * Distinguish between pattern progression (horizontal yellow markers) and playback (vertical white line)
 * Jump to the start of the respective step if "delay to start" button pressed
+* gcc10/std compatibility
 
 
 ## Acknowledgments
