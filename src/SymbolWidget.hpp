@@ -22,6 +22,8 @@
 #define SYMBOLWIDGET_HPP_
 
 #include "BWidgets/Widget.hpp"
+#include "BWidgets/Label.hpp"
+#include "BWidgets/Focusable.hpp"
 
 enum SWSymbol
 {
@@ -33,32 +35,93 @@ enum SWSymbol
         PLAYSYMBOL      = 4
 };
 
-class SymbolWidget : public BWidgets::Widget
+const std::string symboltxt[6] = {"", "Insert", "Delete", "Move backward", "Move forward", "Play"};
+
+class SymbolWidget : public BWidgets::Widget, public BWidgets::Focusable
 {
 protected:
-        BColors::ColorSet fgColors;
-        SWSymbol symbol;
+        BColors::ColorSet fgColors_;
+        SWSymbol symbol_;
+        BWidgets::Label focusLabel_;
 
 public:
         SymbolWidget () : SymbolWidget (0.0, 0.0, 0.0, 0.0, "symbol", NOSYMBOL) {}
         SymbolWidget (const double x, const double y, const double width, const double height, const std::string& name, SWSymbol symbol) :
                 Widget (x, y, width, height, name),
-                fgColors (BColors::whites),
-                symbol (symbol) {}
+                Focusable (std::chrono::milliseconds (BWIDGETS_DEFAULT_FOCUS_IN_MS),
+			   std::chrono::milliseconds (BWIDGETS_DEFAULT_FOCUS_OUT_MS)),
+                fgColors_ (BColors::whites),
+                symbol_ (symbol),
+                focusLabel_ (0, 0, 80, 20, name_ + BWIDGETS_DEFAULT_FOCUS_NAME, symboltxt[symbol + 1])
+        {
+                focusLabel_.setOversize (true);
+   		focusLabel_.resize ();
+   		focusLabel_.hide ();
+   		add (focusLabel_);
+        }
+
+        SymbolWidget (const SymbolWidget& that) :
+		Widget (that), Focusable (that),
+                fgColors_ (that.fgColors_),
+                symbol_ (that.symbol_),
+		focusLabel_ (that.focusLabel_)
+	{
+		focusLabel_.hide();
+		add (focusLabel_);
+	}
+
+	SymbolWidget& operator= (const SymbolWidget& that)
+	{
+		release (&focusLabel_);
+		focusLabel_ = that.focusLabel_;
+		focusLabel_.hide();
+
+                fgColors_ = that.fgColors_;
+                symbol_ = that.symbol_;
+
+		Widget::operator= (that);
+		Focusable::operator= (that);
+
+		add (focusLabel_);
+
+		return *this;
+
+	}
+
+	virtual BWidgets::Widget* clone () const override {return new SymbolWidget (*this);}
 
 	virtual void applyTheme (BStyles::Theme& theme, const std::string& name) override
         {
                 Widget::applyTheme (theme, name);
+                focusLabel_.applyTheme (theme, name + BWIDGETS_DEFAULT_FOCUS_NAME);
+		focusLabel_.resize();
 
         	void* colorsPtr = theme.getStyle(name, BWIDGETS_KEYWORD_FGCOLORS);
         	if (colorsPtr)
                 {
-                        fgColors = *((BColors::ColorSet*) colorsPtr);
+                        fgColors_ = *((BColors::ColorSet*) colorsPtr);
                         update ();
                 }
         }
 
         virtual void applyTheme (BStyles::Theme& theme) override {applyTheme (theme, name_);}
+
+        virtual void onFocusIn (BEvents::FocusEvent* event) override
+	{
+		if (event && event->getWidget())
+		{
+			BUtilities::Point pos = event->getPosition();
+			focusLabel_.moveTo (pos.x - 0.5 * focusLabel_.getWidth(), pos.y - focusLabel_.getHeight());
+			focusLabel_.show();
+		}
+		Widget::onFocusIn (event);
+	}
+
+	virtual void onFocusOut (BEvents::FocusEvent* event) override
+	{
+		if (event && event->getWidget()) focusLabel_.hide();
+		Widget::onFocusOut (event);
+	}
 
 protected:
 	virtual void draw (const BUtilities::RectArea& area) override
@@ -80,21 +143,21 @@ protected:
 			double w = getEffectiveWidth ();
 			double h = getEffectiveHeight ();
 
-                        switch (symbol)
+                        switch (symbol_)
                         {
                                 case ADDSYMBOL:         cairo_move_to (cr, x0, y0 + h / 2);
                                                         cairo_line_to (cr, x0 + w, y0 + h / 2);
                                                         cairo_move_to (cr, x0 + w / 2, y0);
                                                         cairo_line_to (cr, x0 + w / 2, y0 + h);
                                                         cairo_set_line_width (cr, 2.0);
-                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors.getColor (getState ())));
+                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
                                                         cairo_stroke (cr);
                                                         break;
 
                                 case CLOSESYMBOL:       cairo_move_to (cr, x0, y0 + h / 2);
                                                         cairo_line_to (cr, x0 + w, y0 + h / 2);
                                                         cairo_set_line_width (cr, 2.0);
-                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors.getColor (getState ())));
+                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
                                                         cairo_stroke (cr);
                                                         break;
 
@@ -102,7 +165,7 @@ protected:
                                                         cairo_line_to (cr, x0 + 0.25 * w, y0 + 0.5 * h);
                                                         cairo_line_to (cr, x0 + 0.75 * w, y0 + h);
                                                         cairo_set_line_width (cr, 2.0);
-                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors.getColor (getState ())));
+                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
                                                         cairo_stroke (cr);
                                                         break;
 
@@ -110,7 +173,7 @@ protected:
                                                         cairo_line_to (cr, x0 + 0.75 * w, y0 + 0.5 * h);
                                                         cairo_line_to (cr, x0 + 0.25 * w, y0 + h);
                                                         cairo_set_line_width (cr, 2.0);
-                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors.getColor (getState ())));
+                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
                                                         cairo_stroke (cr);
                                                         break;
 
@@ -119,7 +182,7 @@ protected:
                                                         cairo_line_to (cr, x0 + 0.25 * w, y0 + h);
                                                         cairo_close_path (cr);
                                                         cairo_set_line_width (cr, 0.0);
-                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors.getColor (getState ())));
+                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
                                                         cairo_fill (cr);
                                                         break;
 

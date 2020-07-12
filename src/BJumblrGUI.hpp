@@ -300,6 +300,7 @@ private:
 					 {"border", STYLEPTR (&BStyles::noBorder)}}},
 		{"symbol", 		{{"uses", STYLEPTR (&defaultStyles)},
 					 {"fgcolors", STYLEPTR (&blkColors)}}},
+		{"symbol/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
 		{"box", 		{{"background", STYLEPTR (&boxBg)},
 					{"border", STYLEPTR (&border)}}},
 		{"box/focus",		{{"uses", STYLEPTR (&focusStyles)}}},

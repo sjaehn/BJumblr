@@ -186,8 +186,9 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	// Pack widgets
 	mContainer.add (messageLabel);
 	mContainer.add (pageWidget);
-	for (Tab& t : tabs)
+	for (int i = MAXPAGES - 1; i >= 0; --i)
 	{
+		Tab& t = tabs[i];
 		t.container.add (t.icon);
 		t.container.add (t.playSymbol);
 		for (SymbolWidget& s : t.symbols) t.container.add (s);
