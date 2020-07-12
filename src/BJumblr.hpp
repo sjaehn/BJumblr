@@ -76,7 +76,6 @@ private:
 	float validateValue (float value, const Limit limit);
 	Pad validatePad (Pad pad);
 	bool padMessageBufferAppendPad (int page, int row, int step, Pad pad);
-	void padMessageBufferAllPads (int page);
 	void notifyPadsToGui ();
 	void notifyStatusToGui ();
 	void notifyWaveformToGui (const int start, const int end);
@@ -176,6 +175,7 @@ private:
 	// Internals
 	bool ui_on;
 	bool scheduleNotifyPadsToGui;
+	bool scheduleNotifyFullPatternToGui[MAXPAGES];
 	bool scheduleNotifyStatusToGui;
 	bool scheduleNotifyWaveformToGui;
 	bool scheduleNotifySamplePathToGui;

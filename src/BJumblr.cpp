@@ -41,7 +41,8 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	audioBuffer1 (maxBufferSize, 0.0f),
 	audioBuffer2 (maxBufferSize, 0.0f),
 	audioBufferCounter (0), audioBufferSize (samplerate * 8),
-	ui_on (false), scheduleNotifyPadsToGui (false), scheduleNotifyStatusToGui (false),
+	ui_on (false), scheduleNotifyPadsToGui (false), scheduleNotifyFullPatternToGui {false},
+	scheduleNotifyStatusToGui (false),
 	scheduleNotifyWaveformToGui (false), scheduleNotifySamplePathToGui (false),
 	message ()
 
@@ -465,7 +466,7 @@ void BJumblr::run (uint32_t n_samples)
 			if (obj->body.otype == uris.ui_on)
 			{
 				ui_on = true;
-				for (int i = 0; i < nrPages; ++i) padMessageBufferAllPads (i);
+				for (int i = 0; i < nrPages; ++i) scheduleNotifyFullPatternToGui[i] = true;
 				scheduleNotifyPadsToGui = true;
 				scheduleNotifyStatusToGui = true;
 			}
@@ -479,13 +480,14 @@ void BJumblr::run (uint32_t n_samples)
 			// GUI pad changed notifications
 			else if (obj->body.otype == uris.notify_padEvent)
 			{
-				LV2_Atom *oEd = NULL, *oPg = NULL, *oMx = NULL, *oPd = NULL;
+				LV2_Atom *oEd = NULL, *oPg = NULL, *oMx = NULL, *oPd = NULL, *oPat = NULL;
 				int page = -1;
 				lv2_atom_object_get (obj,
 					 	     uris.notify_editMode, &oEd,
 						     uris.notify_padPage, &oPg,
 						     uris.notify_padMaxPage, &oMx,
 						     uris.notify_pad, &oPd,
+						     uris.notify_padFullPattern, &oPat,
 						     NULL);
 
 				// EditMode notification
@@ -533,19 +535,32 @@ void BJumblr::run (uint32_t n_samples)
 									scheduleNotifyPadsToGui = true;
 								}
 							}
+						}
+					}
+				}
 
-							// Last page deletion request
-							else if ((page != 0) && (page == nrPages - 1) && (row == -1) && (step == -1))
+				// Full pattern notification
+				if (oPat && (oPat->type == uris.atom_Vector) && (page >= 0) && (page < MAXPAGES))
+				{
+					const LV2_Atom_Vector* vec = (const LV2_Atom_Vector*) oPat;
+					if (vec->body.child_type == uris.atom_Float)
+					{
+						const uint32_t size = (uint32_t) ((oPat->size - sizeof(LV2_Atom_Vector_Body)) / sizeof (Pad));
+						Pad* data = (Pad*) (&vec->body + 1);
+
+						if (size == MAXSTEPS * MAXSTEPS)
+						{
+							// Copy pattern data
+							for (int r = 0; r < MAXSTEPS; ++r)
 							{
-								if (page == controllers[PAGE]) controllers[PAGE] = page - 1;
-								if (page == lastPage)
+								for (int s = 0; s < MAXSTEPS; ++s)
 								{
-									lastPage = page - 1;
-									pageFade = 1;
+									pads[page][r][s] = data[r * MAXSTEPS + s];
 								}
-								--nrPages;
 							}
 						}
+
+						else fprintf (stderr, "BJumblr.lv2: Corrupt pattern size of %i for page %i.\n", size, page);
 					}
 				}
 			}
@@ -874,8 +889,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 				}
 			}
 
-			// Copy all to padMessageBuffer for submission to GUI
-			padMessageBufferAllPads (p);
+			scheduleNotifyFullPatternToGui[p] = true;
 		}
 
 		// Force GUI notification
@@ -988,53 +1002,47 @@ bool BJumblr::padMessageBufferAppendPad (int page, int row, int step, Pad pad)
 	return false;
 }
 
-
-/*
- * Copies all pads to padMessageBuffer (thus overwrites it!)
- */
-void BJumblr::padMessageBufferAllPads (int page)
-{
-	for (int i = 0; i < MAXSTEPS; ++i)
-	{
-		for (int j = 0; j < MAXSTEPS; ++j)
-		{
-			Pad* pd = &(pads[page][j][i]);
-			padMessageBuffer[page][i * MAXSTEPS + j] = PadMessage (i, j, pd->level);
-		}
-	}
-}
-
 void BJumblr::notifyPadsToGui ()
 {
 	PadMessage endmsg (ENDPADMESSAGE);
 
 	for (int p = 0; p < MAXPAGES; ++p)
 	{
-		if (!(endmsg == padMessageBuffer[p][0]))
+
+		LV2_Atom_Forge_Frame frame;
+		lv2_atom_forge_frame_time(&notifyForge, 0);
+		lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_padEvent);
+		lv2_atom_forge_key(&notifyForge, uris.notify_editMode);
+		lv2_atom_forge_int(&notifyForge, editMode);
+		lv2_atom_forge_key(&notifyForge, uris.notify_padPage);
+		lv2_atom_forge_int(&notifyForge, p);
+
+		if (scheduleNotifyFullPatternToGui[p])
 		{
+			lv2_atom_forge_key(&notifyForge, uris.notify_padFullPattern);
+			lv2_atom_forge_vector(&notifyForge, sizeof(float), uris.atom_Float, MAXSTEPS * MAXSTEPS * sizeof(Pad) / sizeof(float), (void*) &pads[p]);
+		}
+
+		else if (!(endmsg == padMessageBuffer[p][0]))
+		{
+
 			// Get padMessageBuffer size
 			int end = 0;
 			for (int i = 0; (i < MAXSTEPS * MAXSTEPS) && (!(padMessageBuffer[p][i] == endmsg)); ++i) end = i;
 
-			// Prepare forge buffer and initialize atom sequence
-
-			LV2_Atom_Forge_Frame frame;
-			lv2_atom_forge_frame_time(&notifyForge, 0);
-			lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_padEvent);
-			lv2_atom_forge_key(&notifyForge, uris.notify_editMode);
-			lv2_atom_forge_int(&notifyForge, editMode);
-			lv2_atom_forge_key(&notifyForge, uris.notify_padPage);
-			lv2_atom_forge_int(&notifyForge, p);
 			lv2_atom_forge_key(&notifyForge, uris.notify_pad);
 			lv2_atom_forge_vector(&notifyForge, sizeof(float), uris.atom_Float, sizeof(PadMessage) / sizeof(float) * (end + 1), (void*) &padMessageBuffer[p]);
-			lv2_atom_forge_pop(&notifyForge, &frame);
-
-			// Empty padMessageBuffer
-			padMessageBuffer[p][0] = endmsg;
-
-			scheduleNotifyPadsToGui = false;
 		}
+
+		lv2_atom_forge_pop(&notifyForge, &frame);
+
+		// Empty padMessageBuffer
+		padMessageBuffer[p][0] = endmsg;
+
+		scheduleNotifyFullPatternToGui[p] = false;
 	}
+
+	scheduleNotifyPadsToGui = false;
 }
 
 void BJumblr::notifyStatusToGui ()
