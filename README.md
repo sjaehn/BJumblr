@@ -62,8 +62,24 @@ down by mouse wheel scrolling.
 In addidion, the user can control the playback progession using the playback buttons or the speed
 dial. This is facilitated via the progression delay.
 
+
 ### Source
+
 Select between (live) audio stream or a sample file as source.
+
+
+### Pattern page tabs
+
+Define multiple patterns. Click on a tab to highlight the tab and to edit the respective pattern.
+Press ▶ on the tab to activate playback for the respective pattern.
+
+| Symbol | Description |
+| --- | --- |
+| + | Add a pattern page after the respective page. |
+| - | Remove this pattern page. |
+| < | Move pattern page backward. |
+| > | Move pattern page forward. |
+
 
 ### Pattern matrix
 
@@ -78,6 +94,7 @@ B.Jumblr time line automatically synchronizes with the host time/position. Use t
 to manually shift the whole sample /stream. The button < sets the current sample to the start of
 the pattern. The home button can be used to re-synchronize with the host.
 
+
 ### Step edit mode
 
 There are two edit modes. The **ADD** mode allows to place additional pads to a step (row) or to remove
@@ -87,17 +104,20 @@ In contrast, there is only (exactly) one pad per step allowed in the **REPLACE**
 dragging will result in a replacement of the original pad. Note: Deletion of pads (cut) in the
 REPLACE mode results in their replacement by default pads.
 
+
 ### Step size
 
 Defines the duration of each step. You can select between 1/16 and 4 seconds or beats or bars.
 Alternatively, you can enter any value between 0.01 and 4.0 in a host provided generic GUI.
 Note: Jack transport is required in the beats mode and in the bars mode.
 
+
 ### Pattern size
 
 Defines the total pattern size (= number of steps, = number of columns). You can choose between
 predefined pattern sizes from 2 to 32 steps. Alternatively, you can enter any value between 2 and 32
 in a host provided generic GUI.
+
 
 ### Playback and speed
 
@@ -108,11 +128,10 @@ The speed dial controls the speed of progression. These kinds of manipulation of
 are facilitated via the progression delay. The total amount of the progression delay (= delay buttons +
 speed-induced delay) is displayed in the panel above the buttons.
 
+
 ## What's new
 
-* Distinguish between pattern progression (horizontal yellow markers) and playback (vertical white line)
-* Jump to the start of the respective step if "delay to start" button pressed
-* gcc10/std compatibility
+* Pattern pages
 
 
 ## Acknowledgments
