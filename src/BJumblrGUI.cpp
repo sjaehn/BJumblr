@@ -1770,7 +1770,7 @@ void BJumblrGUI::drawPad (cairo_t* cr, int row, int step)
 	Pad pdc = pattern[actPage].getPad (row, cursor);
 	BColors::Color color = BColors::yellow;
 	color.applyBrightness (pd.level - 1.0);
-	if (pdc.level != 0.0) color.applyBrightness (pdc.level * 0.75);
+	if ((actPage == controllers[PAGE]) && (pdc.level != 0.0)) color.applyBrightness (pdc.level * 0.75);
 	drawButton (cr, xr + 1, yr + 1, wr - 2, hr - 2, color);
 }
 
