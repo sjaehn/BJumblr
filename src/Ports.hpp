@@ -38,7 +38,8 @@ enum PortIndex {
 	STEP_OFFSET		= 5,
 	MANUAL_PROGRSSION_DELAY	= 6,
 	SPEED			= 7,
-	MAXCONTROLLERS		= 8
+	PAGE			= 8,
+	MAXCONTROLLERS		= 9
 };
 
 enum BaseIndex

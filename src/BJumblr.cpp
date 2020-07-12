@@ -29,10 +29,10 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	audioInput1 (nullptr), audioInput2 (nullptr),
 	audioOutput1 (nullptr), audioOutput2 (nullptr),
 	notifyForge (), notifyFrame (),
-	padMessageBuffer {PadMessage()},
 	waveform {0.0f}, waveformCounter (0), lastWaveformCounter (0),
 	new_controllers {nullptr}, controllers {0},
-	editMode (0), pads {Pad()}, sample (nullptr),
+	editMode (0), nrPages (1), lastPage (0), pageFade (1),
+	pads {Pad()}, sample (nullptr),
 	rate (samplerate), bpm (120.0f), beatsPerBar (4.0f), beatUnit (0),
 	speed (0.0f), bar (0), barBeat (0.0f),
 	outCapacity (0), position (0.0), cursor (0.0f), offset (0.0), refFrame (0),
@@ -46,6 +46,13 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	message ()
 
 {
+	// Inits
+	for (std::array <PadMessage, MAXSTEPS * MAXSTEPS>& p : padMessageBuffer)
+	{
+		p.fill ({PadMessage()});
+		p[0] = PadMessage (ENDPADMESSAGE);
+	};
+
 	//Scan host features for URID map
 	LV2_URID_Map* m = NULL;
 	LV2_URID_Unmap* u = NULL;
@@ -78,11 +85,11 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	// Initialize notify
 	lv2_atom_forge_init (&notifyForge, map);
 
-	// Initialize padMessageBuffer
-	padMessageBuffer[0] = PadMessage (ENDPADMESSAGE);
-
 	// Initialize pads
-	for (int i = 0; i < MAXSTEPS; ++i) pads[i][i].level = 1.0;
+	for (int p = 0; p < MAXPAGES; ++p)
+	{
+		for (int i = 0; i < MAXSTEPS; ++i) pads[p][i][i].level = 1.0;
+	}
 
 	// Initialize controllers
 	// Controllers are zero initialized and will get data from host, only
@@ -179,7 +186,7 @@ void BJumblr::connect_port (uint32_t port, void *data)
 
 void BJumblr::runSequencer (const int start, const int end)
 {
-
+	int page = controllers[PAGE];
 	int iNrOfSteps = controllers[NR_OF_STEPS];
 	double delay = progressionDelay + controllers[MANUAL_PROGRSSION_DELAY];
 
@@ -232,7 +239,7 @@ void BJumblr::runSequencer (const int start, const int end)
 				default:	break;
 
 			}
-			double fade = (fracTime < FADETIME ? fracTime / FADETIME : 1.0);
+			double fade = (fracTime < FADETIME ? fracTime / FADETIME : 1.0) * pageFade;
 
 			double prevAudio1 = 0;
 			double prevAudio2 = 0;
@@ -243,9 +250,10 @@ void BJumblr::runSequencer (const int start, const int end)
 			if (fade != 1.0)
 			{
 				int iPrevStep = (iStep + iNrOfSteps - 1) % iNrOfSteps;	// Previous step
+				int p = (pageFade < 1.0 ? lastPage : page);		// Previous page
 				for (int r = 0; r < iNrOfSteps; ++r)
 				{
-					float factor = pads[r][iPrevStep].level;
+					float factor = pads[p][r][iPrevStep].level;
 					if (factor != 0.0)
 					{
 						int stepDiff = floormod (iPrevStep - r - delay, iNrOfSteps);
@@ -259,10 +267,12 @@ void BJumblr::runSequencer (const int start, const int end)
 
 			}
 
+			if (pageFade < 1.0) pageFade = LIMIT (pageFade + 1.0 / (FADETIME * rate), 0.0, 1.0);
+
 			// Calculate audio for this step
 			for (int r = 0; r < iNrOfSteps; ++r)
 			{
-				float factor = pads[r][iStep].level;
+				float factor = pads[page][r][iStep].level;
 				if (factor != 0.0)
 				{
 					int stepDiff = floormod (iStep - r - delay, iNrOfSteps);
@@ -396,11 +406,6 @@ void BJumblr::run (uint32_t n_samples)
 
 			if (controllers[i] != val)
 			{
-
-				controllers[i] = val;
-				uint64_t size = getFramesFromValue (controllers[STEP_SIZE] * controllers[NR_OF_STEPS]);
-				audioBufferSize = LIMIT (size, 0, maxBufferSize);
-
 				if (i == SOURCE)
 				{
 					if (val == 0.0) message.deleteMessage (CANT_OPEN_SAMPLE);
@@ -419,6 +424,19 @@ void BJumblr::run (uint32_t n_samples)
 						else message.deleteMessage (JACK_STOP_MSG);
 					}
 				}
+
+				else if (i == PAGE)
+				{
+					if (val != controllers[i])
+					{
+						lastPage = controllers[i];
+						pageFade = 0.0f;
+					}
+				}
+
+				controllers[i] = val;
+				uint64_t size = getFramesFromValue (controllers[STEP_SIZE] * controllers[NR_OF_STEPS]);
+				audioBufferSize = LIMIT (size, 0, maxBufferSize);
 
 				// Also re-calculate waveform buffer for GUI
 				if ((i == SOURCE) || (i == NR_OF_STEPS) || (i == STEP_BASE) || (i == STEP_SIZE) || (i == STEP_OFFSET))
@@ -447,7 +465,7 @@ void BJumblr::run (uint32_t n_samples)
 			if (obj->body.otype == uris.ui_on)
 			{
 				ui_on = true;
-				padMessageBufferAllPads ();
+				for (int i = 0; i < nrPages; ++i) padMessageBufferAllPads (i);
 				scheduleNotifyPadsToGui = true;
 				scheduleNotifyStatusToGui = true;
 			}
@@ -461,17 +479,35 @@ void BJumblr::run (uint32_t n_samples)
 			// GUI pad changed notifications
 			else if (obj->body.otype == uris.notify_padEvent)
 			{
-				LV2_Atom *oEd = NULL, *oPd = NULL;
+				LV2_Atom *oEd = NULL, *oPg = NULL, *oMx = NULL, *oPd = NULL;
+				int page = -1;
 				lv2_atom_object_get (obj,
 					 	     uris.notify_editMode, &oEd,
+						     uris.notify_padPage, &oPg,
+						     uris.notify_padMaxPage, &oMx,
 						     uris.notify_pad, &oPd,
 						     NULL);
 
 				// EditMode notification
 				if (oEd && (oEd->type == uris.atom_Int)) editMode = ((LV2_Atom_Int*)oEd)->body;
 
+				// padPage notification
+				if (oPg && (oPg->type == uris.atom_Int)) page = ((LV2_Atom_Int*)oPg)->body;
+
+				// padMaxPage notification
+				if (oMx && (oMx->type == uris.atom_Int))
+				{
+					int newPages = ((LV2_Atom_Int*)oMx)->body;
+					if (newPages != nrPages)
+					{
+						nrPages = newPages;
+						pageFade = 1;
+						if (controllers[PAGE] >= nrPages) controllers[PAGE] = nrPages - 1;
+					}
+				}
+
 				// Pad notification
-				if (oPd && (oPd->type == uris.atom_Vector))
+				if (oPd && (oPd->type == uris.atom_Vector) && (page >= 0) && (page < MAXPAGES))
 				{
 					const LV2_Atom_Vector* vec = (const LV2_Atom_Vector*) oPd;
 					if (vec->body.child_type == uris.atom_Float)
@@ -479,22 +515,35 @@ void BJumblr::run (uint32_t n_samples)
 						const uint32_t size = (uint32_t) ((oPd->size - sizeof(LV2_Atom_Vector_Body)) / sizeof (PadMessage));
 						PadMessage* pMes = (PadMessage*) (&vec->body + 1);
 
-						// Copy PadMessages to pads
 						for (unsigned int i = 0; i < size; ++i)
 						{
-							int row = (int) pMes[i].row;
-							int step = (int) pMes[i].step;
+							int row = pMes[i].row;
+							int step = pMes[i].step;
+
+							// Copy PadMessages to pads
 							if ((row >= 0) && (row < MAXSTEPS) && (step >= 0) && (step < MAXSTEPS))
 							{
 								Pad pd (pMes[i].level);
 								Pad valPad = validatePad (pd);
-								pads[row][step] = valPad;
+								pads[page][row][step] = valPad;
 								if (valPad != pd)
 								{
-									fprintf (stderr, "BJumblr.lv2: Pad out of range in run (): pads[%i][%i].\n", row, step);
-									padMessageBufferAppendPad (row, step, valPad);
+									fprintf (stderr, "BJumblr.lv2: Pad out of range in run (): pads[%i][%i][%i].\n", page, row, step);
+									padMessageBufferAppendPad (page, row, step, valPad);
 									scheduleNotifyPadsToGui = true;
 								}
+							}
+
+							// Last page deletion request
+							else if ((page != 0) && (page == nrPages - 1) && (row == -1) && (step == -1))
+							{
+								if (page == controllers[PAGE]) controllers[PAGE] = page - 1;
+								if (page == lastPage)
+								{
+									lastPage = page - 1;
+									pageFade = 1;
+								}
+								--nrPages;
 							}
 						}
 					}
@@ -660,17 +709,20 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 	// Store pads
 	char padDataString[0x8010] = "\nMatrix data:\n";
 
-	for (int step = 0; step < MAXSTEPS; ++step)
+	for (int page = 0; page < nrPages; ++page)
 	{
-		for (int row = 0; row < MAXSTEPS; ++row)
+		for (int step = 0; step < MAXSTEPS; ++step)
 		{
-			char valueString[64];
-			int id = step * MAXSTEPS + row;
-			Pad* pd = &pads[row][step];
-			snprintf (valueString, 62, "id:%d; lv:%f", id, pd->level);
-			if ((step < MAXSTEPS - 1) || (row < MAXSTEPS)) strcat (valueString, ";\n");
-			else strcat(valueString, "\n");
-			strcat (padDataString, valueString);
+			for (int row = 0; row < MAXSTEPS; ++row)
+			{
+				char valueString[64];
+				int id = step * MAXSTEPS + row;
+				Pad* pd = &pads[page][row][step];
+				snprintf (valueString, 62, "pg:%d; id:%d; lv:%f", page, id, pd->level);
+				if ((step < MAXSTEPS - 1) || (row < MAXSTEPS)) strcat (valueString, ";\n");
+				else strcat(valueString, "\n");
+				strcat (padDataString, valueString);
+			}
 		}
 	}
 	store (handle, uris.state_pad, padDataString, strlen (padDataString) + 1, uris.atom_String, LV2_STATE_IS_POD);
@@ -716,20 +768,46 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
         }
 
 	// Retrieve pad data
+	nrPages = 1;
 	const void* padData = retrieve(handle, uris.state_pad, &size, &type, &valflags);
 
 	if (padData && (type == uris.atom_String))
 	{
 		std::string padDataString = (char*) padData;
-		const std::string keywords[2] = {"id:", "lv:"};
+		const std::string keywords[3] = {"pg:", "id:", "lv:"};
 
 		// Restore pads
 		// Parse retrieved data
 		while (!padDataString.empty())
 		{
-			// Look for next "id:"
+			// Look for optional "pg:"
+			int page = 0;
 			size_t strPos = padDataString.find (keywords[0]);
 			size_t nextPos = 0;
+			if ((strPos != std::string::npos) && (strPos + 3 <= padDataString.length()))
+			{
+				padDataString.erase (0, strPos + 3);
+				int p;
+				try {p = std::stof (padDataString, &nextPos);}
+				catch  (const std::exception& e)
+				{
+					fprintf (stderr, "BJumblr.lv2: Restore pad state incomplete. Can't parse page from \"%s...\"", padDataString.substr (0, 63).c_str());
+					break;
+				}
+
+				if (nextPos > 0) padDataString.erase (0, nextPos);
+				if ((p < 0) || (p >= MAXPAGES))
+				{
+					fprintf (stderr, "BJumblr.lv2: Restore pad state incomplete. Invalid matrix data block loaded with page %i. Try to use the data before this page.\n", p);
+					break;
+				}
+				if (p >= nrPages) nrPages = p + 1;
+				page = p;
+			}
+
+			// Look for "id:"
+			strPos = padDataString.find (keywords[1]);
+			nextPos = 0;
 			if (strPos == std::string::npos) break;	// No "id:" found => end
 			if (strPos + 3 > padDataString.length()) break;	// Nothing more after id => end
 			padDataString.erase (0, strPos + 3);
@@ -751,7 +829,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 			int step = id / MAXSTEPS;
 
 			// Look for pad data
-			for (int i = 1; i < 2; ++i)
+			for (int i = 2; i < 3; ++i)
 			{
 				strPos = padDataString.find (keywords[i]);
 				if (strPos == std::string::npos) continue;	// Keyword not found => next keyword
@@ -772,7 +850,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 
 				if (nextPos > 0) padDataString.erase (0, nextPos);
 				switch (i) {
-				case 1:	pads[row][step].level = val;
+				case 2:	pads[page][row][step].level = val;
 					break;
 				default:break;
 				}
@@ -781,21 +859,24 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 
 
 		// Validate all pads
-		for (int i = 0; i < MAXSTEPS; ++i)
+		for (int p = 0; p < nrPages; ++p)
 		{
-			for (int j = 0; j < MAXSTEPS; ++j)
+			for (int i = 0; i < MAXSTEPS; ++i)
 			{
-				Pad valPad = validatePad (pads[i][j]);
-				if (valPad != pads[i][j])
+				for (int j = 0; j < MAXSTEPS; ++j)
 				{
-					fprintf (stderr, "BJumblr.lv2: Pad out of range in state_restore (): pads[%i][%i].\n", i, j);
-					pads[i][j] = valPad;
+					Pad valPad = validatePad (pads[p][i][j]);
+					if (valPad != pads[p][i][j])
+					{
+						fprintf (stderr, "BJumblr.lv2: Pad out of range in state_restore (): pads[%i][%i][%i].\n", p, i, j);
+						pads[p][i][j] = valPad;
+					}
 				}
 			}
-		}
 
-		// Copy all to padMessageBuffer for submission to GUI
-		padMessageBufferAllPads ();
+			// Copy all to padMessageBuffer for submission to GUI
+			padMessageBufferAllPads (p);
+		}
 
 		// Force GUI notification
 		scheduleNotifyPadsToGui = true;
@@ -890,17 +971,17 @@ Pad BJumblr::validatePad (Pad pad)
 /*
  * Appends a single pad to padMessageBuffer
  */
-bool BJumblr::padMessageBufferAppendPad (int row, int step, Pad pad)
+bool BJumblr::padMessageBufferAppendPad (int page, int row, int step, Pad pad)
 {
 	PadMessage end = PadMessage (ENDPADMESSAGE);
 	PadMessage msg = PadMessage (step, row, pad.level);
 
 	for (int i = 0; i < MAXSTEPS * MAXSTEPS; ++i)
 	{
-		if (padMessageBuffer[i] != end)
+		if (padMessageBuffer[page][i] != end)
 		{
-			padMessageBuffer[i] = msg;
-			if (i < MAXSTEPS * MAXSTEPS - 1) padMessageBuffer[i + 1] = end;
+			padMessageBuffer[page][i] = msg;
+			if (i < MAXSTEPS * MAXSTEPS - 1) padMessageBuffer[page][i + 1] = end;
 			return true;
 		}
 	}
@@ -911,14 +992,14 @@ bool BJumblr::padMessageBufferAppendPad (int row, int step, Pad pad)
 /*
  * Copies all pads to padMessageBuffer (thus overwrites it!)
  */
-void BJumblr::padMessageBufferAllPads ()
+void BJumblr::padMessageBufferAllPads (int page)
 {
 	for (int i = 0; i < MAXSTEPS; ++i)
 	{
 		for (int j = 0; j < MAXSTEPS; ++j)
 		{
-			Pad* pd = &(pads[j][i]);
-			padMessageBuffer[i * MAXSTEPS + j] = PadMessage (i, j, pd->level);
+			Pad* pd = &(pads[page][j][i]);
+			padMessageBuffer[page][i * MAXSTEPS + j] = PadMessage (i, j, pd->level);
 		}
 	}
 }
@@ -926,27 +1007,33 @@ void BJumblr::padMessageBufferAllPads ()
 void BJumblr::notifyPadsToGui ()
 {
 	PadMessage endmsg (ENDPADMESSAGE);
-	if (!(endmsg == padMessageBuffer[0]))
+
+	for (int p = 0; p < MAXPAGES; ++p)
 	{
-		// Get padMessageBuffer size
-		int end = 0;
-		for (int i = 0; (i < MAXSTEPS * MAXSTEPS) && (!(padMessageBuffer[i] == endmsg)); ++i) end = i;
+		if (!(endmsg == padMessageBuffer[p][0]))
+		{
+			// Get padMessageBuffer size
+			int end = 0;
+			for (int i = 0; (i < MAXSTEPS * MAXSTEPS) && (!(padMessageBuffer[p][i] == endmsg)); ++i) end = i;
 
-		// Prepare forge buffer and initialize atom sequence
+			// Prepare forge buffer and initialize atom sequence
 
-		LV2_Atom_Forge_Frame frame;
-		lv2_atom_forge_frame_time(&notifyForge, 0);
-		lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_padEvent);
-		lv2_atom_forge_key(&notifyForge, uris.notify_editMode);
-		lv2_atom_forge_int(&notifyForge, editMode);
-		lv2_atom_forge_key(&notifyForge, uris.notify_pad);
-		lv2_atom_forge_vector(&notifyForge, sizeof(float), uris.atom_Float, sizeof(PadMessage) / sizeof(float) * (end + 1), (void*) padMessageBuffer);
-		lv2_atom_forge_pop(&notifyForge, &frame);
+			LV2_Atom_Forge_Frame frame;
+			lv2_atom_forge_frame_time(&notifyForge, 0);
+			lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_padEvent);
+			lv2_atom_forge_key(&notifyForge, uris.notify_editMode);
+			lv2_atom_forge_int(&notifyForge, editMode);
+			lv2_atom_forge_key(&notifyForge, uris.notify_padPage);
+			lv2_atom_forge_int(&notifyForge, p);
+			lv2_atom_forge_key(&notifyForge, uris.notify_pad);
+			lv2_atom_forge_vector(&notifyForge, sizeof(float), uris.atom_Float, sizeof(PadMessage) / sizeof(float) * (end + 1), (void*) &padMessageBuffer[p]);
+			lv2_atom_forge_pop(&notifyForge, &frame);
 
-		// Empty padMessageBuffer
-		padMessageBuffer[0] = endmsg;
+			// Empty padMessageBuffer
+			padMessageBuffer[p][0] = endmsg;
 
-		scheduleNotifyPadsToGui = false;
+			scheduleNotifyPadsToGui = false;
+		}
 	}
 }
 

@@ -27,8 +27,8 @@
         rdfs:comment "B.Jumblr is a pattern-controlled audio stream / sample re-sequencer LV2 plugin." ;
 	doap:name "B.Jumblr" ;
 	doap:license <http://usefulinc.com/doap/licenses/gpl>;
-	lv2:microVersion 2 ;
-	lv2:minorVersion 2 ;
+	lv2:microVersion 0 ;
+	lv2:minorVersion 3 ;
         doap:maintainer <http://www.jahnichen.de/sjaehn#me> ;
         lv2:optionalFeature lv2:hardRTCapable ;
         lv2:extensionData state:interface , work:interface ;
@@ -41,14 +41,14 @@
 		lv2:index 0 ;
 		lv2:symbol "control" ;
 		lv2:name "Control" ;
-		rsz:minimumSize 73000;
+		rsz:minimumSize 131072;
 	] , [
 		a lv2:OutputPort , atom:AtomPort ;
 		atom:bufferType atom:Sequence ;
 		lv2:index 1 ;
 		lv2:symbol "notify" ;
 		lv2:name "Notify" ;
-		rsz:minimumSize 73000;
+		rsz:minimumSize 131072;
 	] , [
 		a lv2:AudioPort , lv2:InputPort ;
 		lv2:index 2 ;
@@ -146,4 +146,13 @@
 		lv2:default 1.0 ;
 		lv2:minimum 0.0 ;
 		lv2:maximum 4.0 ;
+	] , [
+		a lv2:InputPort , lv2:ControlPort ;
+		lv2:index 14 ;
+		lv2:symbol "playback_page" ;
+		lv2:name "Playback pattern page" ;
+		lv2:portProperty lv2:integer ;
+		lv2:default 0 ;
+		lv2:minimum 0 ;
+		lv2:maximum 5 ;
 	] .

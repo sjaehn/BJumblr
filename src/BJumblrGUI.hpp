@@ -40,6 +40,7 @@
 #include "BWidgets/PlusButton.hpp"
 #include "BWidgets/MinusButton.hpp"
 #include "BWidgets/FileChooser.hpp"
+#include "BWidgets/ImageIcon.hpp"
 #include "screen.h"
 
 #include "drawbutton.hpp"
@@ -56,6 +57,7 @@
 #include "Journal.hpp"
 #include "MonitorWidget.hpp"
 #include "MarkerWidget.hpp"
+#include "SymbolWidget.hpp"
 
 #define BG_FILE "inc/surface.png"
 #define HELP_URL "https://github.com/sjaehn/BJumblr/blob/master/README.md"
@@ -90,7 +92,9 @@ public:
 	void send_ui_off ();
 	void send_samplePath ();
 	void send_editMode ();
-	void send_pad (int row, int step);
+	void send_maxPage ();
+	void send_pad (int page);
+	void send_pad (int page, int row, int step);
 	virtual void onConfigureRequest (BEvents::ExposeEvent* event) override;
 	virtual void onCloseRequest (BEvents::WidgetEvent* event) override;
 	virtual void onKeyPressed (BEvents::KeyEvent* event) override;
@@ -102,6 +106,9 @@ public:
 
 private:
 	static void valueChangedCallback(BEvents::Event* event);
+	static void pageClickedCallback(BEvents::Event* event);
+	static void pageSymbolClickedCallback(BEvents::Event* event);
+	static void pagePlayClickedCallback(BEvents::Event* event);
 	static void levelChangedCallback(BEvents::Event* event);
 	static void edit1ChangedCallback(BEvents::Event* event);
 	static void edit2ChangedCallback(BEvents::Event* event);
@@ -114,8 +121,14 @@ private:
 	static void helpButtonClickedCallback (BEvents::Event* event);
 	static void ytButtonClickedCallback (BEvents::Event* event);
 	virtual void resize () override;
-	bool validatePad ();
-	bool validatePad (int row, int step, Pad& pad);
+	void pushPage ();
+	void popPage ();
+	void gotoPage (const int page);
+	void insertPage (const int page);
+	void deletePage (const int page);
+	void swapPage (const int page1, const int page2);
+	bool validatePad (int page);
+	bool validatePad (int page, int row, int step, Pad& pad);
 	void drawPad ();
 	void drawPad (int row, int step);
 	void drawPad (cairo_t* cr, int row, int step);
@@ -144,7 +157,7 @@ private:
 		void store ();
 	private:
 		Journal<std::vector<PadMessage>, MAXUNDO> journal;
-		Pad pads [MAXSTEPS] [MAXSTEPS];
+		std::array<std::array<Pad, MAXSTEPS>, MAXSTEPS> pads;
 		struct
 		{
 			std::vector<PadMessage> oldMessage;
@@ -152,7 +165,7 @@ private:
 		} changes;
 	};
 
-	Pattern pattern;
+	std::array<Pattern, MAXPAGES> pattern;
 
 	struct ClipBoard
 	{
@@ -173,9 +186,25 @@ private:
 
 	std::string samplePath;
 
+	// Pages
+	int actPage;
+	int nrPages;
+
 	//Widgets
 	BWidgets::Widget mContainer;
 	BWidgets::Label messageLabel;
+	BWidgets::ValueWidget pageWidget;
+
+	struct Tab
+	{
+		BWidgets::Widget container;
+		BWidgets::ImageIcon icon;
+		SymbolWidget playSymbol;
+		std::array<SymbolWidget, 4> symbols;
+	};
+
+	std::array<Tab, MAXPAGES> tabs;
+
 	PadSurface padSurface;
 	MarkerWidget markerFwd;
 	MarkerWidget markerRev;
@@ -219,6 +248,7 @@ private:
 	BColors::ColorSet tgBgColors = {{{0.0, 0.03, 0.06, 1.0}, {0.3, 0.3, 0.3, 1.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
 	BColors::ColorSet ltColors = {{{1.0, 1.0, 1.0, 1.0}, {1.0, 1.0, 1.0, 1.0}, {0.25, 0.25, 0.25, 1.0}, {0.0, 0.0, 0.0, 1.0}}};
 	BColors::ColorSet wvColors = {{{1.0, 1.0, 1.0, 0.15}, {1.0, 1.0, 1.0, 0.15}, {0.25, 0.25, 0.25, 0.15}, {0.0, 0.0, 0.0, 0.15}}};
+	BColors::ColorSet blkColors = {{{0.0, 0.0, 0.0, 0.75}, {0.0, 0.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.25}, {0.0, 0.0, 0.0, 0.0}}};
 	BColors::Color ink = {0.0, 0.25, 0.5, 1.0};
 	BColors::Color evenPadBgColor = {0.0, 0.05, 0.1, 1.0};
 	BColors::Color oddPadBgColor = {0.0, 0.0, 0.0, 1.0};
@@ -229,6 +259,8 @@ private:
 	BStyles::Border boxlabelborder = {{BColors::grey, 1.0}, 0.0, 3.0, 0.0};
 	BStyles::Border focusborder = BStyles::Border (BStyles::Line (BColors::Color (0.0, 0.0, 0.0, 0.5), 2.0));
 	BStyles::Fill widgetBg = BStyles::noFill;
+	BStyles::Fill tabBg = BStyles::Fill (BColors::Color (0.75, 0.75, 0.0, 0.5));
+	BStyles::Fill activeTabBg = BStyles::Fill (BColors::Color (0.75, 0.75, 0.0, 1.0));
 	BStyles::Fill menuBg = BStyles::Fill (BColors::Color (0.0, 0.0, 0.05, 1.0));
 	BStyles::Fill screenBg = BStyles::Fill (BColors::Color (0.0, 0.0, 0.0, 0.8));
 	BStyles::Fill boxBg = BStyles::Fill (BColors::Color (0.0, 0.0, 0.0, 0.9));
@@ -262,6 +294,12 @@ private:
  					 {"fgcolors", STYLEPTR (&wvColors)}}},
 		{"widget", 		{{"uses", STYLEPTR (&defaultStyles)}}},
 		{"widget/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
+		{"tab", 		{{"background", STYLEPTR (&tabBg)},
+					 {"border", STYLEPTR (&BStyles::noBorder)}}},
+		{"activetab", 		{{"background", STYLEPTR (&activeTabBg)},
+					 {"border", STYLEPTR (&BStyles::noBorder)}}},
+		{"symbol", 		{{"uses", STYLEPTR (&defaultStyles)},
+					 {"fgcolors", STYLEPTR (&blkColors)}}},
 		{"box", 		{{"background", STYLEPTR (&boxBg)},
 					{"border", STYLEPTR (&border)}}},
 		{"box/focus",		{{"uses", STYLEPTR (&focusStyles)}}},

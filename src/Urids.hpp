@@ -54,6 +54,8 @@ struct BJumblrURIs
 	LV2_URID ui_off;
 	LV2_URID state_pad;
 	LV2_URID notify_padEvent;
+	LV2_URID notify_padPage;
+	LV2_URID notify_padMaxPage;
 	LV2_URID notify_pad;
 	LV2_URID notify_editMode;
 	LV2_URID notify_sampleFreeEvent;
@@ -93,6 +95,8 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->ui_off = m->map(m->handle, BJUMBLR_URI "#UIoff");
 	uris->state_pad = m->map(m->handle, BJUMBLR_URI "#STATEpad");
 	uris->notify_padEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadEvent");
+	uris->notify_padPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadPage");
+	uris->notify_padMaxPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadPage");
 	uris->notify_pad = m->map(m->handle, BJUMBLR_URI "#NOTIFYpad");
 	uris->notify_editMode = m->map(m->handle, BJUMBLR_URI "#NOTIFYeditMode");
 	uris->notify_sampleFreeEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYsampleFreeEvent");

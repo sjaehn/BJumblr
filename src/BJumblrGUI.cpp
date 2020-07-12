@@ -33,15 +33,17 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	uris (), forge (), editMode (0), clipBoard (),
 	cursor (0), wheelScrolled (false), padPressed (false), deleteMode (false),
 	samplePath ("."),
+	actPage (0), nrPages (1),
 	mContainer (0, 0, 1020, 620, "main"),
 	messageLabel (400, 45, 600, 20, "ctlabel", ""),
+	pageWidget (0, 0, 0, 0, "widget", 0.0),
 	padSurface (18, 118, 924, 454, "box"),
 	markerFwd (0, 120 + 15.5 * (450.0 / 16.0) - 10, 20, 20, "widget", MARKER_FWD),
 	markerRev (940, 120 + 15.5 * (450.0 / 16.0) - 10, 20, 20, "widget", MARKER_REV),
 	monitorWidget (20, 120, 920, 450, "monitor"),
-	sourceListBox (60, 90, 120, 20, 120, 60, "menu", BItems::ItemList ({{0, "Audio stream"}, {1, "Sample"}}), 0),
-	loadButton (200, 90, 20, 20, "menu/button"),
-	sampleNameLabel (230, 90, 180, 20, "boxlabel", ""),
+	sourceListBox (570, 90, 120, 20, 120, 60, "menu", BItems::ItemList ({{0, "Audio stream"}, {1, "Sample"}}), 0),
+	loadButton (710, 90, 20, 20, "menu/button"),
+	sampleNameLabel (740, 90, 180, 20, "boxlabel", ""),
 	playButton (18, 588, 24, 24, "widget", "Play"),
 	bypassButton (48, 588, 24, 24, "widget", "Bypass"),
 	stopButton (78, 588, 24, 24, "widget", "Stop"),
@@ -72,6 +74,15 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	ytButton (988, 588, 24, 24, "widget", "Tutorial"),
 	fileChooser (nullptr)
 {
+	// Init tabs
+	for (int i = 0; i < MAXPAGES; ++i)
+	{
+		tabs[i].container = BWidgets::Widget (18 + i * 80, 90, 78, 26, "tab");
+		tabs[i].icon = BWidgets::ImageIcon (0, 3, 40, 20, "widget", pluginPath + "inc/page" + std::to_string (i + 1) + ".png");
+		tabs[i].playSymbol = SymbolWidget (40, 7, 16, 12, "symbol", PLAYSYMBOL);
+		for (int j = 0; j < 4; ++j) tabs[i].symbols[j] = SymbolWidget (58 + (j % 2) * 10, 3 + int (j / 2) * 12, 8, 8, "symbol", SWSymbol(j));
+	}
+
 	// Init editButtons
 	for (int i = 0; i < EDIT_RESET; ++i) edit1Buttons[i] = HaloToggleButton (128 + i * 30, 588, 24, 24, "widget", editLabels[i]);
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i) edit2Buttons[i] = HaloButton (298 + i * 30, 588, 24, 24, "widget", editLabels[i + EDIT_RESET]);
@@ -88,6 +99,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	controllerWidgets[STEP_OFFSET] = (BWidgets::ValueWidget*) &syncWidget;
 	controllerWidgets[MANUAL_PROGRSSION_DELAY] = (BWidgets::ValueWidget*) &manualProgressionDelayWidget;
 	controllerWidgets[SPEED] = (BWidgets::ValueWidget*) &speedDial;
+	controllerWidgets[PAGE] = (BWidgets::ValueWidget*) &pageWidget;
 
 	// Init controller values
 	for (int i = 0; i < MAXCONTROLLERS; ++i) controllers[i] = controllerWidgets[i]->getValue ();
@@ -115,6 +127,13 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	loadButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, loadButtonClickedCallback);
 	sampleNameLabel.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, loadButtonClickedCallback);
 
+	for (Tab& t : tabs)
+	{
+		t.container.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, pageClickedCallback);
+		t.playSymbol.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, pagePlayClickedCallback);
+		for (SymbolWidget& s : t.symbols) s.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, pageSymbolClickedCallback);
+	}
+
 	padSurface.setDraggable (true);
 	padSurface.setCallbackFunction (BEvents::BUTTON_PRESS_EVENT, padsPressedCallback);
 	padSurface.setCallbackFunction (BEvents::BUTTON_RELEASE_EVENT, padsPressedCallback);
@@ -130,6 +149,20 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	// Configure widgets
 	loadButton.hide();
 	sampleNameLabel.hide();
+	for (int i = 0; i < MAXPAGES; ++i)
+	{
+		tabs[i].playSymbol.setState (BColors::INACTIVE);
+		for (int j = 0; j < 4; ++j) tabs[i].symbols[j].setState (BColors::ACTIVE);
+		if (i > 0) tabs[i].container.hide();
+	}
+	tabs[0].container.rename ("activetab");
+	tabs[0].playSymbol.setState (BColors::ACTIVE);
+	tabs[0].symbols[1].hide(); // -
+	tabs[0].symbols[2].hide(); // <
+	tabs[0].symbols[3].hide(); // >
+	for (Tab& t : tabs) t.icon.setClickable (false);
+
+	for (Pattern& p : pattern) p.clear();
 
 	// Load background & apply theme
 	bgImageSurface = cairo_image_surface_create_from_png ((pluginPath + BG_FILE).c_str());
@@ -152,6 +185,14 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 
 	// Pack widgets
 	mContainer.add (messageLabel);
+	mContainer.add (pageWidget);
+	for (Tab& t : tabs)
+	{
+		t.container.add (t.icon);
+		t.container.add (t.playSymbol);
+		for (SymbolWidget& s : t.symbols) t.container.add (s);
+		mContainer.add (t.container);
+	}
 	mContainer.add (playButton);
 	mContainer.add (bypassButton);
 	mContainer.add (stopButton);
@@ -189,7 +230,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	add (mContainer);
 	getKeyGrabStack()->add (this);
 
-	pattern.clear ();
+	for (Pattern& p : pattern) p.clear ();
 
 	//Scan host features for URID map
 	LV2_URID_Map* map = NULL;
@@ -301,9 +342,12 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 			// Pad notification
 			if (obj->body.otype == uris.notify_padEvent)
 			{
-				LV2_Atom *oEdit = NULL, *oPad = NULL;
+				LV2_Atom *oEdit = NULL, *oPage = NULL, *oMax = NULL, *oPad = NULL;
+				int page = -1;
 				lv2_atom_object_get(obj,
 						    uris.notify_editMode, &oEdit,
+						    uris.notify_padPage, &oPage,
+						    uris.notify_padMaxPage, &oMax,
 						    uris.notify_pad, &oPad,
 						    NULL);
 
@@ -312,14 +356,24 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 					editModeListBox.setValue (((LV2_Atom_Int*)oEdit)->body);
 				}
 
-				if (oPad && (oPad->type == uris.atom_Vector))
+				if (oPage && (oPage->type == uris.atom_Int)) page = (((LV2_Atom_Int*)oPage)->body);
+
+				if (oMax && (oMax->type == uris.atom_Int))
+				{
+					int newPages = (((LV2_Atom_Int*)oMax)->body);
+
+					while (newPages > nrPages) pushPage();
+					while (newPages < nrPages) popPage();
+				}
+
+				if (oPad && (oPad->type == uris.atom_Vector) && (page >= 0) && (page < MAXPAGES))
 				{
 					const LV2_Atom_Vector* vec = (const LV2_Atom_Vector*) oPad;
 					if (vec->body.child_type == uris.atom_Float)
 					{
 						if (wheelScrolled)
 						{
-							pattern.store ();
+							pattern[page].store ();
 							wheelScrolled = false;
 						}
 
@@ -332,11 +386,11 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 							int row = (int) pMes[i].row;
 							if ((step >= 0) && (step < MAXSTEPS) && (row >= 0) && (row < MAXSTEPS))
 							{
-								pattern.setPad (row, step, Pad (pMes[i]));
+								pattern[page].setPad (row, step, Pad (pMes[i]));
 							}
 						}
-						pattern.store ();
-						drawPad ();
+						pattern[page].store ();
+						if (page == actPage) drawPad ();
 					}
 				}
 			}
@@ -462,16 +516,23 @@ void BJumblrGUI::resize ()
 	//Scale widgets
 	RESIZE (mContainer, 0, 0, 1020, 620, sz);
 	RESIZE (messageLabel, 400, 45, 600, 20, sz);
+	for (int i = 0; i < MAXPAGES; ++i)
+	{
+		RESIZE (tabs[i].container, 18 + i * 80, 90, 78, 26, sz);
+		RESIZE (tabs[i].icon, 0, 3, 40, 20, sz);
+		RESIZE (tabs[i].playSymbol, 40, 7, 16, 12, sz);
+		for (int j = 0; j < 4; ++j) RESIZE (tabs[i].symbols[j], 58 + (j % 2) * 10, 3 + int (j / 2) * 12, 8, 8, sz);
+	}
 	RESIZE (padSurface, 18, 118, 924, 454, sz);
 	const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
 	RESIZE (markerFwd, 0, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10), 20, 20, sz);
 	RESIZE (markerRev, 940, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10), 20, 20, sz);
 	RESIZE (monitorWidget, 20, 120, 920, 450, sz);
-	RESIZE (sourceListBox, 60, 90, 120, 20, sz);
+	RESIZE (sourceListBox, 570, 90, 120, 20, sz);
 	sourceListBox.resizeListBox (BUtilities::Point (120 * sz, 60 * sz));
 	sourceListBox.resizeListBoxItems (BUtilities::Point (120 * sz, 20 * sz));
-	RESIZE (loadButton, 200, 90, 20, 20, sz);
-	RESIZE (sampleNameLabel, 230, 90, 180, 20, sz);
+	RESIZE (loadButton, 710, 90, 20, 20, sz);
+	RESIZE (sampleNameLabel, 740, 90, 180, 20, sz);
 	RESIZE (playButton, 18, 588, 24, 24, sz);
 	RESIZE (bypassButton, 48, 588, 24, 24, sz);
 	RESIZE (stopButton, 78, 588, 24, 24, sz);
@@ -519,6 +580,13 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 {
 	mContainer.applyTheme (theme);
 	messageLabel.applyTheme (theme);
+	for (Tab& t : tabs)
+	{
+		t.container.applyTheme (theme);
+		t.icon.applyTheme (theme);
+		t.playSymbol.applyTheme (theme);
+		for (SymbolWidget& s : t.symbols) s.applyTheme (theme);
+	}
 	padSurface.applyTheme (theme);
 	markerFwd.applyTheme (theme);
 	markerRev.applyTheme (theme);
@@ -652,24 +720,174 @@ void BJumblrGUI::send_editMode ()
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }
 
-void BJumblrGUI::send_pad (int row, int step)
+void BJumblrGUI::send_maxPage ()
 {
-	PadMessage padmsg (step, row, pattern.getPad (row, step));
+	uint8_t obj_buf[128];
+	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
+
+	LV2_Atom_Forge_Frame frame;
+	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_padEvent);
+	lv2_atom_forge_key(&forge, uris.notify_padMaxPage);
+	lv2_atom_forge_int(&forge, nrPages);
+	lv2_atom_forge_pop(&forge, &frame);
+	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
+}
+
+void BJumblrGUI::send_pad (int page)
+{
+	PadMessage padmsg [MAXSTEPS][MAXSTEPS];
+	for (int s = 0; s < MAXSTEPS; ++s)
+	{
+		for (int r = 0; r < MAXSTEPS; ++r)
+		{
+			padmsg[s][r] = PadMessage (s, r, pattern[page].getPad (r, s));
+		}
+	}
+
+	uint8_t obj_buf[16384];
+	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
+
+	LV2_Atom_Forge_Frame frame;
+	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_padEvent);
+	//lv2_atom_forge_key(&forge, uris.notify_editMode);
+	//lv2_atom_forge_int(&forge, editMode);
+	lv2_atom_forge_key(&forge, uris.notify_padPage);
+	lv2_atom_forge_int(&forge, page);
+	lv2_atom_forge_key(&forge, uris.notify_pad);
+	lv2_atom_forge_vector(&forge, sizeof(float), uris.atom_Float, MAXSTEPS * MAXSTEPS * sizeof(PadMessage) / sizeof(float), (void*) &padmsg);
+	lv2_atom_forge_pop(&forge, &frame);
+	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
+}
+
+void BJumblrGUI::send_pad (int page, int row, int step)
+{
+	PadMessage padmsg (step, row, pattern[page].getPad (row, step));
 
 	uint8_t obj_buf[128];
 	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
 
 	LV2_Atom_Forge_Frame frame;
 	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_padEvent);
-	lv2_atom_forge_key(&forge, uris.notify_editMode);
-	lv2_atom_forge_int(&forge, editMode);
+	//lv2_atom_forge_key(&forge, uris.notify_editMode);
+	//lv2_atom_forge_int(&forge, editMode);
+	lv2_atom_forge_key(&forge, uris.notify_padPage);
+	lv2_atom_forge_int(&forge, page);
 	lv2_atom_forge_key(&forge, uris.notify_pad);
 	lv2_atom_forge_vector(&forge, sizeof(float), uris.atom_Float, sizeof(PadMessage) / sizeof(float), (void*) &padmsg);
 	lv2_atom_forge_pop(&forge, &frame);
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }
 
-bool BJumblrGUI::validatePad ()
+void BJumblrGUI::pushPage ()
+{
+	if (nrPages >= MAXPAGES) return;
+
+	tabs[nrPages - 1].symbols[1].show();
+	tabs[nrPages - 1].symbols[3].show();
+
+	tabs[nrPages].container.show();
+	tabs[nrPages].symbols[1].show();
+	tabs[nrPages].symbols[2].show();
+	tabs[nrPages].symbols[3].hide();
+
+	if (nrPages == MAXPAGES - 1)
+	{
+		for (Tab& t : tabs) t.symbols[0].hide();
+	}
+
+	++nrPages;
+}
+
+void BJumblrGUI::popPage ()
+{
+	if (nrPages <= 1) return;
+
+	tabs[nrPages - 2].symbols[3].hide();
+	if (nrPages == 2) tabs[0].symbols[1].hide();
+	tabs[nrPages - 1].container.hide();
+	for (Tab& t : tabs) t.symbols[0].show();
+
+	if (actPage >= nrPages - 1) gotoPage (nrPages - 2);
+	if (controllers[PAGE] >= nrPages - 1) pageWidget.setValue (0);
+
+	--nrPages;
+}
+
+void BJumblrGUI::gotoPage (const int page)
+{
+	if ((page < 0) || (page >= nrPages)) return;
+
+	actPage = page;
+	for (int i = 0; i < MAXPAGES; ++i)
+	{
+		if (i == page) tabs[i].container.rename ("activetab");
+		else tabs[i].container.rename ("tab");
+		tabs[i].container.applyTheme (theme);
+	}
+	drawPad();
+}
+
+void BJumblrGUI::insertPage (const int page)
+{
+	if ((page < 0) || (nrPages >= MAXPAGES)) return;
+
+	pushPage();
+	if (actPage >= page) gotoPage (actPage + 1);
+	if (pageWidget.getValue() >= page) pageWidget.setValue (pageWidget.getValue() + 1);
+
+	// Move pages
+	for (int i = nrPages - 1; i > page; --i)
+	{
+		pattern[i] = pattern[i - 1];
+		send_pad (i);
+		if (i == actPage) drawPad();
+	}
+
+	// Init new page
+	pattern[page].clear();
+	for (int i = 0; i < MAXSTEPS; ++i) pattern[page].setPad (i, i, Pad (1.0));
+	send_pad (page);
+	if (page == actPage) drawPad();
+}
+
+void BJumblrGUI::deletePage (const int page)
+{
+	if ((page < 0) || (page >= nrPages)) return;
+
+	if (actPage > page) gotoPage (actPage - 1);
+	if (pageWidget.getValue() > page) pageWidget.setValue (pageWidget.getValue() - 1);
+
+	for (int i = page; i < nrPages -1; ++i)
+	{
+		pattern[i] = pattern[i + 1];
+		send_pad (i);
+		if (i == actPage) drawPad ();
+	}
+
+	popPage();
+	send_maxPage();
+}
+
+void BJumblrGUI::swapPage (const int page1, const int page2)
+{
+	if ((page1 < 0) || (page1 >= nrPages) || (page2 < 0) || (page2 >= nrPages)) return;
+
+	Pattern p;
+	p.clear();
+	p = pattern[page1];
+	pattern[page1] = pattern[page2];
+	pattern[page2] = p;
+	send_pad (page1);
+	send_pad (page2);
+
+	if (actPage == page1) gotoPage (page2);
+	else if (actPage == page2) gotoPage (page1);
+
+	if (pageWidget.getValue() == page1) pageWidget.setValue (page2);
+	else if (pageWidget.getValue() == page2) pageWidget.setValue (page1);
+}
+
+bool BJumblrGUI::validatePad (int page)
 {
 	bool changed = false;
 
@@ -684,16 +902,16 @@ bool BJumblrGUI::validatePad ()
 				// Clear if there is already an active pad
 				if (padOn)
 				{
-					if (pattern.getPad (r, s).level != 0.0)
+					if (pattern[page].getPad (r, s).level != 0.0)
 					{
-						pattern.setPad (r, s, Pad(0));
-						send_pad (r, s);
+						pattern[page].setPad (r, s, Pad(0));
+						send_pad (page, r, s);
 						changed = true;
 					}
 				}
 
 				// First active pad
-				else if (pattern.getPad (r, s).level != 0.0)
+				else if (pattern[page].getPad (r, s).level != 0.0)
 				{
 					padOn = true;
 				}
@@ -702,8 +920,8 @@ bool BJumblrGUI::validatePad ()
 			// Empty step: Set default
 			if (!padOn)
 			{
-				pattern.setPad (s, s, Pad (1.0));
-				send_pad (s, s);
+				pattern[page].setPad (s, s, Pad (1.0));
+				send_pad (page, s, s);
 				changed = true;
 			}
 		}
@@ -712,7 +930,7 @@ bool BJumblrGUI::validatePad ()
 	return (!changed);
 }
 
-bool BJumblrGUI::validatePad (int row, int step, Pad& pad)
+bool BJumblrGUI::validatePad (int page, int row, int step, Pad& pad)
 {
 	bool changed = false;
 
@@ -721,18 +939,18 @@ bool BJumblrGUI::validatePad (int row, int step, Pad& pad)
 	{
 		if (pad.level != 0.0)
 		{
-			pattern.setPad (row, step, pad);
-			send_pad (row, step);
+			pattern[page].setPad (row, step, pad);
+			send_pad (page, row, step);
 
 			for (int r = 0; r < MAXSTEPS; ++r)
 			{
 				// Clear all other active pads
 				if (r != row)
 				{
-					if (pattern.getPad (r, step).level != 0.0)
+					if (pattern[page].getPad (r, step).level != 0.0)
 					{
-						pattern.setPad (r, step, Pad(0));
-						send_pad (r, step);
+						pattern[page].setPad (r, step, Pad(0));
+						send_pad (page, r, step);
 						changed = true;
 					}
 				}
@@ -742,8 +960,8 @@ bool BJumblrGUI::validatePad (int row, int step, Pad& pad)
 
 	else
 	{
-		pattern.setPad (row, step, pad);
-		send_pad (row, step);
+		pattern[page].setPad (row, step, pad);
+		send_pad (page, row, step);
 	}
 
 	return (!changed);
@@ -796,6 +1014,13 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 			case PLAY:		ui->bypassButton.setValue (value == 2.0 ? 1 : 0);
 						break;
 
+			case PAGE:		for (int i = 0; i < MAXPAGES; ++i)
+						{
+							if (i == value) ui->tabs[i].playSymbol.setState (BColors::ACTIVE);
+							else ui->tabs[i].playSymbol.setState (BColors::INACTIVE);
+						}
+						break;
+
 			default:		break;
 		}
 	}
@@ -805,10 +1030,13 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 	{
 		ui->editMode = ui->editModeListBox.getValue();
 		ui->send_editMode();
-		if (!ui->validatePad())
+		for (int i = 0; i < MAXPAGES; ++i)
 		{
-			ui->drawPad();
-			ui->pattern.store ();
+			if (!ui->validatePad(i))
+			{
+				if (i == ui->actPage) ui->drawPad();
+				ui->pattern[i].store ();
+			}
 		}
 	}
 
@@ -825,6 +1053,81 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 		{
 			ui->playButton.setValue (0.0);
 			ui->bypassButton.setValue (0.0);
+		}
+	}
+}
+
+
+void BJumblrGUI::pageClickedCallback(BEvents::Event* event)
+{
+	if (!event) return;
+	BWidgets::Widget* widget = event->getWidget ();
+	if (!widget) return;
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	for (int i = 0; i < ui->nrPages; ++i)
+	{
+		if (&ui->tabs[i].container == widget)
+		{
+			ui->gotoPage (i);
+			break;
+		}
+	}
+}
+
+void BJumblrGUI::pageSymbolClickedCallback(BEvents::Event* event)
+{
+	if (!event) return;
+	SymbolWidget* widget = (SymbolWidget*)event->getWidget ();
+	if (!widget) return;
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	for (int i = 0; i < ui->nrPages; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			if (&ui->tabs[i].symbols[j] == widget)
+			{
+				switch (j)
+				{
+					// Symbol +
+					case 0:	ui->insertPage (i + 1);
+						break;
+
+					// Symbol -
+					case 1: ui->deletePage (i);
+						break;
+
+					// Symbol <
+					case 2:	ui->swapPage (i, i - 1);
+						break;
+
+					// Symbol >
+					case 3:	ui->swapPage (i, i + 1);
+						break;
+				}
+				return;
+			}
+		}
+	}
+}
+
+void BJumblrGUI::pagePlayClickedCallback(BEvents::Event* event)
+{
+	if (!event) return;
+	SymbolWidget* widget = (SymbolWidget*)event->getWidget ();
+	if (!widget) return;
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	for (int i = 0; i < ui->nrPages; ++i)
+	{
+		if (&ui->tabs[i].playSymbol == widget)
+		{
+			ui->pageWidget.setValue (i);
+			break;
 		}
 	}
 }
@@ -909,6 +1212,8 @@ void BJumblrGUI::edit2ChangedCallback(BEvents::Event* event)
 	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
 	if (!ui) return;
 
+	int page = ui->actPage;
+
 	// Identify editButtons: RESET ... REDO
 	int widgetNr = -1;
 	for (int i = 0; i < MAXEDIT - EDIT_RESET; ++i)
@@ -927,7 +1232,7 @@ void BJumblrGUI::edit2ChangedCallback(BEvents::Event* event)
 		{
 			if (ui->wheelScrolled)
 			{
-				ui->pattern.store ();
+				ui->pattern[page].store ();
 				ui->wheelScrolled = false;
 			}
 
@@ -936,41 +1241,41 @@ void BJumblrGUI::edit2ChangedCallback(BEvents::Event* event)
 			{
 				for (int s = 0; s < MAXSTEPS; ++s)
 				{
-					if (s == r) ui->pattern.setPad (r, s, Pad (1.0));
-					else ui->pattern.setPad (r, s, p0);
-					ui->send_pad (r, s);
+					if (s == r) ui->pattern[page].setPad (r, s, Pad (1.0));
+					else ui->pattern[page].setPad (r, s, p0);
+					ui->send_pad (page, r, s);
 				}
 			}
 
 			ui->drawPad ();
-			ui->pattern.store ();
+			ui->pattern[page].store ();
 		}
 		break;
 
 		case EDIT_UNDO:
 		{
-			std::vector<PadMessage> padMessages = ui->pattern.undo ();
+			std::vector<PadMessage> padMessages = ui->pattern[page].undo ();
 			for (PadMessage const& p : padMessages)
 			{
 				size_t r = LIMIT (p.row, 0, MAXSTEPS);
 				size_t s = LIMIT (p.step, 0, MAXSTEPS);
-				ui->send_pad (r, s);
+				ui->send_pad (page, r, s);
 			}
-			ui->validatePad();
+			ui->validatePad (page);
 			ui->drawPad ();
 		}
 		break;
 
 		case EDIT_REDO:
 		{
-			std::vector<PadMessage> padMessages = ui->pattern.redo ();
+			std::vector<PadMessage> padMessages = ui->pattern[page].redo ();
 			for (PadMessage const& p : padMessages)
 			{
 				size_t r = LIMIT (p.row, 0, MAXSTEPS);
 				size_t s = LIMIT (p.step, 0, MAXSTEPS);
-				ui->send_pad (r, s);
+				ui->send_pad (page, r, s);
 			}
-			ui->validatePad();
+			ui->validatePad (page);
 			ui->drawPad ();
 		}
 		break;
@@ -988,6 +1293,8 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
 	if (!ui) return;
 
+	int page = ui->actPage;
+
 	if
 	(
 		(event->getEventType () == BEvents::BUTTON_PRESS_EVENT) ||
@@ -997,7 +1304,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 	{
 		if (ui->wheelScrolled)
 		{
-			ui->pattern.store ();
+			ui->pattern[page].store ();
 			ui->wheelScrolled = false;
 		}
 
@@ -1014,7 +1321,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 
 			if ((row >= 0) && (row < maxstep) && (step >= 0) && (step < maxstep))
 			{
-				Pad oldPad = ui->pattern.getPad (row, step);
+				Pad oldPad = ui->pattern[page].getPad (row, step);
 
 				// Left button
 				if (pointerEvent->getButton() == BDevices::LEFT_BUTTON)
@@ -1071,7 +1378,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 											(step - s < maxstep)
 										)
 										{
-											if (!ui->validatePad (row + r, step - s, ui->clipBoard.data.at(r).at(s)))
+											if (!ui->validatePad (page, row + r, step - s, ui->clipBoard.data.at(r).at(s)))
 											{
 												valid = false;
 											}
@@ -1090,7 +1397,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 					{
 						if (!ui->padPressed) ui->deleteMode = ((oldPad.level == float (ui->levelDial.getValue())) && (ui->editMode != 1));
 						Pad newPad = (ui->deleteMode ? Pad (0.0) : Pad (ui->levelDial.getValue()));
-						if (!ui->validatePad (row, step, newPad)) ui->drawPad();
+						if (!ui->validatePad (page, row, step, newPad)) ui->drawPad();
 						else ui->drawPad (row,step);
 					}
 
@@ -1099,7 +1406,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 
 				else if (pointerEvent->getButton() == BDevices::RIGHT_BUTTON)
 				{
-					ui->levelDial.setValue (ui->pattern.getPad (row, step).level);
+					ui->levelDial.setValue (ui->pattern[page].getPad (row, step).level);
 				}
 			}
 		}
@@ -1137,14 +1444,14 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 						{
 							for (int s = clipSMin; s <= clipSMax; ++s)
 							{
-								Pad pd = ui->pattern.getPad (clipRMin + dr, s);
-								ui->pattern.setPad (clipRMin + dr, s, ui->pattern.getPad (clipRMax -dr, s));
-								ui->send_pad (clipRMin + dr, s);
-								ui->pattern.setPad (clipRMax - dr, s, pd);
-								ui->send_pad (clipRMax - dr, s);
+								Pad pd = ui->pattern[page].getPad (clipRMin + dr, s);
+								ui->pattern[page].setPad (clipRMin + dr, s, ui->pattern[page].getPad (clipRMax -dr, s));
+								ui->send_pad (page, clipRMin + dr, s);
+								ui->pattern[page].setPad (clipRMax - dr, s, pd);
+								ui->send_pad (page, clipRMax - dr, s);
 							}
 						}
-						ui->pattern.store ();
+						ui->pattern[page].store ();
 					}
 
 					// YFLIP
@@ -1157,7 +1464,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 						{
 							for (int dr = 0; dr <= clipRMax - clipRMin; ++dr)
 							{
-								pads[dr][ds] = ui->pattern.getPad (clipRMin + dr, clipSMin + ds);
+								pads[dr][ds] = ui->pattern[page].getPad (clipRMin + dr, clipSMin + ds);
 							}
 						}
 
@@ -1167,7 +1474,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 						{
 							for (int dr = 0; dr <= clipRMax - clipRMin; ++dr)
 							{
-								if (!ui->validatePad (clipRMin + dr, clipSMax - ds, pads[dr][ds]))
+								if (!ui->validatePad (page, clipRMin + dr, clipSMax - ds, pads[dr][ds]))
 								{
 									valid = false;
 								}
@@ -1175,7 +1482,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 							}
 						}
 						if (!valid) ui->drawPad();
-						ui->pattern.store ();
+						ui->pattern[page].store ();
 					}
 
 					// Store selected data in clipboard after flip (XFLIP, YFLIP)
@@ -1186,7 +1493,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 					{
 						std::vector<Pad> padRow;
 						padRow.clear ();
-						for (int s = clipSMax; s >= clipSMin; --s) padRow.push_back (ui->pattern.getPad (r, s));
+						for (int s = clipSMax; s >= clipSMin; --s) padRow.push_back (ui->pattern[page].getPad (r, s));
 						ui->clipBoard.data.push_back (padRow);
 					}
 
@@ -1201,15 +1508,15 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 							for (int r = clipRMin; r <= clipRMax; ++r)
 							{
 								// Limit action to not empty pads
-								if (ui->pattern.getPad (r, s) != Pad())
+								if (ui->pattern[page].getPad (r, s) != Pad())
 								{
 									// REPLACE mode: delete everything except default pads
 									if (ui->editMode == 1)
 									{
 										if (r != s)
 										{
-											ui->pattern.setPad (r, s,  Pad ());
-											ui->send_pad (r, s);
+											ui->pattern[page].setPad (r, s,  Pad ());
+											ui->send_pad (page, r, s);
 											empty = true;
 										}
 
@@ -1219,8 +1526,8 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 									// ADD mode: simply delete
 									else
 									{
-										ui->pattern.setPad (r, s,  Pad ());
-										ui->send_pad (r, s);
+										ui->pattern[page].setPad (r, s,  Pad ());
+										ui->send_pad (page, r, s);
 									}
 								}
 							}
@@ -1228,11 +1535,11 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 							// Emptied column in REPLACE mode: set default
 							if (empty)
 							{
-								ui->pattern.setPad (s, s,  Pad (1.0));
-								ui->send_pad (s, s);
+								ui->pattern[page].setPad (s, s,  Pad (1.0));
+								ui->send_pad (page, s, s);
 							}
 						}
-						ui->pattern.store ();
+						ui->pattern[page].store ();
 					}
 
 					ui->clipBoard.ready = true;
@@ -1243,7 +1550,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 			else
 			{
 				ui->padPressed = false;
-				ui->pattern.store ();
+				ui->pattern[page].store ();
 			}
 		}
 	}
@@ -1262,15 +1569,16 @@ void BJumblrGUI::padsScrolledCallback (BEvents::Event* event)
 		const double width = ui->padSurface.getEffectiveWidth ();
 		const double height = ui->padSurface.getEffectiveHeight ();
 
+		int page = ui->actPage;
 		int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
 		int step = maxstep - 1 - int ((wheelEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
 		int row = (wheelEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
 
 		if ((row >= 0) && (row < maxstep) && (step >= 0) && (step < maxstep))
 		{
-			Pad pd = ui->pattern.getPad (row, step);
+			Pad pd = ui->pattern[page].getPad (row, step);
 			pd.level = LIMIT (pd.level + 0.01 * wheelEvent->getDelta().y, 0.0, 1.0);
-			if (!ui->validatePad (row, step, pd)) ui->drawPad();
+			if (!ui->validatePad (page, row, step, pd)) ui->drawPad();
 			else ui->drawPad (row, step);
 			ui->wheelScrolled = true;
 		}
@@ -1290,6 +1598,7 @@ void BJumblrGUI::padsFocusedCallback (BEvents::Event* event)
 	const double width = ui->padSurface.getEffectiveWidth ();
 	const double height = ui->padSurface.getEffectiveHeight ();
 
+	int page = ui->actPage;
 	int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
 	int step = maxstep - 1 - int ((focusEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
 	int row = (focusEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
@@ -1300,7 +1609,7 @@ void BJumblrGUI::padsFocusedCallback (BEvents::Event* event)
 		(
 			"Row: " + std::to_string (row + 1) + "\n" +
 			"Step: " + std::to_string (step + 1) + "\n" +
-			"Level: " + BUtilities::to_string (ui->pattern.getPad (row, step).level, "%1.2f")
+			"Level: " + BUtilities::to_string (ui->pattern[page].getPad (row, step).level, "%1.2f")
 		);
 	}
 }
@@ -1457,8 +1766,8 @@ void BJumblrGUI::drawPad (cairo_t* cr, int row, int step)
 	cairo_fill (cr);
 
 	// Draw pad
-	Pad pd = pattern.getPad (row, step);
-	Pad pdc = pattern.getPad (row, cursor);
+	Pad pd = pattern[actPage].getPad (row, step);
+	Pad pdc = pattern[actPage].getPad (row, cursor);
 	BColors::Color color = BColors::yellow;
 	color.applyBrightness (pd.level - 1.0);
 	if (pdc.level != 0.0) color.applyBrightness (pdc.level * 0.75);

@@ -43,12 +43,13 @@ ROOTFILES = \
 	BJumblr.ttl \
 	LICENSE
 
-INCFILES = \
-	inc/surface.png
+INCFILES = inc/*.png
 
 B_FILES = $(addprefix $(BUNDLE)/, $(ROOTFILES) $(INCFILES))
 
 GUI_INCL = \
+	src/BWidgets/ImageIcon.cpp \
+	src/BWidgets/Icon.cpp \
 	src/BWidgets/FileChooser.cpp \
 	src/BWidgets/PopupListBox.cpp \
 	src/BWidgets/ListBox.cpp \

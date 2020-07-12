@@ -75,8 +75,8 @@ private:
 	void runSequencer (const int start, const int end);
 	float validateValue (float value, const Limit limit);
 	Pad validatePad (Pad pad);
-	bool padMessageBufferAppendPad (int row, int step, Pad pad);
-	void padMessageBufferAllPads ();
+	bool padMessageBufferAppendPad (int page, int row, int step, Pad pad);
+	void padMessageBufferAllPads (int page);
 	void notifyPadsToGui ();
 	void notifyStatusToGui ();
 	void notifyWaveformToGui (const int start, const int end);
@@ -101,7 +101,7 @@ private:
 	LV2_Atom_Forge notifyForge;
 	LV2_Atom_Forge_Frame notifyFrame;
 
-	PadMessage padMessageBuffer[MAXSTEPS * MAXSTEPS];
+	std::array<std::array <PadMessage, MAXSTEPS * MAXSTEPS>, MAXPAGES> padMessageBuffer;
 
 	float waveform[WAVEFORMSIZE];
 	int waveformCounter;
@@ -119,13 +119,16 @@ private:
 		{0.01, 4, 0},		// STEP_SIZE
 		{0, 31, 1},		// STEP_OFFSET
 		{-32, 32, 0},		// MANUAL_PROGRSSION_DELAY
-		{0, 4, 0}		// SPEED
+		{0, 4, 0},		// SPEED
+		{0, 5, 1}		// PAGE
 	};
 
 	// Pads
 	int editMode;
-	Pad pads [MAXSTEPS] [MAXSTEPS];
-
+	int nrPages;
+	int lastPage;
+	double pageFade;
+	Pad pads [MAXPAGES] [MAXSTEPS] [MAXSTEPS];
 	// Sample
 	struct Sample
 	{

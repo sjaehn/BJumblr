@@ -37,6 +37,21 @@ protected:
         typename std::list<T>::iterator newIterator;
 
 public:
+        Journal& operator= (const Journal& rhs)
+        {
+                oldList = rhs.oldList;
+                newList = rhs.newList;
+                oldIterator = oldList.begin();
+                int od = 0;
+                for (auto it = rhs.oldList.begin(); it !=rhs.oldIterator; ++it, ++od);
+                std::advance (oldIterator, od);
+                newIterator = newList.begin();
+                int nd = 0;
+                for (auto it = rhs.newList.begin(); it !=rhs.newIterator; ++it, ++nd);
+                std::advance (newIterator, nd);
+                return *this;
+        }
+
         void clear ()
         {
                 oldList.clear ();
