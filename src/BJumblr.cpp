@@ -738,13 +738,16 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 		{
 			for (int row = 0; row < MAXSTEPS; ++row)
 			{
-				char valueString[64];
-				int id = step * MAXSTEPS + row;
 				Pad* pd = &pads[page][row][step];
-				snprintf (valueString, 62, "pg:%d; id:%d; lv:%f", page, id, pd->level);
-				if ((step < MAXSTEPS - 1) || (row < MAXSTEPS)) strcat (valueString, ";\n");
-				else strcat(valueString, "\n");
-				strcat (padDataString, valueString);
+				if (*pd != Pad())
+				{
+					char valueString[64];
+					int id = step * MAXSTEPS + row;
+					snprintf (valueString, 62, "pg:%d; id:%d; lv:%f", page, id, pd->level);
+					if ((step < MAXSTEPS - 1) || (row < MAXSTEPS)) strcat (valueString, ";\n");
+					else strcat(valueString, "\n");
+					strcat (padDataString, valueString);
+				}
 			}
 		}
 	}
@@ -791,11 +794,22 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
         }
 
 	// Retrieve pad data
-	nrPages = 1;
 	const void* padData = retrieve(handle, uris.state_pad, &size, &type, &valflags);
 
 	if (padData && (type == uris.atom_String))
 	{
+		nrPages = 1;
+		for (int i = 0; i < MAXPAGES; ++i)
+		{
+			for (int j = 0; j < MAXSTEPS; ++j)
+			{
+				for (int k = 0; k < MAXSTEPS; ++k)
+				{
+					pads[i][j][k] = Pad();
+				}
+			}
+		}
+
 		std::string padDataString = (char*) padData;
 		const std::string keywords[3] = {"pg:", "id:", "lv:"};
 
