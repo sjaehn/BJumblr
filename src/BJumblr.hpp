@@ -119,7 +119,7 @@ private:
 		{0, 31, 1},		// STEP_OFFSET
 		{-32, 32, 0},		// MANUAL_PROGRSSION_DELAY
 		{0, 4, 0},		// SPEED
-		{0, 5, 1}		// PAGE
+		{0, 15, 1}		// PAGE
 	};
 
 	// Pads

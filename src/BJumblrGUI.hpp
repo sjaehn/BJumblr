@@ -109,6 +109,7 @@ private:
 	static void pageClickedCallback(BEvents::Event* event);
 	static void pageSymbolClickedCallback(BEvents::Event* event);
 	static void pagePlayClickedCallback(BEvents::Event* event);
+	static void pageScrollClickedCallback(BEvents::Event* event);
 	static void levelChangedCallback(BEvents::Event* event);
 	static void edit1ChangedCallback(BEvents::Event* event);
 	static void edit2ChangedCallback(BEvents::Event* event);
@@ -127,6 +128,7 @@ private:
 	void insertPage (const int page);
 	void deletePage (const int page);
 	void swapPage (const int page1, const int page2);
+	void updatePageContainer ();
 	bool validatePad (int page);
 	bool validatePad (int page, int row, int step, Pad& pad);
 	void drawPad ();
@@ -189,11 +191,14 @@ private:
 	// Pages
 	int actPage;
 	int nrPages;
+	int pageOffset;
 
 	//Widgets
 	BWidgets::Widget mContainer;
 	BWidgets::Label messageLabel;
 	BWidgets::ValueWidget pageWidget;
+	SymbolWidget pageBackSymbol;
+	SymbolWidget pageForwardSymbol;
 
 	struct Tab
 	{
@@ -295,9 +300,11 @@ private:
 		{"widget", 		{{"uses", STYLEPTR (&defaultStyles)}}},
 		{"widget/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
 		{"tab", 		{{"background", STYLEPTR (&tabBg)},
-					 {"border", STYLEPTR (&BStyles::noBorder)}}},
+					 {"border", STYLEPTR (&BStyles::noBorder)},
+			 		 {"fgcolors", STYLEPTR (&blkColors)}}},
 		{"activetab", 		{{"background", STYLEPTR (&activeTabBg)},
-					 {"border", STYLEPTR (&BStyles::noBorder)}}},
+					 {"border", STYLEPTR (&BStyles::noBorder)},
+			 		 {"fgcolors", STYLEPTR (&blkColors)}}},
 		{"symbol", 		{{"uses", STYLEPTR (&defaultStyles)},
 					 {"fgcolors", STYLEPTR (&blkColors)}}},
 		{"symbol/focus",	{{"uses", STYLEPTR (&focusStyles)}}},

@@ -142,36 +142,37 @@ protected:
 			double y0 = getYOffset ();
 			double w = getEffectiveWidth ();
 			double h = getEffectiveHeight ();
+                        double ext = (w < h ? w : h);
 
                         switch (symbol_)
                         {
-                                case ADDSYMBOL:         cairo_move_to (cr, x0, y0 + h / 2);
-                                                        cairo_line_to (cr, x0 + w, y0 + h / 2);
-                                                        cairo_move_to (cr, x0 + w / 2, y0);
-                                                        cairo_line_to (cr, x0 + w / 2, y0 + h);
+                                case ADDSYMBOL:         cairo_move_to (cr, x0 + w / 2 - ext / 2, y0 + h / 2);
+                                                        cairo_line_to (cr, x0 + w / 2 + ext / 2, y0 + h / 2);
+                                                        cairo_move_to (cr, x0 + w / 2, y0 + h / 2 - ext / 2);
+                                                        cairo_line_to (cr, x0 + w / 2, y0 + h / 2 + ext / 2);
                                                         cairo_set_line_width (cr, 2.0);
                                                         cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
                                                         cairo_stroke (cr);
                                                         break;
 
-                                case CLOSESYMBOL:       cairo_move_to (cr, x0, y0 + h / 2);
-                                                        cairo_line_to (cr, x0 + w, y0 + h / 2);
+                                case CLOSESYMBOL:       cairo_move_to (cr, x0 + w / 2 - ext / 2, y0 + h / 2);
+                                                        cairo_line_to (cr, x0 + w / 2 + ext / 2, y0 + h / 2);
                                                         cairo_set_line_width (cr, 2.0);
                                                         cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
                                                         cairo_stroke (cr);
                                                         break;
 
-                                case LEFTSYMBOL:        cairo_move_to (cr, x0 + 0.75 * w, y0);
-                                                        cairo_line_to (cr, x0 + 0.25 * w, y0 + 0.5 * h);
-                                                        cairo_line_to (cr, x0 + 0.75 * w, y0 + h);
+                                case LEFTSYMBOL:        cairo_move_to (cr, x0 + w / 2 + 0.25 * ext, y0 + h / 2 - ext / 2);
+                                                        cairo_line_to (cr, x0 + w / 2 - 0.25 * ext, y0 + h / 2);
+                                                        cairo_line_to (cr, x0 + w / 2 + 0.25 * ext, y0 + h / 2 + ext / 2);
                                                         cairo_set_line_width (cr, 2.0);
                                                         cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
                                                         cairo_stroke (cr);
                                                         break;
 
-                                case RIGHTSYMBOL:       cairo_move_to (cr, x0 + 0.25 * w, y0);
-                                                        cairo_line_to (cr, x0 + 0.75 * w, y0 + 0.5 * h);
-                                                        cairo_line_to (cr, x0 + 0.25 * w, y0 + h);
+                                case RIGHTSYMBOL:       cairo_move_to (cr, x0 + w / 2 - 0.25 * ext, y0 + h / 2 - ext / 2);
+                                                        cairo_line_to (cr, x0 + w / 2 + 0.25 * ext, y0 + h / 2);
+                                                        cairo_line_to (cr, x0 + w / 2 - 0.25 * ext, y0 + h / 2 + ext / 2);
                                                         cairo_set_line_width (cr, 2.0);
                                                         cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
                                                         cairo_stroke (cr);

@@ -33,10 +33,12 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	uris (), forge (), editMode (0), clipBoard (),
 	cursor (0), wheelScrolled (false), padPressed (false), deleteMode (false),
 	samplePath ("."),
-	actPage (0), nrPages (1),
+	actPage (0), nrPages (1), pageOffset (0),
 	mContainer (0, 0, 1020, 620, "main"),
 	messageLabel (400, 45, 600, 20, "ctlabel", ""),
-	pageWidget (0, 0, 0, 0, "widget", 0.0),
+	pageWidget (18, 90, 504, 26, "widget", 0.0),
+	pageBackSymbol (0, 0, 10, 26, "tab", LEFTSYMBOL),
+	pageForwardSymbol (482, 0, 10, 26, "tab", RIGHTSYMBOL),
 	padSurface (18, 118, 924, 454, "box"),
 	markerFwd (0, 120 + 15.5 * (450.0 / 16.0) - 10, 20, 20, "widget", MARKER_FWD),
 	markerRev (940, 120 + 15.5 * (450.0 / 16.0) - 10, 20, 20, "widget", MARKER_REV),
@@ -77,7 +79,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	// Init tabs
 	for (int i = 0; i < MAXPAGES; ++i)
 	{
-		tabs[i].container = BWidgets::Widget (18 + i * 80, 90, 78, 26, "tab");
+		tabs[i].container = BWidgets::Widget (i * 80, 0, 78, 26, "tab");
 		tabs[i].icon = BWidgets::ImageIcon (0, 3, 40, 20, "widget", pluginPath + "inc/page" + std::to_string (i + 1) + ".png");
 		tabs[i].playSymbol = SymbolWidget (40, 7, 16, 12, "symbol", PLAYSYMBOL);
 		for (int j = 0; j < 4; ++j) tabs[i].symbols[j] = SymbolWidget (58 + (j % 2) * 10, 3 + int (j / 2) * 12, 8, 8, "symbol", SWSymbol(j));
@@ -127,6 +129,9 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	loadButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, loadButtonClickedCallback);
 	sampleNameLabel.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, loadButtonClickedCallback);
 
+	pageBackSymbol.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, pageScrollClickedCallback);
+	pageForwardSymbol.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, pageScrollClickedCallback);
+
 	for (Tab& t : tabs)
 	{
 		t.container.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, pageClickedCallback);
@@ -149,6 +154,10 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	// Configure widgets
 	loadButton.hide();
 	sampleNameLabel.hide();
+	pageBackSymbol.setFocusable (false);
+	pageForwardSymbol.setFocusable (false);
+	pageBackSymbol.hide();
+	pageForwardSymbol.hide();
 	for (int i = 0; i < MAXPAGES; ++i)
 	{
 		tabs[i].playSymbol.setState (BColors::INACTIVE);
@@ -186,13 +195,15 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	// Pack widgets
 	mContainer.add (messageLabel);
 	mContainer.add (pageWidget);
+	pageWidget.add (pageBackSymbol);
+	pageWidget.add (pageForwardSymbol);
 	for (int i = MAXPAGES - 1; i >= 0; --i)
 	{
 		Tab& t = tabs[i];
 		t.container.add (t.icon);
 		t.container.add (t.playSymbol);
 		for (SymbolWidget& s : t.symbols) t.container.add (s);
-		mContainer.add (t.container);
+		pageWidget.add (t.container);
 	}
 	mContainer.add (playButton);
 	mContainer.add (bypassButton);
@@ -554,9 +565,10 @@ void BJumblrGUI::resize ()
 	//Scale widgets
 	RESIZE (mContainer, 0, 0, 1020, 620, sz);
 	RESIZE (messageLabel, 400, 45, 600, 20, sz);
+	RESIZE (pageWidget, 18, 90, 504, 26, sz);
+	updatePageContainer();
 	for (int i = 0; i < MAXPAGES; ++i)
 	{
-		RESIZE (tabs[i].container, 18 + i * 80, 90, 78, 26, sz);
 		RESIZE (tabs[i].icon, 0, 3, 40, 20, sz);
 		RESIZE (tabs[i].playSymbol, 40, 7, 16, 12, sz);
 		for (int j = 0; j < 4; ++j) RESIZE (tabs[i].symbols[j], 58 + (j % 2) * 10, 3 + int (j / 2) * 12, 8, 8, sz);
@@ -618,6 +630,9 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 {
 	mContainer.applyTheme (theme);
 	messageLabel.applyTheme (theme);
+	pageWidget.applyTheme (theme);
+	pageBackSymbol.applyTheme (theme);
+	pageForwardSymbol.applyTheme (theme);
 	for (Tab& t : tabs)
 	{
 		t.container.applyTheme (theme);
@@ -830,6 +845,7 @@ void BJumblrGUI::pushPage ()
 	}
 
 	++nrPages;
+	updatePageContainer();
 }
 
 void BJumblrGUI::popPage ()
@@ -845,6 +861,7 @@ void BJumblrGUI::popPage ()
 	if (controllers[PAGE] >= nrPages - 1) pageWidget.setValue (0);
 
 	--nrPages;
+	updatePageContainer();
 }
 
 void BJumblrGUI::gotoPage (const int page)
@@ -859,6 +876,7 @@ void BJumblrGUI::gotoPage (const int page)
 		tabs[i].container.applyTheme (theme);
 	}
 	drawPad();
+	updatePageContainer();
 }
 
 void BJumblrGUI::insertPage (const int page)
@@ -919,6 +937,36 @@ void BJumblrGUI::swapPage (const int page1, const int page2)
 
 	if (pageWidget.getValue() == page1) pageWidget.setValue (page2);
 	else if (pageWidget.getValue() == page2) pageWidget.setValue (page1);
+}
+
+void BJumblrGUI::updatePageContainer()
+{
+	if (nrPages > 6) pageOffset = LIMIT (pageOffset, 0, nrPages - 6);
+	else pageOffset = 0;
+	
+	int x0 = (pageOffset == 0 ? 0 : 12 * sz);
+
+	if (pageOffset != 0) pageBackSymbol.show();
+	else pageBackSymbol.hide();
+
+	if (pageOffset + 6 < nrPages) pageForwardSymbol.show();
+	else pageForwardSymbol.hide();
+
+	for (int p = 0; p < nrPages; ++p)
+	{
+		if ((p < pageOffset) || (p >= pageOffset + 6)) tabs[p].container.hide();
+		else
+		{
+			tabs[p].container.moveTo (x0 + (p - pageOffset) * 80 * sz, 0);
+			tabs[p].container.resize (78 * sz, 26 * sz);
+			tabs[p].container.show();
+		}
+	}
+
+	pageBackSymbol.moveTo (0, 0);
+	pageBackSymbol.resize (10 * sz, 26 * sz);
+	pageForwardSymbol.moveTo (x0 + 480 * sz, 0);
+	pageForwardSymbol.resize (10 * sz, 26 * sz);
 }
 
 bool BJumblrGUI::validatePad (int page)
@@ -1166,6 +1214,20 @@ void BJumblrGUI::pagePlayClickedCallback(BEvents::Event* event)
 			break;
 		}
 	}
+}
+
+void BJumblrGUI::pageScrollClickedCallback(BEvents::Event* event)
+{
+	if (!event) return;
+	SymbolWidget* widget = (SymbolWidget*)event->getWidget ();
+	if (!widget) return;
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	if (widget == &ui->pageBackSymbol) --ui->pageOffset;
+	else if (widget == &ui->pageForwardSymbol) ++ui->pageOffset;
+
+	ui->updatePageContainer();
 }
 
 void BJumblrGUI::levelChangedCallback(BEvents::Event* event)
