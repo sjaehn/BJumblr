@@ -494,7 +494,15 @@ void BJumblr::run (uint32_t n_samples)
 				if (oEd && (oEd->type == uris.atom_Int)) editMode = ((LV2_Atom_Int*)oEd)->body;
 
 				// padPage notification
-				if (oPg && (oPg->type == uris.atom_Int)) page = ((LV2_Atom_Int*)oPg)->body;
+				if (oPg && (oPg->type == uris.atom_Int))
+				{
+					page = ((LV2_Atom_Int*)oPg)->body;
+					if (page >= nrPages)
+					{
+						nrPages = LIMIT (page + 1, 1, MAXPAGES);
+						if (controllers[PAGE] >= nrPages) controllers[PAGE] = nrPages - 1;
+					}
+				}
 
 				// padMaxPage notification
 				if (oMx && (oMx->type == uris.atom_Int))
@@ -502,7 +510,7 @@ void BJumblr::run (uint32_t n_samples)
 					int newPages = ((LV2_Atom_Int*)oMx)->body;
 					if (newPages != nrPages)
 					{
-						nrPages = newPages;
+						nrPages = LIMIT (newPages, 1, MAXPAGES);
 						pageFade = 1;
 						if (controllers[PAGE] >= nrPages) controllers[PAGE] = nrPages - 1;
 					}
@@ -722,7 +730,7 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 	store (handle, uris.notify_editMode, &em, sizeof(uint32_t), uris.atom_Int, LV2_STATE_IS_POD);
 
 	// Store pads
-	char padDataString[0x8010] = "\nMatrix data:\n";
+	char padDataString[0x80100] = "\nMatrix data:\n";
 
 	for (int page = 0; page < nrPages; ++page)
 	{
@@ -1006,7 +1014,7 @@ void BJumblr::notifyPadsToGui ()
 {
 	PadMessage endmsg (ENDPADMESSAGE);
 
-	for (int p = 0; p < MAXPAGES; ++p)
+	for (int p = 0; p < nrPages; ++p)
 	{
 
 		LV2_Atom_Forge_Frame frame;

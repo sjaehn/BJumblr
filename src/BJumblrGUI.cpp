@@ -358,7 +358,12 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 					editModeListBox.setValue (((LV2_Atom_Int*)oEdit)->body);
 				}
 
-				if (oPage && (oPage->type == uris.atom_Int)) page = (((LV2_Atom_Int*)oPage)->body);
+				if (oPage && (oPage->type == uris.atom_Int))
+				{
+					page = (((LV2_Atom_Int*)oPage)->body);
+
+					while (page >= nrPages) pushPage();
+				}
 
 				if (oMax && (oMax->type == uris.atom_Int))
 				{

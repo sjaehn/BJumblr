@@ -97,7 +97,7 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->state_pad = m->map(m->handle, BJUMBLR_URI "#STATEpad");
 	uris->notify_padEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadEvent");
 	uris->notify_padPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadPage");
-	uris->notify_padMaxPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadPage");
+	uris->notify_padMaxPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadMaxPage");
 	uris->notify_pad = m->map(m->handle, BJUMBLR_URI "#NOTIFYpad");
 	uris->notify_padFullPattern = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadFullPattern");
 	uris->notify_editMode = m->map(m->handle, BJUMBLR_URI "#NOTIFYeditMode");
