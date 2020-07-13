@@ -1025,6 +1025,7 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 	// Controllers
 	if (controllerNr >= 0)
 	{
+		float oldValue = ui->controllers[controllerNr];
 		ui->controllers[controllerNr] = value;
 		ui->write_function(ui->controller, CONTROLLERS + controllerNr, sizeof(float), 0, &ui->controllers[controllerNr]);
 
@@ -1053,6 +1054,7 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 							if (i == value) ui->tabs[i].playSymbol.setState (BColors::ACTIVE);
 							else ui->tabs[i].playSymbol.setState (BColors::INACTIVE);
 						}
+						if ((oldValue == ui->actPage) || (value == ui->actPage)) ui->drawPad();
 						break;
 
 			default:		break;
