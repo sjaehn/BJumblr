@@ -165,7 +165,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 15 ;
+		lv2:index 14 ;
 		lv2:symbol "page_1_midi_status" ;
 		lv2:name "Page 1: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -178,7 +178,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 16 ;
+		lv2:index 15 ;
 		lv2:symbol "page_1_midi_channel" ;
 		lv2:name "Page 1: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -188,27 +188,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 17 ;
+		lv2:index 16 ;
 		lv2:symbol "page_1_midi_message" ;
 		lv2:name "Page 1: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 18 ;
+		lv2:index 17 ;
 		lv2:symbol "page_1_midi_value" ;
 		lv2:name "Page 1: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 19 ;
+		lv2:index 18 ;
 		lv2:symbol "page_2_midi_status" ;
 		lv2:name "Page 2: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -221,7 +221,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 20 ;
+		lv2:index 19 ;
 		lv2:symbol "page_2_midi_channel" ;
 		lv2:name "Page 2: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -231,27 +231,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 21 ;
+		lv2:index 20 ;
 		lv2:symbol "page_2_midi_message" ;
 		lv2:name "Page 2: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 22 ;
+		lv2:index 21 ;
 		lv2:symbol "page_2_midi_value" ;
 		lv2:name "Page 2: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 23 ;
+		lv2:index 22 ;
 		lv2:symbol "page_3_midi_status" ;
 		lv2:name "Page 3: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -264,7 +264,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 24 ;
+		lv2:index 23 ;
 		lv2:symbol "page_3_midi_channel" ;
 		lv2:name "Page 3: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -274,27 +274,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 25 ;
+		lv2:index 24 ;
 		lv2:symbol "page_3_midi_message" ;
 		lv2:name "Page 3: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 26 ;
+		lv2:index 25 ;
 		lv2:symbol "page_3_midi_value" ;
 		lv2:name "Page 3: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 27 ;
+		lv2:index 26 ;
 		lv2:symbol "page_4_midi_status" ;
 		lv2:name "Page 4: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -307,7 +307,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 28 ;
+		lv2:index 27 ;
 		lv2:symbol "page_4_midi_channel" ;
 		lv2:name "Page 4: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -317,27 +317,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 29 ;
+		lv2:index 28 ;
 		lv2:symbol "page_4_midi_message" ;
 		lv2:name "Page 4: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 30 ;
+		lv2:index 29 ;
 		lv2:symbol "page_4_midi_value" ;
 		lv2:name "Page 4: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 31 ;
+		lv2:index 30 ;
 		lv2:symbol "page_5_midi_status" ;
 		lv2:name "Page 5: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -350,7 +350,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 32 ;
+		lv2:index 31 ;
 		lv2:symbol "page_5_midi_channel" ;
 		lv2:name "Page 5: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -360,27 +360,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 33 ;
+		lv2:index 32 ;
 		lv2:symbol "page_5_midi_message" ;
 		lv2:name "Page 5: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 34 ;
+		lv2:index 33 ;
 		lv2:symbol "page_5_midi_value" ;
 		lv2:name "Page 5: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 35 ;
+		lv2:index 34 ;
 		lv2:symbol "page_6_midi_status" ;
 		lv2:name "Page 6: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -393,7 +393,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 36 ;
+		lv2:index 35 ;
 		lv2:symbol "page_6_midi_channel" ;
 		lv2:name "Page 6: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -403,27 +403,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 37 ;
+		lv2:index 36 ;
 		lv2:symbol "page_6_midi_message" ;
 		lv2:name "Page 6: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 38 ;
+		lv2:index 37 ;
 		lv2:symbol "page_6_midi_value" ;
 		lv2:name "Page 6: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 39 ;
+		lv2:index 38 ;
 		lv2:symbol "page_7_midi_status" ;
 		lv2:name "Page 7: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -436,7 +436,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 40 ;
+		lv2:index 39 ;
 		lv2:symbol "page_7_midi_channel" ;
 		lv2:name "Page 7: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -446,27 +446,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 41 ;
+		lv2:index 40 ;
 		lv2:symbol "page_7_midi_message" ;
 		lv2:name "Page 7: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 42 ;
+		lv2:index 41 ;
 		lv2:symbol "page_7_midi_value" ;
 		lv2:name "Page 7: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 43 ;
+		lv2:index 42 ;
 		lv2:symbol "page_8_midi_status" ;
 		lv2:name "Page 8: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -479,7 +479,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 44 ;
+		lv2:index 43 ;
 		lv2:symbol "page_8_midi_channel" ;
 		lv2:name "Page 8: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -489,27 +489,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 45 ;
+		lv2:index 44 ;
 		lv2:symbol "page_8_midi_message" ;
 		lv2:name "Page 8: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 46 ;
+		lv2:index 45 ;
 		lv2:symbol "page_8_midi_value" ;
 		lv2:name "Page 8: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 47 ;
+		lv2:index 46 ;
 		lv2:symbol "page_9_midi_status" ;
 		lv2:name "Page 9: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -522,7 +522,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 48 ;
+		lv2:index 47 ;
 		lv2:symbol "page_9_midi_channel" ;
 		lv2:name "Page 9: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -532,27 +532,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 49 ;
+		lv2:index 48 ;
 		lv2:symbol "page_9_midi_message" ;
 		lv2:name "Page 9: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 50 ;
+		lv2:index 49 ;
 		lv2:symbol "page_9_midi_value" ;
 		lv2:name "Page 9: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 51 ;
+		lv2:index 50 ;
 		lv2:symbol "page_10_midi_status" ;
 		lv2:name "Page 10: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -565,7 +565,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 52 ;
+		lv2:index 51 ;
 		lv2:symbol "page_10_midi_channel" ;
 		lv2:name "Page 10: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -575,27 +575,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 53 ;
+		lv2:index 52 ;
 		lv2:symbol "page_10_midi_message" ;
 		lv2:name "Page 10: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 54 ;
+		lv2:index 53 ;
 		lv2:symbol "page_10_midi_value" ;
 		lv2:name "Page 10: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 55 ;
+		lv2:index 54 ;
 		lv2:symbol "page_11_midi_status" ;
 		lv2:name "Page 11: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -608,7 +608,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 56 ;
+		lv2:index 55 ;
 		lv2:symbol "page_11_midi_channel" ;
 		lv2:name "Page 11: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -618,27 +618,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 57 ;
+		lv2:index 56 ;
 		lv2:symbol "page_11_midi_message" ;
 		lv2:name "Page 11: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 58 ;
+		lv2:index 57 ;
 		lv2:symbol "page_11_midi_value" ;
 		lv2:name "Page 11: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 59 ;
+		lv2:index 58 ;
 		lv2:symbol "page_12_midi_status" ;
 		lv2:name "Page 12: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -651,7 +651,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 60 ;
+		lv2:index 59 ;
 		lv2:symbol "page_12_midi_channel" ;
 		lv2:name "Page 12: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -661,27 +661,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 61 ;
+		lv2:index 60 ;
 		lv2:symbol "page_12_midi_message" ;
 		lv2:name "Page 12: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 62 ;
+		lv2:index 61 ;
 		lv2:symbol "page_12_midi_value" ;
 		lv2:name "Page 12: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 63 ;
+		lv2:index 62 ;
 		lv2:symbol "page_13_midi_status" ;
 		lv2:name "Page 13: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -694,7 +694,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 64 ;
+		lv2:index 63 ;
 		lv2:symbol "page_13_midi_channel" ;
 		lv2:name "Page 13: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -704,27 +704,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 65 ;
+		lv2:index 64 ;
 		lv2:symbol "page_13_midi_message" ;
 		lv2:name "Page 13: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 66 ;
+		lv2:index 65 ;
 		lv2:symbol "page_13_midi_value" ;
 		lv2:name "Page 13: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 67 ;
+		lv2:index 66 ;
 		lv2:symbol "page_14_midi_status" ;
 		lv2:name "Page 14: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -737,7 +737,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 68 ;
+		lv2:index 67 ;
 		lv2:symbol "page_14_midi_channel" ;
 		lv2:name "Page 14: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -747,27 +747,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 69 ;
+		lv2:index 68 ;
 		lv2:symbol "page_14_midi_message" ;
 		lv2:name "Page 14: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 70 ;
+		lv2:index 69 ;
 		lv2:symbol "page_14_midi_value" ;
 		lv2:name "Page 14: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 71 ;
+		lv2:index 70 ;
 		lv2:symbol "page_15_midi_status" ;
 		lv2:name "Page 15: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -780,7 +780,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 72 ;
+		lv2:index 71 ;
 		lv2:symbol "page_15_midi_channel" ;
 		lv2:name "Page 15: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -790,27 +790,27 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 73 ;
+		lv2:index 72 ;
 		lv2:symbol "page_15_midi_message" ;
 		lv2:name "Page 15: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 74 ;
+		lv2:index 73 ;
 		lv2:symbol "page_15_midi_value" ;
 		lv2:name "Page 15: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 75 ;
+		lv2:index 74 ;
 		lv2:symbol "page_16_midi_status" ;
 		lv2:name "Page 16: MIDI status" ;
 		lv2:portProperty lv2:integer, lv2:enumeration ;
@@ -823,7 +823,7 @@
 		lv2:maximum 15 ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 76 ;
+		lv2:index 75 ;
 		lv2:symbol "page_16_midi_channel" ;
 		lv2:name "Page 16: MIDI channel" ;
 		lv2:portProperty lv2:integer;
@@ -833,21 +833,21 @@
 		rdfs:comment "MIDI channel number (1 .. 16). Use 0 for any channel." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 77 ;
+		lv2:index 76 ;
 		lv2:symbol "page_16_midi_message" ;
 		lv2:name "Page 16: MIDI note / message" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "MIDI byte 2 (note or message) 0 .. 127. Use 128 for any note/message." ;
 	] , [
 		a lv2:InputPort , lv2:ControlPort ;
-		lv2:index 78 ;
+		lv2:index 77 ;
 		lv2:symbol "page_16_midi_value" ;
 		lv2:name "Page 16: MIDI value" ;
 		lv2:portProperty lv2:integer;
-		lv2:default 128 ;
+		lv2:default 0 ;
 		lv2:minimum 0 ;
 		lv2:maximum 128 ;
 		rdfs:comment "Optional MIDI byte 3 (value) 0 .. 127. Use 128 for any value." ;

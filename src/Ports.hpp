@@ -39,7 +39,14 @@ enum PortIndex {
 	MANUAL_PROGRSSION_DELAY	= 6,
 	SPEED			= 7,
 	PAGE			= 8,
-	MAXCONTROLLERS		= 9
+
+	MIDI			= 9,
+	STATUS			= 0,
+	CHANNEL			= 1,
+	NOTE			= 2,
+	VALUE			= 3,
+	NR_MIDI_CTRLS		= 4,
+	MAXCONTROLLERS		= MIDI + 16 * NR_MIDI_CTRLS
 };
 
 enum BaseIndex

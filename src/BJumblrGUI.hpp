@@ -41,6 +41,7 @@
 #include "BWidgets/MinusButton.hpp"
 #include "BWidgets/FileChooser.hpp"
 #include "BWidgets/ImageIcon.hpp"
+#include "BWidgets/TextToggleButton.hpp"
 #include "screen.h"
 
 #include "drawbutton.hpp"
@@ -93,6 +94,8 @@ public:
 	void send_samplePath ();
 	void send_editMode ();
 	void send_maxPage ();
+	void send_playbackPage ();
+	void send_requestMidiLearn ();
 	void send_pad (int page);
 	void send_pad (int page, int row, int step);
 	virtual void onConfigureRequest (BEvents::ExposeEvent* event) override;
@@ -110,6 +113,8 @@ private:
 	static void pageSymbolClickedCallback(BEvents::Event* event);
 	static void pagePlayClickedCallback(BEvents::Event* event);
 	static void pageScrollClickedCallback(BEvents::Event* event);
+	static void midiSymbolClickedCallback(BEvents::Event* event);
+	static void midiButtonClickedCallback(BEvents::Event* event);
 	static void levelChangedCallback(BEvents::Event* event);
 	static void edit1ChangedCallback(BEvents::Event* event);
 	static void edit2ChangedCallback(BEvents::Event* event);
@@ -205,10 +210,27 @@ private:
 		BWidgets::Widget container;
 		BWidgets::ImageIcon icon;
 		SymbolWidget playSymbol;
+		SymbolWidget midiSymbol;
 		std::array<SymbolWidget, 4> symbols;
+		std::array<BWidgets::ValueWidget, 4> midiWidgets;
 	};
 
 	std::array<Tab, MAXPAGES> tabs;
+
+	BWidgets::ValueWidget midiBox;
+	BWidgets::Label midiText;
+	BWidgets::Label midiStatusLabel;
+	BWidgets::PopupListBox midiStatusListBox;
+	BWidgets::Label midiChannelLabel;
+	BWidgets::PopupListBox midiChannelListBox;
+	BWidgets::Label midiNoteLabel;
+	BWidgets::PopupListBox midiNoteListBox;
+	BWidgets::Label midiValueLabel;
+	BWidgets::PopupListBox midiValueListBox;
+	BWidgets::TextToggleButton midiLearnButton;
+	BWidgets::TextButton midiCancelButton;
+	BWidgets::TextButton midiOkButton;
+
 
 	PadSurface padSurface;
 	MarkerWidget markerFwd;
@@ -271,6 +293,8 @@ private:
 	BStyles::Fill boxBg = BStyles::Fill (BColors::Color (0.0, 0.0, 0.0, 0.9));
 	BStyles::Font ctLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 12.0,
 						   BStyles::TEXT_ALIGN_CENTER, BStyles::TEXT_VALIGN_MIDDLE);
+   	BStyles::Font tLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD, 12.0,
+   						   BStyles::TEXT_ALIGN_CENTER, BStyles::TEXT_VALIGN_MIDDLE);
 	BStyles::Font tgLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 12.0,
 						   BStyles::TEXT_ALIGN_CENTER, BStyles::TEXT_VALIGN_MIDDLE);
 	BStyles::Font lfLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 12.0,
@@ -283,6 +307,10 @@ private:
 					{"border", STYLEPTR (&labelborder)},
 					{"textcolors", STYLEPTR (&BColors::whites)},
 					{"font", STYLEPTR (&ctLabelFont)}}};
+	BStyles::StyleSet smlabelStyles = {"labels", {{"background", STYLEPTR (&BStyles::noFill)},
+					  {"border", STYLEPTR (&labelborder)},
+					  {"textcolors", STYLEPTR (&BColors::whites)},
+					  {"font", STYLEPTR (&smLabelFont)}}};
 	BStyles::StyleSet focusStyles = {"labels", {{"background", STYLEPTR (&screenBg)},
 					{"border", STYLEPTR (&focusborder)},
 					{"textcolors", STYLEPTR (&ltColors)},
@@ -299,6 +327,8 @@ private:
  					 {"fgcolors", STYLEPTR (&wvColors)}}},
 		{"widget", 		{{"uses", STYLEPTR (&defaultStyles)}}},
 		{"widget/focus",	{{"uses", STYLEPTR (&focusStyles)}}},
+		{"screen", 		{{"background", STYLEPTR (&screenBg)},
+					 {"border", STYLEPTR (&BStyles::noBorder)}}},
 		{"tab", 		{{"background", STYLEPTR (&tabBg)},
 					 {"border", STYLEPTR (&BStyles::noBorder)},
 			 		 {"fgcolors", STYLEPTR (&blkColors)}}},
@@ -320,7 +350,8 @@ private:
  					 {"textcolors", STYLEPTR (&BColors::whites)},
   					 {"font", STYLEPTR (&smLabelFont)}}},
 		{"button", 		{{"background", STYLEPTR (&BStyles::blackFill)},
-					 {"border", STYLEPTR (&border)}}},
+					 {"border", STYLEPTR (&border)},
+				 	 {"bgcolors", STYLEPTR (&buttonBgColors)}}},
 		{"tgbutton", 		{{"border", STYLEPTR (&BStyles::noBorder)},
 					 {"textcolors", STYLEPTR (&tgColors)},
 					 {"bgcolors", STYLEPTR (&tgBgColors)},
@@ -332,6 +363,10 @@ private:
 					 {"textcolors", STYLEPTR (&fgColors)},
 					 {"font", STYLEPTR (&ctLabelFont)}}},
 		{"dial/focus", 		{{"uses", STYLEPTR (&focusStyles)}}},
+		{"tlabel",	 	{{"uses", STYLEPTR (&smlabelStyles)},
+					 {"font", STYLEPTR (&tLabelFont)}}},
+		{"ylabel",	 	{{"uses", STYLEPTR (&smlabelStyles)},
+					 {"textcolors", STYLEPTR (&fgColors)}}},
 		{"ctlabel",	 	{{"uses", STYLEPTR (&labelStyles)}}},
 		{"lflabel",	 	{{"uses", STYLEPTR (&labelStyles)},
 					 {"font", STYLEPTR (&lfLabelFont)}}},

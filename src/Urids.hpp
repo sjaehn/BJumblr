@@ -27,6 +27,7 @@
 #include <lv2/lv2plug.in/ns/ext/atom/forge.h>
 #include <lv2/lv2plug.in/ns/ext/urid/urid.h>
 #include <lv2/lv2plug.in/ns/ext/time/time.h>
+#include <lv2/lv2plug.in/ns/ext/midi/midi.h>
 #include <lv2/lv2plug.in/ns/ext/state/state.h>
 #include "definitions.h"
 
@@ -35,6 +36,7 @@ struct BJumblrURIs
 	LV2_URID atom_Sequence;
 	LV2_URID atom_Float;
 	LV2_URID atom_Double;
+	LV2_URID atom_Bool;
 	LV2_URID atom_Int;
 	LV2_URID atom_Object;
 	LV2_URID atom_Blank;
@@ -50,12 +52,12 @@ struct BJumblrURIs
 	LV2_URID time_beatsPerBar;
 	LV2_URID time_beatUnit;
 	LV2_URID time_speed;
+	LV2_URID midi_Event;
 	LV2_URID ui_on;
 	LV2_URID ui_off;
 	LV2_URID state_pad;
 	LV2_URID notify_padEvent;
 	LV2_URID notify_padPage;
-	LV2_URID notify_padMaxPage;
 	LV2_URID notify_pad;
 	LV2_URID notify_padFullPattern;
 	LV2_URID notify_editMode;
@@ -63,6 +65,10 @@ struct BJumblrURIs
 	LV2_URID notify_pathEvent;
 	LV2_URID notify_samplePath;
 	LV2_URID notify_statusEvent;
+	LV2_URID notify_requestMidiLearn;
+	LV2_URID notify_midiLearned;
+	LV2_URID notify_maxPage;
+	LV2_URID notify_playbackPage;
 	LV2_URID notify_cursor;
 	LV2_URID notify_progressionDelay;
 	LV2_URID notify_messageEvent;
@@ -77,6 +83,7 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->atom_Sequence = m->map(m->handle, LV2_ATOM__Sequence);
 	uris->atom_Float = m->map(m->handle, LV2_ATOM__Float);
 	uris->atom_Double = m->map(m->handle, LV2_ATOM__Double);
+	uris->atom_Bool = m->map(m->handle, LV2_ATOM__Bool);
 	uris->atom_Int = m->map(m->handle, LV2_ATOM__Int);
 	uris->atom_Object = m->map(m->handle, LV2_ATOM__Object);
 	uris->atom_Blank = m->map(m->handle, LV2_ATOM__Blank);
@@ -92,12 +99,12 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->time_beatUnit = m->map(m->handle, LV2_TIME__beatUnit);
 	uris->time_beatsPerBar = m->map(m->handle, LV2_TIME__beatsPerBar);
 	uris->time_speed = m->map(m->handle, LV2_TIME__speed);
+	uris->midi_Event = m->map(m->handle, LV2_MIDI__MidiEvent);
 	uris->ui_on = m->map(m->handle, BJUMBLR_URI "#UIon");
 	uris->ui_off = m->map(m->handle, BJUMBLR_URI "#UIoff");
 	uris->state_pad = m->map(m->handle, BJUMBLR_URI "#STATEpad");
 	uris->notify_padEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadEvent");
 	uris->notify_padPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadPage");
-	uris->notify_padMaxPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadMaxPage");
 	uris->notify_pad = m->map(m->handle, BJUMBLR_URI "#NOTIFYpad");
 	uris->notify_padFullPattern = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadFullPattern");
 	uris->notify_editMode = m->map(m->handle, BJUMBLR_URI "#NOTIFYeditMode");
@@ -105,6 +112,10 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->notify_pathEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYpathEvent");
 	uris->notify_samplePath = m->map(m->handle, BJUMBLR_URI "#NOTIFYsamplePath");
 	uris->notify_statusEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYstatusEvent");
+	uris->notify_requestMidiLearn = m->map(m->handle, BJUMBLR_URI "#NOTIFYrequestMidiLearn");
+	uris->notify_midiLearned = m->map(m->handle, BJUMBLR_URI "#NOTIFYmidiLearned");
+	uris->notify_maxPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadMaxPage");
+	uris->notify_playbackPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYplaybackPage");
 	uris->notify_cursor = m->map(m->handle, BJUMBLR_URI "#NOTIFYcursor");
 	uris->notify_progressionDelay = m->map(m->handle, BJUMBLR_URI "#NOTIFYplaybackDelay");
 	uris->notify_messageEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYmessageEvent");

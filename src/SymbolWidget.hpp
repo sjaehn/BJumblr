@@ -24,18 +24,20 @@
 #include "BWidgets/Widget.hpp"
 #include "BWidgets/Label.hpp"
 #include "BWidgets/Focusable.hpp"
+#include <cmath>
 
 enum SWSymbol
 {
         NOSYMBOL        = -1,
         ADDSYMBOL       = 0,
         CLOSESYMBOL     = 1,
-        LEFTSYMBOL      = 2,
-        RIGHTSYMBOL     = 3,
-        PLAYSYMBOL      = 4
+        RIGHTSYMBOL     = 2,
+        LEFTSYMBOL      = 3,
+        PLAYSYMBOL      = 4,
+        MIDISYMBOL      = 5
 };
 
-const std::string symboltxt[6] = {"", "Insert", "Delete", "Move backward", "Move forward", "Play"};
+const std::string symboltxt[7] = {"", "Insert", "Delete", "Move forward", "Move backward", "Play", "MIDI"};
 
 class SymbolWidget : public BWidgets::Widget, public BWidgets::Focusable
 {
@@ -186,6 +188,17 @@ protected:
                                                         cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
                                                         cairo_fill (cr);
                                                         break;
+
+                                case MIDISYMBOL:        cairo_set_line_width (cr, 0.5);
+                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
+                                                        for (int i = 0; i < 3; ++i) cairo_rectangle (cr, x0 + 0.5 * w - 0.375 * ext + i * 0.25 * ext, y0 + 0.5 * h - 0.45 * ext, 0.25 * ext, 0.9 * ext);
+                                                        cairo_stroke (cr);
+                                                        cairo_set_line_width (cr, 0.0);
+                                                        for (int i = 0; i < 2; ++i)
+                                                        {
+                                                                cairo_rectangle (cr, x0 + 0.5 * w - 0.2 * ext + i * 0.25 * ext, y0 + 0.5 * h - 0.45 * ext, 0.15 * ext, 0.6 * ext);
+                                                                cairo_fill (cr);
+                                                        }
 
                                 default:                break;
                         }

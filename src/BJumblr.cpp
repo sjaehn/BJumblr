@@ -31,7 +31,7 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	notifyForge (), notifyFrame (),
 	waveform {0.0f}, waveformCounter (0), lastWaveformCounter (0),
 	new_controllers {nullptr}, controllers {0},
-	editMode (0), nrPages (1), lastPage (0), pageFade (1),
+	editMode (0), midiLearn (false), nrPages (1), playPage (0), lastPage (0), pageFade (1),
 	pads {Pad()}, sample (nullptr),
 	rate (samplerate), bpm (120.0f), beatsPerBar (4.0f), beatUnit (0),
 	speed (0.0f), bar (0), barBeat (0.0f),
@@ -44,6 +44,7 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	ui_on (false), scheduleNotifyPadsToGui (false), scheduleNotifyFullPatternToGui {false},
 	scheduleNotifyStatusToGui (false),
 	scheduleNotifyWaveformToGui (false), scheduleNotifySamplePathToGui (false),
+	scheduleNotifyMidiLearnedToGui (false),
 	message ()
 
 {
@@ -187,7 +188,6 @@ void BJumblr::connect_port (uint32_t port, void *data)
 
 void BJumblr::runSequencer (const int start, const int end)
 {
-	int page = controllers[PAGE];
 	int iNrOfSteps = controllers[NR_OF_STEPS];
 	double delay = progressionDelay + controllers[MANUAL_PROGRSSION_DELAY];
 
@@ -251,7 +251,7 @@ void BJumblr::runSequencer (const int start, const int end)
 			if (fade != 1.0)
 			{
 				int iPrevStep = (iStep + iNrOfSteps - 1) % iNrOfSteps;	// Previous step
-				int p = (pageFade < 1.0 ? lastPage : page);		// Previous page
+				int p = (pageFade < 1.0 ? lastPage : playPage);		// Previous page
 				for (int r = 0; r < iNrOfSteps; ++r)
 				{
 					float factor = pads[p][r][iPrevStep].level;
@@ -273,7 +273,7 @@ void BJumblr::runSequencer (const int start, const int end)
 			// Calculate audio for this step
 			for (int r = 0; r < iNrOfSteps; ++r)
 			{
-				float factor = pads[page][r][iStep].level;
+				float factor = pads[playPage][r][iStep].level;
 				if (factor != 0.0)
 				{
 					int stepDiff = floormod (iStep - r - delay, iNrOfSteps);
@@ -426,14 +426,7 @@ void BJumblr::run (uint32_t n_samples)
 					}
 				}
 
-				else if (i == PAGE)
-				{
-					if (val != controllers[i])
-					{
-						lastPage = controllers[i];
-						pageFade = 0.0f;
-					}
-				}
+				else if (i == PAGE) playPage = val;
 
 				controllers[i] = val;
 				uint64_t size = getFramesFromValue (controllers[STEP_SIZE] * controllers[NR_OF_STEPS]);
@@ -480,12 +473,11 @@ void BJumblr::run (uint32_t n_samples)
 			// GUI pad changed notifications
 			else if (obj->body.otype == uris.notify_padEvent)
 			{
-				LV2_Atom *oEd = NULL, *oPg = NULL, *oMx = NULL, *oPd = NULL, *oPat = NULL;
+				LV2_Atom *oEd = NULL, *oPg = NULL, *oPd = NULL, *oPat = NULL;
 				int page = -1;
 				lv2_atom_object_get (obj,
 					 	     uris.notify_editMode, &oEd,
 						     uris.notify_padPage, &oPg,
-						     uris.notify_padMaxPage, &oMx,
 						     uris.notify_pad, &oPd,
 						     uris.notify_padFullPattern, &oPat,
 						     NULL);
@@ -500,19 +492,7 @@ void BJumblr::run (uint32_t n_samples)
 					if (page >= nrPages)
 					{
 						nrPages = LIMIT (page + 1, 1, MAXPAGES);
-						if (controllers[PAGE] >= nrPages) controllers[PAGE] = nrPages - 1;
-					}
-				}
-
-				// padMaxPage notification
-				if (oMx && (oMx->type == uris.atom_Int))
-				{
-					int newPages = ((LV2_Atom_Int*)oMx)->body;
-					if (newPages != nrPages)
-					{
-						nrPages = LIMIT (newPages, 1, MAXPAGES);
-						pageFade = 1;
-						if (controllers[PAGE] >= nrPages) controllers[PAGE] = nrPages - 1;
+						if (playPage >= nrPages) playPage = nrPages - 1;
 					}
 				}
 
@@ -570,6 +550,48 @@ void BJumblr::run (uint32_t n_samples)
 
 						else fprintf (stderr, "BJumblr.lv2: Corrupt pattern size of %i for page %i.\n", size, page);
 					}
+				}
+			}
+
+			// Status notifications
+			else if (obj->body.otype == uris.notify_statusEvent)
+			{
+				LV2_Atom *oMx = NULL, *oPp = NULL, *oMl = NULL;
+				lv2_atom_object_get (obj,
+					 	     uris.notify_maxPage, &oMx,
+						     uris.notify_playbackPage, &oPp,
+						     uris.notify_requestMidiLearn, &oMl,
+						     NULL);
+
+				// padMaxPage notification
+				if (oMx && (oMx->type == uris.atom_Int))
+				{
+					int newPages = ((LV2_Atom_Int*)oMx)->body;
+					if (newPages != nrPages)
+					{
+						nrPages = LIMIT (newPages, 1, MAXPAGES);
+						pageFade = 1;
+						if (playPage >= nrPages) playPage = nrPages - 1;
+					}
+				}
+
+				// playbackPage notification
+				if (oPp && (oPp->type == uris.atom_Int))
+				{
+					int newPp = ((LV2_Atom_Int*)oPp)->body;
+					if (newPp != playPage)
+					{
+						lastPage = playPage;
+						playPage = LIMIT (newPp, 0, MAXPAGES - 1);
+						pageFade = 0;
+					}
+				}
+
+				// Midi learn request notification
+				if (oMl && (oMl->type == uris.atom_Bool))
+				{
+					bool newMl = ((LV2_Atom_Bool*)oMl)->body;
+					if (newMl != midiLearn) midiLearn = newMl;
 				}
 			}
 
@@ -662,6 +684,56 @@ void BJumblr::run (uint32_t n_samples)
 			}
 		}
 
+		// Read incoming MIDI events
+		else if (ev->body.type == uris.midi_Event)
+		{
+			const uint8_t* const msg = (const uint8_t*)(ev + 1);
+			const uint8_t status = (msg[0] >> 4);
+			const uint8_t channel = msg[0] & 0x0F;
+			const uint8_t note = ((status == 8) || (status == 9) || (status == 11) ? msg[1] : 0);
+			const uint8_t value = ((status == 8) || (status == 9) || (status == 11) ? msg[2] : 0);
+
+			if (midiLearn)
+			{
+				midiLearned[0] = status;
+				midiLearned[1] = channel;
+				midiLearned[2] = note;
+				midiLearned[3] = value;
+				midiLearn = false;
+				scheduleNotifyMidiLearnedToGui = true;
+			}
+
+			else
+			{
+
+				for (int p = 0; p < nrPages; ++p)
+				{
+					if
+					(
+						controllers[MIDI + p * NR_MIDI_CTRLS + STATUS] &&
+						(controllers[MIDI + p * NR_MIDI_CTRLS + STATUS] == status) &&
+						(
+							(controllers[MIDI + p * NR_MIDI_CTRLS + CHANNEL] == 0) ||
+							(controllers[MIDI + p * NR_MIDI_CTRLS + CHANNEL] - 1 == channel)
+						) &&
+						(
+							(controllers[MIDI + p * NR_MIDI_CTRLS + NOTE] == 128) ||
+							(controllers[MIDI + p * NR_MIDI_CTRLS + NOTE] == note)
+						) &&
+						(
+							(controllers[MIDI + p * NR_MIDI_CTRLS + VALUE] == 128) ||
+							(controllers[MIDI + p * NR_MIDI_CTRLS + VALUE] == value)
+						)
+					)
+					{
+						playPage = p;
+						scheduleNotifyPlaybackPageToGui = true;
+						break;
+					}
+				}
+			}
+		}
+
 		// Update for this iteration
 		uint32_t next_t = (ev->time.frames < n_samples ? ev->time.frames : n_samples);
 		runSequencer (last_t, next_t);
@@ -695,6 +767,8 @@ void BJumblr::run (uint32_t n_samples)
 		if (scheduleNotifyPadsToGui) notifyPadsToGui();
 		if (scheduleNotifyWaveformToGui) notifyWaveformToGui (lastWaveformCounter, waveformCounter);
 		if (scheduleNotifySamplePathToGui) notifySamplePathToGui ();
+		if (scheduleNotifyPlaybackPageToGui) notifyPlaybackPageToGui ();
+		if (scheduleNotifyMidiLearnedToGui) notifyMidiLearnedToGui ();
 		if (message.isScheduled ()) notifyMessageToGui();
 	}
 	lv2_atom_forge_pop(&notifyForge, &notifyFrame);
@@ -724,6 +798,10 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 		}
 		else fprintf (stderr, "BJumblr.lv2: Feature map_path not available! Can't save sample!\n" );
 	}
+
+	// Store playbackPage
+	uint32_t pp = playPage;
+	store (handle, uris.notify_playbackPage, &pp, sizeof(uint32_t), uris.atom_Int, LV2_STATE_IS_POD);
 
 	// Store edit mode
 	uint32_t em = editMode;
@@ -782,6 +860,16 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 			message.setMessage (CANT_OPEN_SAMPLE);
 		}
 		scheduleNotifySamplePathToGui = true;
+        }
+
+	// Retrieve playbackPage
+	const void* ppData = retrieve (handle, uris.notify_playbackPage, &size, &type, &valflags);
+        if (ppData && (size == sizeof (uint32_t)) && (type == uris.atom_Int))
+	{
+		const uint32_t pp = *(const uint32_t*) ppData;
+		if ((pp < 0) || (pp >= MAXPAGES)) fprintf (stderr, "BJumblr.lv2: Invalid playbackPage data\n");
+		else playPage = pp;
+		scheduleNotifyPlaybackPageToGui = true;
         }
 
 	// Retrieve edit mode
@@ -1113,6 +1201,31 @@ void BJumblr::notifyWaveformToGui (const int start, const int end)
 
 	scheduleNotifyWaveformToGui = false;
 	lastWaveformCounter = end;
+}
+
+void BJumblr::notifyPlaybackPageToGui ()
+{
+	LV2_Atom_Forge_Frame frame;
+	lv2_atom_forge_frame_time(&notifyForge, 0);
+	lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_statusEvent);
+	lv2_atom_forge_key(&notifyForge, uris.notify_playbackPage);
+	lv2_atom_forge_int(&notifyForge, playPage);
+	lv2_atom_forge_pop(&notifyForge, &frame);
+
+	scheduleNotifyPlaybackPageToGui = false;
+}
+
+void BJumblr::notifyMidiLearnedToGui ()
+{
+	uint32_t ml = midiLearned[0] * 0x1000000 + midiLearned[1] * 0x10000 + midiLearned[2] * 0x100 + midiLearned[3];
+	LV2_Atom_Forge_Frame frame;
+	lv2_atom_forge_frame_time(&notifyForge, 0);
+	lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_statusEvent);
+	lv2_atom_forge_key(&notifyForge, uris.notify_midiLearned);
+	lv2_atom_forge_int(&notifyForge, ml);
+	lv2_atom_forge_pop(&notifyForge, &frame);
+
+	scheduleNotifyMidiLearnedToGui = false;
 }
 
 void BJumblr::notifyMessageToGui()

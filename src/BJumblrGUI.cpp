@@ -21,6 +21,7 @@
 #include "BJumblrGUI.hpp"
 #include "BUtilities/to_string.hpp"
 #include "MessageDefinitions.hpp"
+#include "MidiDefs.hpp"
 
 inline double floorfrac (const double value) {return value - floor (value);}
 inline double floormod (const double numer, const double denom) {return numer - floor(numer / denom) * denom;}
@@ -36,9 +37,40 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	actPage (0), nrPages (1), pageOffset (0),
 	mContainer (0, 0, 1020, 620, "main"),
 	messageLabel (400, 45, 600, 20, "ctlabel", ""),
-	pageWidget (18, 90, 504, 26, "widget", 0.0),
-	pageBackSymbol (0, 0, 10, 26, "tab", LEFTSYMBOL),
-	pageForwardSymbol (482, 0, 10, 26, "tab", RIGHTSYMBOL),
+	pageWidget (18, 86, 504, 30, "widget", 0.0),
+	pageBackSymbol (0, 0, 10, 30, "tab", LEFTSYMBOL),
+	pageForwardSymbol (482, 0, 10, 30, "tab", RIGHTSYMBOL),
+
+	midiBox (18, 118, 480, 120, "screen", 0),
+	midiText (20, 10, 420, 20, "tlabel", "MIDI control page #1"),
+	midiStatusLabel (10, 30, 140, 20, "ylabel", "MIDI status"),
+	midiStatusListBox
+	(
+		10, 50, 140, 20, 0, 20, 140, 100, "menu",
+		BItems::ItemList ({{0, "None"}, {9, "Note on"}, {8, "Note off"}, {11, "Control change"}}),
+		0
+	),
+	midiChannelLabel (160, 30, 60, 20, "ylabel", "Channel"),
+	midiChannelListBox
+	(
+		160, 50, 60, 20, 0, 20, 60, 360, "menu",
+		BItems::ItemList
+		({
+			{0, "All"}, {1, "1"}, {2, "2"}, {3, "3"},
+			{4, "4"}, {5, "5"}, {6, "6"}, {7, "7"},
+			{8, "8"}, {9, "9"}, {10, "10"}, {11, "11"},
+			{12, "12"}, {13, "13"}, {14, "14"}, {15, "15"}, {16, "16"}
+		}),
+		0
+	),
+	midiNoteLabel (230, 30, 100, 20, "ylabel", "Note"),
+	midiNoteListBox ( 230, 50, 100, 20, 0, 20, 100, 360, "menu", BItems::ItemList ({NOTELIST}), 128),
+	midiValueLabel (340, 30, 60, 20, "ylabel", "Value"),
+	midiValueListBox ( 340, 50, 60, 20, 0, 20, 60, 360, "menu", BItems::ItemList ({VALLIST}), 128),
+	midiLearnButton (410, 50, 60, 20, "menu/button", "Learn"),
+	midiCancelButton (160, 90, 60, 20, "menu/button", "Cancel"),
+	midiOkButton (260, 90, 60, 20, "menu/button", "OK"),
+
 	padSurface (18, 118, 924, 454, "box"),
 	markerFwd (0, 120 + 15.5 * (450.0 / 16.0) - 10, 20, 20, "widget", MARKER_FWD),
 	markerRev (940, 120 + 15.5 * (450.0 / 16.0) - 10, 20, 20, "widget", MARKER_REV),
@@ -79,10 +111,12 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	// Init tabs
 	for (int i = 0; i < MAXPAGES; ++i)
 	{
-		tabs[i].container = BWidgets::Widget (i * 80, 0, 78, 26, "tab");
-		tabs[i].icon = BWidgets::ImageIcon (0, 3, 40, 20, "widget", pluginPath + "inc/page" + std::to_string (i + 1) + ".png");
-		tabs[i].playSymbol = SymbolWidget (40, 7, 16, 12, "symbol", PLAYSYMBOL);
-		for (int j = 0; j < 4; ++j) tabs[i].symbols[j] = SymbolWidget (58 + (j % 2) * 10, 3 + int (j / 2) * 12, 8, 8, "symbol", SWSymbol(j));
+		tabs[i].container = BWidgets::Widget (i * 80, 0, 78, 30, "tab");
+		tabs[i].icon = BWidgets::ImageIcon (0, 8, 40, 20, "widget", pluginPath + "inc/page" + std::to_string (i + 1) + ".png");
+		tabs[i].playSymbol = SymbolWidget (40, 12, 20, 12, "symbol", PLAYSYMBOL);
+		tabs[i].midiSymbol = SymbolWidget (60, 12, 20, 12, "symbol", MIDISYMBOL);
+		for (int j = 0; j < 4; ++j) tabs[i].symbols[j] = SymbolWidget (68 - j * 10, 2, 8, 8, "symbol", SWSymbol(j));
+		for (int j = 0; j < 4; ++j) tabs[i].midiWidgets[j] = BWidgets::ValueWidget (0, 0, 0, 0, "widget", 0);
 	}
 
 	// Init editButtons
@@ -102,6 +136,10 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	controllerWidgets[MANUAL_PROGRSSION_DELAY] = (BWidgets::ValueWidget*) &manualProgressionDelayWidget;
 	controllerWidgets[SPEED] = (BWidgets::ValueWidget*) &speedDial;
 	controllerWidgets[PAGE] = (BWidgets::ValueWidget*) &pageWidget;
+	for (int i = 0; i < MAXPAGES; ++i)
+	{
+		for (int j = 0; j < 4; ++j) controllerWidgets[MIDI + i * 4 + j] = (BWidgets::ValueWidget*) &tabs[i].midiWidgets[j];
+	}
 
 	// Init controller values
 	for (int i = 0; i < MAXCONTROLLERS; ++i) controllers[i] = controllerWidgets[i]->getValue ();
@@ -136,8 +174,13 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	{
 		t.container.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, pageClickedCallback);
 		t.playSymbol.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, pagePlayClickedCallback);
+		t.midiSymbol.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, midiSymbolClickedCallback);
 		for (SymbolWidget& s : t.symbols) s.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, pageSymbolClickedCallback);
 	}
+
+	midiLearnButton.setCallbackFunction(BEvents::VALUE_CHANGED_EVENT, midiButtonClickedCallback);
+	midiCancelButton.setCallbackFunction(BEvents::VALUE_CHANGED_EVENT, midiButtonClickedCallback);
+	midiOkButton.setCallbackFunction(BEvents::VALUE_CHANGED_EVENT, midiButtonClickedCallback);
 
 	padSurface.setDraggable (true);
 	padSurface.setCallbackFunction (BEvents::BUTTON_PRESS_EVENT, padsPressedCallback);
@@ -154,6 +197,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	// Configure widgets
 	loadButton.hide();
 	sampleNameLabel.hide();
+	midiBox.hide();
 	pageBackSymbol.setFocusable (false);
 	pageForwardSymbol.setFocusable (false);
 	pageBackSymbol.hide();
@@ -161,14 +205,15 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	for (int i = 0; i < MAXPAGES; ++i)
 	{
 		tabs[i].playSymbol.setState (BColors::INACTIVE);
+		tabs[i].midiSymbol.setState (BColors::INACTIVE);
 		for (int j = 0; j < 4; ++j) tabs[i].symbols[j].setState (BColors::ACTIVE);
 		if (i > 0) tabs[i].container.hide();
 	}
 	tabs[0].container.rename ("activetab");
 	tabs[0].playSymbol.setState (BColors::ACTIVE);
-	tabs[0].symbols[1].hide(); // -
-	tabs[0].symbols[2].hide(); // <
-	tabs[0].symbols[3].hide(); // >
+	tabs[0].symbols[CLOSESYMBOL].hide(); // -
+	tabs[0].symbols[LEFTSYMBOL].hide(); // <
+	tabs[0].symbols[RIGHTSYMBOL].hide(); // >
 	for (Tab& t : tabs) t.icon.setClickable (false);
 
 	for (Pattern& p : pattern) p.clear();
@@ -201,8 +246,10 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	{
 		Tab& t = tabs[i];
 		t.container.add (t.icon);
-		t.container.add (t.playSymbol);
 		for (SymbolWidget& s : t.symbols) t.container.add (s);
+		for (BWidgets::ValueWidget& m : t.midiWidgets) t.container.add (m);
+		t.container.add (t.playSymbol);
+		t.container.add (t.midiSymbol);
 		pageWidget.add (t.container);
 	}
 	mContainer.add (playButton);
@@ -237,6 +284,20 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (speedDial);
 	mContainer.add (helpButton);
 	mContainer.add (ytButton);
+
+	mContainer.add (midiBox);
+	midiBox.add (midiText);
+	midiBox.add (midiStatusLabel);
+	midiBox.add (midiStatusListBox);
+	midiBox.add (midiChannelLabel);
+	midiBox.add (midiChannelListBox);
+	midiBox.add (midiNoteLabel);
+	midiBox.add (midiNoteListBox);
+	midiBox.add (midiValueLabel);
+	midiBox.add (midiValueListBox);
+	midiBox.add (midiLearnButton);
+	midiBox.add (midiCancelButton);
+	midiBox.add (midiOkButton);
 
 	drawPad();
 	add (mContainer);
@@ -354,12 +415,11 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 			// Pad notification
 			if (obj->body.otype == uris.notify_padEvent)
 			{
-				LV2_Atom *oEdit = NULL, *oPage = NULL, *oMax = NULL, *oPad = NULL, *oFull = NULL;
+				LV2_Atom *oEdit = NULL, *oPage = NULL, *oPad = NULL, *oFull = NULL;
 				int page = -1;
 				lv2_atom_object_get(obj,
 						    uris.notify_editMode, &oEdit,
 						    uris.notify_padPage, &oPage,
-						    uris.notify_padMaxPage, &oMax,
 						    uris.notify_pad, &oPad,
 						    uris.notify_padFullPattern, &oFull,
 						    NULL);
@@ -374,14 +434,6 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 					page = (((LV2_Atom_Int*)oPage)->body);
 
 					while (page >= nrPages) pushPage();
-				}
-
-				if (oMax && (oMax->type == uris.atom_Int))
-				{
-					int newPages = (((LV2_Atom_Int*)oMax)->body);
-
-					while (newPages > nrPages) pushPage();
-					while (newPages < nrPages) popPage();
 				}
 
 				if (oPad && (oPad->type == uris.atom_Vector) && (page >= 0) && (page < MAXPAGES))
@@ -472,14 +524,45 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 			// Status notifications
 			else if (obj->body.otype == uris.notify_statusEvent)
 			{
-				LV2_Atom *oCursor = NULL, *oDelay = NULL;
+				LV2_Atom *oMax = NULL, *oPlay = NULL, *oMid = NULL, *oCursor = NULL, *oDelay = NULL;
 				lv2_atom_object_get
 				(
 					obj,
+					uris.notify_maxPage, &oMax,
+					uris.notify_playbackPage, &oPlay,
+					uris.notify_midiLearned, &oMid,
 					uris.notify_cursor, &oCursor,
 					uris.notify_progressionDelay, &oDelay,
 					NULL
 				);
+
+				if (oMax && (oMax->type == uris.atom_Int))
+				{
+					int newPages = (((LV2_Atom_Int*)oMax)->body);
+
+					while (newPages > nrPages) pushPage();
+					while (newPages < nrPages) popPage();
+				}
+
+				if (oPlay && (oPlay->type == uris.atom_Int))
+				{
+					int newPlay = (((LV2_Atom_Int*)oPlay)->body);
+					pageWidget.setValue (LIMIT (newPlay, 0, MAXPAGES - 1));
+				}
+
+				if (oMid && (oMid->type == uris.atom_Int))
+				{
+					uint32_t newMid = (((LV2_Atom_Int*)oMid)->body);
+					uint8_t st = newMid >> 24;
+					uint8_t ch = (newMid >> 16) & 0xFF;
+					uint8_t nt = (newMid >> 8) & 0xFF;
+					uint8_t vl = newMid & 0xFF;
+					midiStatusListBox.setValue ((st == 8) || (st == 9) || (st == 11) ? st : 0);
+					midiChannelListBox.setValue (LIMIT (ch, 0, 15) + 1);
+					midiNoteListBox.setValue (LIMIT (nt, 0, 127));
+					midiValueListBox.setValue (LIMIT (vl, 0, 127));
+					midiLearnButton.setValue (0.0);
+				}
 
 				// Cursor notifications
 				if (oCursor && (oCursor->type == uris.atom_Float) && (cursor != ((LV2_Atom_Float*)oCursor)->body))
@@ -548,6 +631,7 @@ void BJumblrGUI::resize ()
 	hide ();
 	//Scale fonts
 	ctLabelFont.setFontSize (12 * sz);
+	tLabelFont.setFontSize (12 * sz);
 	tgLabelFont.setFontSize (12 * sz);
 	lfLabelFont.setFontSize (12 * sz);
 	smLabelFont.setFontSize (8 * sz);
@@ -565,14 +649,42 @@ void BJumblrGUI::resize ()
 	//Scale widgets
 	RESIZE (mContainer, 0, 0, 1020, 620, sz);
 	RESIZE (messageLabel, 400, 45, 600, 20, sz);
-	RESIZE (pageWidget, 18, 90, 504, 26, sz);
+	RESIZE (pageWidget, 18, 86, 504, 30, sz);
 	updatePageContainer();
 	for (int i = 0; i < MAXPAGES; ++i)
 	{
-		RESIZE (tabs[i].icon, 0, 3, 40, 20, sz);
-		RESIZE (tabs[i].playSymbol, 40, 7, 16, 12, sz);
-		for (int j = 0; j < 4; ++j) RESIZE (tabs[i].symbols[j], 58 + (j % 2) * 10, 3 + int (j / 2) * 12, 8, 8, sz);
+		RESIZE (tabs[i].icon, 0, 8, 40, 20, sz);
+		RESIZE (tabs[i].playSymbol, 40, 12, 20, 12, sz);
+		RESIZE (tabs[i].midiSymbol, 60, 12, 20, 12, sz);
+		for (int j = 0; j < 4; ++j) RESIZE (tabs[i].symbols[j], 68 - j * 10, 2, 8, 8, sz);
 	}
+
+	RESIZE (midiBox, 18, 118, 480, 120, sz);
+	RESIZE (midiText, 20, 10, 420, 20, sz);
+	RESIZE (midiStatusLabel, 10, 30, 140, 20, sz);
+	RESIZE (midiStatusListBox, 10, 50, 140, 20, sz);
+	midiStatusListBox.resizeListBox(BUtilities::Point (140 * sz, 100 * sz));
+	midiStatusListBox.moveListBox(BUtilities::Point (0, 20 * sz));
+	midiStatusListBox.resizeListBoxItems(BUtilities::Point (140 * sz, 20 * sz));
+	RESIZE (midiChannelLabel, 160, 30, 60, 20, sz);
+	RESIZE (midiChannelListBox, 160, 50, 60, 20, sz);
+	midiChannelListBox.resizeListBox(BUtilities::Point (60 * sz, 360 * sz));
+	midiChannelListBox.moveListBox(BUtilities::Point (0, 20 * sz));
+	midiChannelListBox.resizeListBoxItems(BUtilities::Point (60 * sz, 20 * sz));
+	RESIZE (midiNoteLabel, 230, 30, 100, 20, sz);
+	RESIZE (midiNoteListBox, 230, 50, 100, 20, sz);
+	midiNoteListBox.resizeListBox(BUtilities::Point (100 * sz, 360 * sz));
+	midiNoteListBox.moveListBox(BUtilities::Point (0, 20 * sz));
+	midiNoteListBox.resizeListBoxItems(BUtilities::Point (100 * sz, 20 * sz));
+	RESIZE (midiValueLabel, 340, 30, 60, 20, sz);
+	RESIZE (midiValueListBox, 340, 50, 60, 20, sz);
+	midiValueListBox.resizeListBox(BUtilities::Point (60 * sz, 360 * sz));
+	midiValueListBox.moveListBox(BUtilities::Point (0, 20 * sz));
+	midiValueListBox.resizeListBoxItems(BUtilities::Point (60 * sz, 20 * sz));
+	RESIZE (midiLearnButton, 410, 50, 60, 20, sz);
+	RESIZE (midiCancelButton, 160, 90, 60, 20, sz);
+	RESIZE (midiOkButton, 260, 90, 60, 20, sz);
+
 	RESIZE (padSurface, 18, 118, 924, 454, sz);
 	const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
 	RESIZE (markerFwd, 0, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10), 20, 20, sz);
@@ -638,8 +750,24 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 		t.container.applyTheme (theme);
 		t.icon.applyTheme (theme);
 		t.playSymbol.applyTheme (theme);
+		t.midiSymbol.applyTheme (theme);
 		for (SymbolWidget& s : t.symbols) s.applyTheme (theme);
 	}
+
+	midiBox.applyTheme (theme);
+	midiText.applyTheme (theme);
+	midiStatusLabel.applyTheme (theme);
+	midiStatusListBox.applyTheme (theme);
+	midiChannelLabel.applyTheme (theme);
+	midiChannelListBox.applyTheme (theme);
+	midiNoteLabel.applyTheme (theme);
+	midiNoteListBox.applyTheme (theme);
+	midiValueLabel.applyTheme (theme);
+	midiValueListBox.applyTheme (theme);
+	midiLearnButton.applyTheme (theme);
+	midiCancelButton.applyTheme (theme);
+	midiOkButton.applyTheme (theme);
+
 	padSurface.applyTheme (theme);
 	markerFwd.applyTheme (theme);
 	markerRev.applyTheme (theme);
@@ -779,9 +907,35 @@ void BJumblrGUI::send_maxPage ()
 	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
 
 	LV2_Atom_Forge_Frame frame;
-	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_padEvent);
-	lv2_atom_forge_key(&forge, uris.notify_padMaxPage);
+	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_statusEvent);
+	lv2_atom_forge_key(&forge, uris.notify_maxPage);
 	lv2_atom_forge_int(&forge, nrPages);
+	lv2_atom_forge_pop(&forge, &frame);
+	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
+}
+
+void BJumblrGUI::send_playbackPage ()
+{
+	uint8_t obj_buf[128];
+	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
+
+	LV2_Atom_Forge_Frame frame;
+	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_statusEvent);
+	lv2_atom_forge_key(&forge, uris.notify_playbackPage);
+	lv2_atom_forge_int(&forge, int (pageWidget.getValue()));
+	lv2_atom_forge_pop(&forge, &frame);
+	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
+}
+
+void BJumblrGUI::send_requestMidiLearn ()
+{
+	uint8_t obj_buf[128];
+	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
+
+	LV2_Atom_Forge_Frame frame;
+	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_statusEvent);
+	lv2_atom_forge_key(&forge, uris.notify_requestMidiLearn);
+	lv2_atom_forge_bool(&forge, midiLearnButton.getValue() != 0.0);
 	lv2_atom_forge_pop(&forge, &frame);
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }
@@ -831,17 +985,17 @@ void BJumblrGUI::pushPage ()
 {
 	if (nrPages >= MAXPAGES) return;
 
-	tabs[nrPages - 1].symbols[1].show();
-	tabs[nrPages - 1].symbols[3].show();
+	tabs[nrPages - 1].symbols[CLOSESYMBOL].show();
+	tabs[nrPages - 1].symbols[RIGHTSYMBOL].show();
 
 	tabs[nrPages].container.show();
-	tabs[nrPages].symbols[1].show();
-	tabs[nrPages].symbols[2].show();
-	tabs[nrPages].symbols[3].hide();
+	tabs[nrPages].symbols[CLOSESYMBOL].show();
+	tabs[nrPages].symbols[LEFTSYMBOL].show();
+	tabs[nrPages].symbols[RIGHTSYMBOL].hide();
 
 	if (nrPages == MAXPAGES - 1)
 	{
-		for (Tab& t : tabs) t.symbols[0].hide();
+		for (Tab& t : tabs) t.symbols[ADDSYMBOL].hide();
 	}
 
 	++nrPages;
@@ -852,13 +1006,13 @@ void BJumblrGUI::popPage ()
 {
 	if (nrPages <= 1) return;
 
-	tabs[nrPages - 2].symbols[3].hide();
-	if (nrPages == 2) tabs[0].symbols[1].hide();
+	tabs[nrPages - 2].symbols[RIGHTSYMBOL].hide();
+	if (nrPages == 2) tabs[0].symbols[CLOSESYMBOL].hide();
 	tabs[nrPages - 1].container.hide();
-	for (Tab& t : tabs) t.symbols[0].show();
+	for (Tab& t : tabs) t.symbols[ADDSYMBOL].show();
 
 	if (actPage >= nrPages - 1) gotoPage (nrPages - 2);
-	if (controllers[PAGE] >= nrPages - 1) pageWidget.setValue (0);
+	if (pageWidget.getValue() >= nrPages - 1) pageWidget.setValue (0);
 
 	--nrPages;
 	updatePageContainer();
@@ -943,7 +1097,7 @@ void BJumblrGUI::updatePageContainer()
 {
 	if (nrPages > 6) pageOffset = LIMIT (pageOffset, 0, nrPages - 6);
 	else pageOffset = 0;
-	
+
 	int x0 = (pageOffset == 0 ? 0 : 12 * sz);
 
 	if (pageOffset != 0) pageBackSymbol.show();
@@ -958,15 +1112,15 @@ void BJumblrGUI::updatePageContainer()
 		else
 		{
 			tabs[p].container.moveTo (x0 + (p - pageOffset) * 80 * sz, 0);
-			tabs[p].container.resize (78 * sz, 26 * sz);
+			tabs[p].container.resize (78 * sz, 30 * sz);
 			tabs[p].container.show();
 		}
 	}
 
 	pageBackSymbol.moveTo (0, 0);
-	pageBackSymbol.resize (10 * sz, 26 * sz);
+	pageBackSymbol.resize (10 * sz, 30 * sz);
 	pageForwardSymbol.moveTo (x0 + 480 * sz, 0);
-	pageForwardSymbol.resize (10 * sz, 26 * sz);
+	pageForwardSymbol.resize (10 * sz, 30 * sz);
 }
 
 bool BJumblrGUI::validatePad (int page)
@@ -1073,7 +1227,6 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 	// Controllers
 	if (controllerNr >= 0)
 	{
-		float oldValue = ui->controllers[controllerNr];
 		ui->controllers[controllerNr] = value;
 		ui->write_function(ui->controller, CONTROLLERS + controllerNr, sizeof(float), 0, &ui->controllers[controllerNr]);
 
@@ -1102,10 +1255,21 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 							if (i == value) ui->tabs[i].playSymbol.setState (BColors::ACTIVE);
 							else ui->tabs[i].playSymbol.setState (BColors::INACTIVE);
 						}
-						if ((oldValue == ui->actPage) || (value == ui->actPage)) ui->drawPad();
+						ui->drawPad();
 						break;
 
-			default:		break;
+			default:		if (controllerNr >= MIDI)
+						{
+							int page = (controllerNr - MIDI) / NR_MIDI_CTRLS;
+							int midiCtrl = (controllerNr - MIDI) % NR_MIDI_CTRLS;
+
+							if (midiCtrl == STATUS)
+							{
+								if (value < 8) ui->tabs[page].midiSymbol.setState (BColors::INACTIVE);
+								else ui->tabs[page].midiSymbol.setState (BColors::ACTIVE);
+							}
+						}
+						break;
 		}
 	}
 
@@ -1177,20 +1341,20 @@ void BJumblrGUI::pageSymbolClickedCallback(BEvents::Event* event)
 				switch (j)
 				{
 					// Symbol +
-					case 0:	ui->insertPage (i + 1);
-						break;
+					case ADDSYMBOL:		ui->insertPage (i + 1);
+								break;
 
 					// Symbol -
-					case 1: ui->deletePage (i);
-						break;
+					case CLOSESYMBOL: 	ui->deletePage (i);
+								break;
 
 					// Symbol <
-					case 2:	ui->swapPage (i, i - 1);
-						break;
+					case LEFTSYMBOL:	ui->swapPage (i, i - 1);
+								break;
 
 					// Symbol >
-					case 3:	ui->swapPage (i, i + 1);
-						break;
+					case RIGHTSYMBOL:	ui->swapPage (i, i + 1);
+								break;
 				}
 				return;
 			}
@@ -1228,6 +1392,68 @@ void BJumblrGUI::pageScrollClickedCallback(BEvents::Event* event)
 	else if (widget == &ui->pageForwardSymbol) ++ui->pageOffset;
 
 	ui->updatePageContainer();
+}
+
+void BJumblrGUI::midiSymbolClickedCallback(BEvents::Event* event)
+{
+	if (!event) return;
+	SymbolWidget* widget = (SymbolWidget*)event->getWidget ();
+	if (!widget) return;
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	for (int i = 0; i < ui->nrPages; ++i)
+	{
+		if (widget == &ui->tabs[i].midiSymbol)
+		{
+			ui->midiText.setText ("MIDI control page #" + std::to_string (i + 1));
+			ui->midiStatusListBox.setValue (ui->controllers[MIDI + i * NR_MIDI_CTRLS + STATUS]);
+			ui->midiChannelListBox.setValue (ui->controllers[MIDI + i * NR_MIDI_CTRLS + CHANNEL]);
+			ui->midiNoteListBox.setValue (ui->controllers[MIDI + i * NR_MIDI_CTRLS + NOTE]);
+			ui->midiValueListBox.setValue (ui->controllers[MIDI + i * NR_MIDI_CTRLS + VALUE]);
+			ui->midiBox.setValue (i);
+			ui->midiBox.show();
+			return;
+		}
+	}
+}
+
+void BJumblrGUI::midiButtonClickedCallback(BEvents::Event* event)
+{
+	if (!event) return;
+	BWidgets::ValueWidget* widget = (BWidgets::ValueWidget*) event->getWidget ();
+	if (!widget) return;
+	float value = widget->getValue();
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	if (widget == &ui->midiLearnButton)
+	{
+		if (value == 1) ui->send_requestMidiLearn();
+	}
+
+	else if (widget == &ui->midiCancelButton)
+	{
+		if (value == 1)
+		{
+			ui->midiLearnButton.setValue (0);
+			ui->midiBox.hide();
+		}
+	}
+
+	else if (widget == &ui->midiOkButton)
+	{
+		if (value == 1)
+		{
+			int page = ui->midiBox.getValue();
+			ui->midiLearnButton.setValue (0);
+			ui->tabs[page].midiWidgets[STATUS].setValue (ui->midiStatusListBox.getValue());
+			ui->tabs[page].midiWidgets[CHANNEL].setValue (ui->midiChannelListBox.getValue());
+			ui->tabs[page].midiWidgets[NOTE].setValue (ui->midiNoteListBox.getValue());
+			ui->tabs[page].midiWidgets[VALUE].setValue (ui->midiValueListBox.getValue());
+			ui->midiBox.hide();
+		}
+	}
 }
 
 void BJumblrGUI::levelChangedCallback(BEvents::Event* event)
@@ -1868,7 +2094,7 @@ void BJumblrGUI::drawPad (cairo_t* cr, int row, int step)
 	Pad pdc = pattern[actPage].getPad (row, cursor);
 	BColors::Color color = BColors::yellow;
 	color.applyBrightness (pd.level - 1.0);
-	if ((actPage == controllers[PAGE]) && (pdc.level != 0.0)) color.applyBrightness (pdc.level * 0.75);
+	if ((actPage == pageWidget.getValue()) && (pdc.level != 0.0)) color.applyBrightness (pdc.level * 0.75);
 	drawButton (cr, xr + 1, yr + 1, wr - 2, hr - 2, color);
 }
 

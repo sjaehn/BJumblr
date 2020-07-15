@@ -71,7 +71,8 @@ Select between (live) audio stream or a sample file as source.
 ### Pattern page tabs
 
 Define multiple patterns. Click on a tab to highlight the tab and to edit the respective pattern.
-Press ▶ on the tab to activate playback for the respective pattern.
+Press ▶ on the tab to activate playback for the respective pattern. Press the piano keys symbol to
+enable / disable MIDI-controlled playback of the respective pattern.
 
 | Symbol | Description |
 | --- | --- |
@@ -79,6 +80,12 @@ Press ▶ on the tab to activate playback for the respective pattern.
 | - | Remove this pattern page. |
 | < | Move pattern page backward. |
 | > | Move pattern page forward. |
+
+### MIDI control page
+
+This menu appears upon clicking on the piano keys symbol in the respective tab. Enable / disable
+MIDI-controlled playback of the respective pattern by selection or deselection (= none) of a MIDI
+status.
 
 
 ### Pattern matrix
@@ -133,6 +140,8 @@ speed-induced delay) is displayed in the panel above the buttons.
 
 * Pattern pages
 * More compact GUI <-> DSP data transfer
+* MIDI-controlled pattern playback
+* MIDI learn
 
 
 ## Acknowledgments

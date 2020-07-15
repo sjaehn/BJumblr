@@ -79,6 +79,8 @@ private:
 	void notifyPadsToGui ();
 	void notifyStatusToGui ();
 	void notifyWaveformToGui (const int start, const int end);
+	void notifyPlaybackPageToGui ();
+	void notifyMidiLearnedToGui ();
 	void notifyMessageToGui();
 	void notifySamplePathToGui ();
 
@@ -119,12 +121,79 @@ private:
 		{0, 31, 1},		// STEP_OFFSET
 		{-32, 32, 0},		// MANUAL_PROGRSSION_DELAY
 		{0, 4, 0},		// SPEED
-		{0, 15, 1}		// PAGE
+		{0, 15, 1},		// PAGE
+		{0, 15, 1},		// MIDI
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1},
+		{0, 15, 1},
+		{0, 16, 1},
+		{0, 128, 1},
+		{0, 128, 1}
 	};
 
 	// Pads
 	int editMode;
+	bool midiLearn;
+	uint8_t midiLearned[4];
 	int nrPages;
+	int playPage;
 	int lastPage;
 	double pageFade;
 	Pad pads [MAXPAGES] [MAXSTEPS] [MAXSTEPS];
@@ -176,9 +245,11 @@ private:
 	bool ui_on;
 	bool scheduleNotifyPadsToGui;
 	bool scheduleNotifyFullPatternToGui[MAXPAGES];
+	bool scheduleNotifyPlaybackPageToGui;
 	bool scheduleNotifyStatusToGui;
 	bool scheduleNotifyWaveformToGui;
 	bool scheduleNotifySamplePathToGui;
+	bool scheduleNotifyMidiLearnedToGui;
 	Message message;
 };
 
