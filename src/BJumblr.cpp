@@ -240,7 +240,9 @@ void BJumblr::runSequencer (const int start, const int end)
 				default:	break;
 
 			}
-			double fade = (fracTime < FADETIME ? fracTime / FADETIME : 1.0) * pageFade;
+
+			double stepFade = (fracTime < FADETIME ? fracTime / FADETIME : 1.0);
+			double fade = stepFade * pageFade;
 
 			double prevAudio1 = 0;
 			double prevAudio2 = 0;
@@ -248,10 +250,10 @@ void BJumblr::runSequencer (const int start, const int end)
 			double audio2 = 0;
 
 			// Fade out: Extrapolate audio using previous step data
-			if (fade != 1.0)
+			if (fade < 1.0)
 			{
-				int iPrevStep = (iStep + iNrOfSteps - 1) % iNrOfSteps;	// Previous step
-				int p = (pageFade < 1.0 ? lastPage : playPage);		// Previous page
+				int iPrevStep = (stepFade < 1.0 ? (iStep + iNrOfSteps - 1) % iNrOfSteps : iStep);	// Previous step
+				int p = (pageFade < 1.0 ? lastPage : playPage);						// Previous page
 				for (int r = 0; r < iNrOfSteps; ++r)
 				{
 					float factor = pads[p][r][iPrevStep].level;
@@ -426,7 +428,18 @@ void BJumblr::run (uint32_t n_samples)
 					}
 				}
 
-				else if (i == PAGE) playPage = val;
+				else if (i == PAGE)
+				{
+					if ((val != controllers[i]) && (val != playPage))
+					{
+						if (pageFade > 0.5)
+						{
+							lastPage = playPage;
+							pageFade = 0.0f;
+						}
+						playPage = val;
+					}
+				}
 
 				controllers[i] = val;
 				uint64_t size = getFramesFromValue (controllers[STEP_SIZE] * controllers[NR_OF_STEPS]);
@@ -726,6 +739,11 @@ void BJumblr::run (uint32_t n_samples)
 						)
 					)
 					{
+						if (pageFade > 0.5)
+						{
+							lastPage = playPage;
+							pageFade = 0.0f;
+						}
 						playPage = p;
 						scheduleNotifyPlaybackPageToGui = true;
 						break;
