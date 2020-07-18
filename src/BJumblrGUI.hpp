@@ -115,6 +115,7 @@ private:
 	static void pageScrollClickedCallback(BEvents::Event* event);
 	static void midiSymbolClickedCallback(BEvents::Event* event);
 	static void midiButtonClickedCallback(BEvents::Event* event);
+	static void midiStatusChangedCallback(BEvents::Event* event);
 	static void levelChangedCallback(BEvents::Event* event);
 	static void edit1ChangedCallback(BEvents::Event* event);
 	static void edit2ChangedCallback(BEvents::Event* event);

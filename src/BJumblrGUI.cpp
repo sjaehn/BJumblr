@@ -41,19 +41,19 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	pageBackSymbol (0, 0, 10, 30, "tab", LEFTSYMBOL),
 	pageForwardSymbol (482, 0, 10, 30, "tab", RIGHTSYMBOL),
 
-	midiBox (18, 118, 480, 120, "screen", 0),
-	midiText (20, 10, 420, 20, "tlabel", "MIDI control page #1"),
-	midiStatusLabel (10, 30, 140, 20, "ylabel", "MIDI status"),
+	midiBox (18, 118, 510, 120, "screen", 0),
+	midiText (20, 10, 450, 20, "tlabel", "MIDI control page #1"),
+	midiStatusLabel (10, 30, 130, 20, "ylabel", "MIDI status"),
 	midiStatusListBox
 	(
-		10, 50, 140, 20, 0, 20, 140, 100, "menu",
+		10, 50, 130, 20, 0, 20, 130, 100, "menu",
 		BItems::ItemList ({{0, "None"}, {9, "Note on"}, {8, "Note off"}, {11, "Control change"}}),
 		0
 	),
-	midiChannelLabel (160, 30, 60, 20, "ylabel", "Channel"),
+	midiChannelLabel (150, 30, 50, 20, "ylabel", "Channel"),
 	midiChannelListBox
 	(
-		160, 50, 60, 20, 0, 20, 60, 360, "menu",
+		150, 50, 50, 20, 0, 20, 50, 360, "menu",
 		BItems::ItemList
 		({
 			{0, "All"}, {1, "1"}, {2, "2"}, {3, "3"},
@@ -63,13 +63,13 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 		}),
 		0
 	),
-	midiNoteLabel (230, 30, 100, 20, "ylabel", "Note"),
-	midiNoteListBox ( 230, 50, 100, 20, 0, 20, 100, 360, "menu", BItems::ItemList ({NOTELIST}), 128),
-	midiValueLabel (340, 30, 60, 20, "ylabel", "Value"),
-	midiValueListBox ( 340, 50, 60, 20, 0, 20, 60, 360, "menu", BItems::ItemList ({VALLIST}), 128),
-	midiLearnButton (410, 50, 60, 20, "menu/button", "Learn"),
-	midiCancelButton (160, 90, 60, 20, "menu/button", "Cancel"),
-	midiOkButton (260, 90, 60, 20, "menu/button", "OK"),
+	midiNoteLabel (210, 30, 160, 20, "ylabel", "Note"),
+	midiNoteListBox (210, 50, 160, 20, 0, 20, 160, 360, "menu", BItems::ItemList ({NOTELIST}), 128),
+	midiValueLabel (380, 30, 50, 20, "ylabel", "Value"),
+	midiValueListBox (380, 50, 50, 20, 0, 20, 50, 360, "menu", BItems::ItemList ({VALLIST}), 128),
+	midiLearnButton (440, 50, 60, 20, "menu/button", "Learn"),
+	midiCancelButton (170, 90, 60, 20, "menu/button", "Cancel"),
+	midiOkButton (280, 90, 60, 20, "menu/button", "OK"),
 
 	padSurface (18, 118, 924, 454, "box"),
 	markerFwd (0, 120 + 15.5 * (450.0 / 16.0) - 10, 20, 20, "widget", MARKER_FWD),
@@ -181,6 +181,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	midiLearnButton.setCallbackFunction(BEvents::VALUE_CHANGED_EVENT, midiButtonClickedCallback);
 	midiCancelButton.setCallbackFunction(BEvents::VALUE_CHANGED_EVENT, midiButtonClickedCallback);
 	midiOkButton.setCallbackFunction(BEvents::VALUE_CHANGED_EVENT, midiButtonClickedCallback);
+	midiStatusListBox.setCallbackFunction(BEvents::VALUE_CHANGED_EVENT, midiStatusChangedCallback);
 
 	padSurface.setDraggable (true);
 	padSurface.setCallbackFunction (BEvents::BUTTON_PRESS_EVENT, padsPressedCallback);
@@ -673,31 +674,31 @@ void BJumblrGUI::resize ()
 		for (int j = 0; j < 4; ++j) RESIZE (tabs[i].symbols[j], 68 - j * 10, 2, 8, 8, sz);
 	}
 
-	RESIZE (midiBox, 18, 118, 480, 120, sz);
-	RESIZE (midiText, 20, 10, 420, 20, sz);
-	RESIZE (midiStatusLabel, 10, 30, 140, 20, sz);
-	RESIZE (midiStatusListBox, 10, 50, 140, 20, sz);
-	midiStatusListBox.resizeListBox(BUtilities::Point (140 * sz, 100 * sz));
+	RESIZE (midiBox, 18, 118, 510, 120, sz);
+	RESIZE (midiText, 20, 10, 450, 20, sz);
+	RESIZE (midiStatusLabel, 10, 30, 130, 20, sz);
+	RESIZE (midiStatusListBox, 10, 50, 130, 20, sz);
+	midiStatusListBox.resizeListBox(BUtilities::Point (130 * sz, 100 * sz));
 	midiStatusListBox.moveListBox(BUtilities::Point (0, 20 * sz));
-	midiStatusListBox.resizeListBoxItems(BUtilities::Point (140 * sz, 20 * sz));
-	RESIZE (midiChannelLabel, 160, 30, 60, 20, sz);
-	RESIZE (midiChannelListBox, 160, 50, 60, 20, sz);
-	midiChannelListBox.resizeListBox(BUtilities::Point (60 * sz, 360 * sz));
+	midiStatusListBox.resizeListBoxItems(BUtilities::Point (130 * sz, 20 * sz));
+	RESIZE (midiChannelLabel, 150, 30, 50, 20, sz);
+	RESIZE (midiChannelListBox, 150, 50, 50, 20, sz);
+	midiChannelListBox.resizeListBox(BUtilities::Point (50 * sz, 360 * sz));
 	midiChannelListBox.moveListBox(BUtilities::Point (0, 20 * sz));
-	midiChannelListBox.resizeListBoxItems(BUtilities::Point (60 * sz, 20 * sz));
-	RESIZE (midiNoteLabel, 230, 30, 100, 20, sz);
-	RESIZE (midiNoteListBox, 230, 50, 100, 20, sz);
-	midiNoteListBox.resizeListBox(BUtilities::Point (100 * sz, 360 * sz));
+	midiChannelListBox.resizeListBoxItems(BUtilities::Point (50 * sz, 20 * sz));
+	RESIZE (midiNoteLabel, 210, 30, 160, 20, sz);
+	RESIZE (midiNoteListBox, 210, 50, 160, 20, sz);
+	midiNoteListBox.resizeListBox(BUtilities::Point (160 * sz, 360 * sz));
 	midiNoteListBox.moveListBox(BUtilities::Point (0, 20 * sz));
-	midiNoteListBox.resizeListBoxItems(BUtilities::Point (100 * sz, 20 * sz));
-	RESIZE (midiValueLabel, 340, 30, 60, 20, sz);
-	RESIZE (midiValueListBox, 340, 50, 60, 20, sz);
-	midiValueListBox.resizeListBox(BUtilities::Point (60 * sz, 360 * sz));
+	midiNoteListBox.resizeListBoxItems(BUtilities::Point (160 * sz, 20 * sz));
+	RESIZE (midiValueLabel, 380, 30, 50, 20, sz);
+	RESIZE (midiValueListBox, 380, 50, 50, 20, sz);
+	midiValueListBox.resizeListBox(BUtilities::Point (50 * sz, 360 * sz));
 	midiValueListBox.moveListBox(BUtilities::Point (0, 20 * sz));
-	midiValueListBox.resizeListBoxItems(BUtilities::Point (60 * sz, 20 * sz));
-	RESIZE (midiLearnButton, 410, 50, 60, 20, sz);
-	RESIZE (midiCancelButton, 160, 90, 60, 20, sz);
-	RESIZE (midiOkButton, 260, 90, 60, 20, sz);
+	midiValueListBox.resizeListBoxItems(BUtilities::Point (50 * sz, 20 * sz));
+	RESIZE (midiLearnButton, 440, 50, 60, 20, sz);
+	RESIZE (midiCancelButton, 170, 90, 60, 20, sz);
+	RESIZE (midiOkButton, 280, 90, 60, 20, sz);
 
 	RESIZE (padSurface, 18, 118, 924, 454, sz);
 	const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
@@ -1471,6 +1472,48 @@ void BJumblrGUI::midiButtonClickedCallback(BEvents::Event* event)
 			ui->midiBox.hide();
 		}
 	}
+}
+
+void BJumblrGUI::midiStatusChangedCallback(BEvents::Event* event)
+{
+	if (!event) return;
+	BWidgets::PopupListBox* widget = (BWidgets::PopupListBox*) event->getWidget ();
+	if (!widget) return;
+	float value = widget->getValue();
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+
+	BWidgets::PopupListBox& nlb = ui->midiNoteListBox;
+	BWidgets::Label& nl = ui->midiNoteLabel;
+	int nr = nlb.getValue();
+
+	if (value == 11)
+	{
+		nlb = BWidgets::PopupListBox
+		(
+			210 * ui->sz, 50 * ui->sz, 160 * ui->sz, 20 * ui->sz, 0, 20 * ui->sz, 160 * ui->sz, 360 *ui->sz,
+			"menu",
+			BItems::ItemList ({CCLIST}),
+			0
+		);
+		nl.setText ("Control change");
+	}
+
+	else
+	{
+		nlb = BWidgets::PopupListBox
+		(
+			210 * ui->sz, 50 * ui->sz, 160 * ui->sz, 20 * ui->sz, 0, 20 * ui->sz, 160 * ui->sz, 360 * ui->sz,
+			"menu",
+			BItems::ItemList ({NOTELIST}),
+			0
+		);
+		nl.setText ("Note");
+	}
+
+	nlb.resizeListBoxItems(BUtilities::Point (160 * ui->sz, 20 * ui->sz));
+	nlb.applyTheme (ui->theme);
+	nlb.setValue (nr);
 }
 
 void BJumblrGUI::levelChangedCallback(BEvents::Event* event)

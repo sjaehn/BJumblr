@@ -221,9 +221,9 @@
         {65, "CC65 (Portamento)"}, \
         {66, "CC66 (Sostenuto)"}, \
         {67, "CC67 (Soft Pedal)"}, \
-        {68, "CC68 (Legato Foot Switch)"}, \
+        {68, "CC68 (Leg. Foot Switch)"}, \
         {69, "CC69 (Hold2)"}, \
-        {70, "CC70 (SC1 Sound Variation)"}, \
+        {70, "CC70 (SC1 Sound Var.)"}, \
         {71, "CC71 (SC2 Timbre)"}, \
         {72, "CC72 (SC3 Release Time)"}, \
         {73, "CC73 (SC4 Attack Time)"}, \
@@ -237,7 +237,7 @@
         {81, "CC81 (General Purpose 6)"}, \
         {82, "CC82 (General Purpose 7)"}, \
         {83, "CC83 (General Purpose 8)"}, \
-        {84, "CC84 (Portamento Control)"}, \
+        {84, "CC84 (Portamento Ctrl.)"}, \
         {85, "CC85"}, \
         {86, "CC86"}, \
         {87, "CC87"}, \
@@ -251,10 +251,10 @@
         {95, "CC95 (E5 Phaser Depth)"}, \
         {96, "CC96 (Data Increment)"}, \
         {97, "CC97 (Data Decrement)"}, \
-        {98, "CC98 (Non-registered Parameter Number)"}, \
-        {99, "CC99 (Non-registered Parameter Number)"}, \
-        {100, "CC100 (Registered Parameter Number)"}, \
-        {101, "CC101 (Registered Parameter Number)"}, \
+        {98, "CC98 (Non-reg. Param. Nr.)"}, \
+        {99, "CC99 (Non-reg. Param. Nr.)"}, \
+        {100, "CC100 (Reg. Param. Nr.)"}, \
+        {101, "CC101 (Reg. Param. Nr.)"}, \
         {102, "CC102"}, \
         {103, "CC103"}, \
         {104, "CC104"}, \
@@ -274,13 +274,14 @@
         {118, "CC118"}, \
         {119, "CC119"}, \
         {120, "CC120 (All Sounds Off)"}, \
-        {121, "CC121 (Reset Controllers)"}, \
-        {122, "CC122 (Local Control Switch)"}, \
+        {121, "CC121 (Reset Ctrls.)"}, \
+        {122, "CC122 (Local Ctrl. Sw.)"}, \
         {123, "CC123 (All Notes Off)"}, \
         {124, "CC124 (Omni Off)"}, \
         {125, "CC125 (Omni On)"}, \
         {126, "CC126 (Mono1)"}, \
-        {127, "CC127 (Mono2)"}
+        {127, "CC127 (Mono2)"}, \
+        {128, "All"}
 #endif /* CCLIST */
 
 #ifndef VALLIST
