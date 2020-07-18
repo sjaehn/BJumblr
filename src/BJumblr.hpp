@@ -79,6 +79,7 @@ private:
 	void notifyPadsToGui ();
 	void notifyStatusToGui ();
 	void notifyWaveformToGui (const int start, const int end);
+	void notifySchedulePageToGui ();
 	void notifyPlaybackPageToGui ();
 	void notifyMidiLearnedToGui ();
 	void notifyMessageToGui();
@@ -193,9 +194,9 @@ private:
 	bool midiLearn;
 	uint8_t midiLearned[4];
 	int nrPages;
+	int schedulePage;
 	int playPage;
 	int lastPage;
-	double pageFade;
 	Pad pads [MAXPAGES] [MAXSTEPS] [MAXSTEPS];
 	// Sample
 	struct Sample
@@ -245,6 +246,7 @@ private:
 	bool ui_on;
 	bool scheduleNotifyPadsToGui;
 	bool scheduleNotifyFullPatternToGui[MAXPAGES];
+	bool scheduleNotifySchedulePageToGui;
 	bool scheduleNotifyPlaybackPageToGui;
 	bool scheduleNotifyStatusToGui;
 	bool scheduleNotifyWaveformToGui;

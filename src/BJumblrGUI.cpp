@@ -524,11 +524,12 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 			// Status notifications
 			else if (obj->body.otype == uris.notify_statusEvent)
 			{
-				LV2_Atom *oMax = NULL, *oPlay = NULL, *oMid = NULL, *oCursor = NULL, *oDelay = NULL;
+				LV2_Atom *oMax = NULL, *oSched = NULL, *oPlay = NULL, *oMid = NULL, *oCursor = NULL, *oDelay = NULL;
 				lv2_atom_object_get
 				(
 					obj,
 					uris.notify_maxPage, &oMax,
+					uris.notify_schedulePage, &oSched,
 					uris.notify_playbackPage, &oPlay,
 					uris.notify_midiLearned, &oMid,
 					uris.notify_cursor, &oCursor,
@@ -544,10 +545,23 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 					while (newPages < nrPages) popPage();
 				}
 
+				if (oSched && (oSched->type == uris.atom_Int))
+				{
+					int newSched = (((LV2_Atom_Int*)oSched)->body);
+					pageWidget.setValue (LIMIT (newSched, 0, MAXPAGES - 1));
+				}
+
 				if (oPlay && (oPlay->type == uris.atom_Int))
 				{
 					int newPlay = (((LV2_Atom_Int*)oPlay)->body);
-					pageWidget.setValue (LIMIT (newPlay, 0, MAXPAGES - 1));
+					newPlay = LIMIT (newPlay, 0, MAXPAGES - 1);
+					int val = pageWidget.getValue();
+					for (int i = 0; i < MAXPAGES; ++i)
+					{
+						if (i == newPlay) tabs[i].playSymbol.setState (BColors::ACTIVE);
+						else if (i != val) tabs[i].playSymbol.setState (BColors::INACTIVE);
+					}
+					drawPad();
 				}
 
 				if (oMid && (oMid->type == uris.atom_Int))
@@ -1252,8 +1266,11 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 
 			case PAGE:		for (int i = 0; i < MAXPAGES; ++i)
 						{
-							if (i == value) ui->tabs[i].playSymbol.setState (BColors::ACTIVE);
-							else ui->tabs[i].playSymbol.setState (BColors::INACTIVE);
+							if (ui->tabs[i].playSymbol.getState() != BColors::ACTIVE)
+							{
+								if (i == value) ui->tabs[i].playSymbol.setState (BColors::NORMAL);
+								else ui->tabs[i].playSymbol.setState (BColors::INACTIVE);
+							}
 						}
 						ui->drawPad();
 						break;
@@ -2094,7 +2111,7 @@ void BJumblrGUI::drawPad (cairo_t* cr, int row, int step)
 	Pad pdc = pattern[actPage].getPad (row, cursor);
 	BColors::Color color = BColors::yellow;
 	color.applyBrightness (pd.level - 1.0);
-	if ((actPage == pageWidget.getValue()) && (pdc.level != 0.0)) color.applyBrightness (pdc.level * 0.75);
+	if ((tabs[actPage].playSymbol.getState() == BColors::ACTIVE) && (pdc.level != 0.0)) color.applyBrightness (pdc.level * 0.75);
 	drawButton (cr, xr + 1, yr + 1, wr - 2, hr - 2, color);
 }
 

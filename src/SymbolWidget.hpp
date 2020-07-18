@@ -128,7 +128,7 @@ public:
 protected:
 	virtual void draw (const BUtilities::RectArea& area) override
 	{
-		if ((!widgetSurface_) || (cairo_surface_status (widgetSurface_) != CAIRO_STATUS_SUCCESS)) return;
+                if ((!widgetSurface_) || (cairo_surface_status (widgetSurface_) != CAIRO_STATUS_SUCCESS)) return;
 
 		Widget::draw (area);
 
@@ -185,8 +185,17 @@ protected:
                                                         cairo_line_to (cr, x0 + 0.25 * w, y0 + h);
                                                         cairo_close_path (cr);
                                                         cairo_set_line_width (cr, 0.0);
-                                                        cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
-                                                        cairo_fill (cr);
+                                                        if (getState() == BColors::NORMAL)
+                                                        {
+                                                                cairo_set_line_width (cr, 1.0);
+                                                                cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (BColors::ACTIVE)));
+                                                                cairo_stroke (cr);
+                                                        }
+                                                        else
+                                                        {
+                                                                cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
+                                                                cairo_fill (cr);
+                                                        }
                                                         break;
 
                                 case MIDISYMBOL:        cairo_set_line_width (cr, 0.5);

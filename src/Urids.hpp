@@ -68,6 +68,7 @@ struct BJumblrURIs
 	LV2_URID notify_requestMidiLearn;
 	LV2_URID notify_midiLearned;
 	LV2_URID notify_maxPage;
+	LV2_URID notify_schedulePage;
 	LV2_URID notify_playbackPage;
 	LV2_URID notify_cursor;
 	LV2_URID notify_progressionDelay;
@@ -115,6 +116,7 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->notify_requestMidiLearn = m->map(m->handle, BJUMBLR_URI "#NOTIFYrequestMidiLearn");
 	uris->notify_midiLearned = m->map(m->handle, BJUMBLR_URI "#NOTIFYmidiLearned");
 	uris->notify_maxPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadMaxPage");
+	uris->notify_schedulePage = m->map(m->handle, BJUMBLR_URI "#NOTIFYschedulePage");
 	uris->notify_playbackPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYplaybackPage");
 	uris->notify_cursor = m->map(m->handle, BJUMBLR_URI "#NOTIFYcursor");
 	uris->notify_progressionDelay = m->map(m->handle, BJUMBLR_URI "#NOTIFYplaybackDelay");

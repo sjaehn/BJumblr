@@ -31,7 +31,8 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	notifyForge (), notifyFrame (),
 	waveform {0.0f}, waveformCounter (0), lastWaveformCounter (0),
 	new_controllers {nullptr}, controllers {0},
-	editMode (0), midiLearn (false), nrPages (1), playPage (0), lastPage (0), pageFade (1),
+	editMode (0), midiLearn (false), nrPages (1),
+	schedulePage (0), playPage (0), lastPage (0),
 	pads {Pad()}, sample (nullptr),
 	rate (samplerate), bpm (120.0f), beatsPerBar (4.0f), beatUnit (0),
 	speed (0.0f), bar (0), barBeat (0.0f),
@@ -42,6 +43,8 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	audioBuffer2 (maxBufferSize, 0.0f),
 	audioBufferCounter (0), audioBufferSize (samplerate * 8),
 	ui_on (false), scheduleNotifyPadsToGui (false), scheduleNotifyFullPatternToGui {false},
+	scheduleNotifySchedulePageToGui (false),
+	scheduleNotifyPlaybackPageToGui (false),
 	scheduleNotifyStatusToGui (false),
 	scheduleNotifyWaveformToGui (false), scheduleNotifySamplePathToGui (false),
 	scheduleNotifyMidiLearnedToGui (false),
@@ -241,8 +244,7 @@ void BJumblr::runSequencer (const int start, const int end)
 
 			}
 
-			double stepFade = (fracTime < FADETIME ? fracTime / FADETIME : 1.0);
-			double fade = stepFade * pageFade;
+			double fade = (fracTime < FADETIME ? fracTime / FADETIME : 1.0);
 
 			double prevAudio1 = 0;
 			double prevAudio2 = 0;
@@ -252,11 +254,17 @@ void BJumblr::runSequencer (const int start, const int end)
 			// Fade out: Extrapolate audio using previous step data
 			if (fade < 1.0)
 			{
-				int iPrevStep = (stepFade < 1.0 ? (iStep + iNrOfSteps - 1) % iNrOfSteps : iStep);	// Previous step
-				int p = (pageFade < 1.0 ? lastPage : playPage);						// Previous page
+				// Begin of step: Page change scheduled ?
+				if ((fade < 0.1) && (schedulePage != playPage))
+				{
+					playPage = schedulePage;
+					scheduleNotifyPlaybackPageToGui = true;
+				}
+
+				int iPrevStep = (fade < 1.0 ? (iStep + iNrOfSteps - 1) % iNrOfSteps : iStep);	// Previous step
 				for (int r = 0; r < iNrOfSteps; ++r)
 				{
-					float factor = pads[p][r][iPrevStep].level;
+					float factor = pads[lastPage][r][iPrevStep].level;
 					if (factor != 0.0)
 					{
 						int stepDiff = floormod (iPrevStep - r - delay, iNrOfSteps);
@@ -270,7 +278,7 @@ void BJumblr::runSequencer (const int start, const int end)
 
 			}
 
-			if (pageFade < 1.0) pageFade = LIMIT (pageFade + 1.0 / (FADETIME * rate), 0.0, 1.0);
+			else lastPage = playPage;
 
 			// Calculate audio for this step
 			for (int r = 0; r < iNrOfSteps; ++r)
@@ -430,15 +438,8 @@ void BJumblr::run (uint32_t n_samples)
 
 				else if (i == PAGE)
 				{
-					if ((val != controllers[i]) && (val != playPage))
-					{
-						if (pageFade > 0.5)
-						{
-							lastPage = playPage;
-							pageFade = 0.0f;
-						}
-						playPage = val;
-					}
+					schedulePage = val;
+					scheduleNotifySchedulePageToGui = true;
 				}
 
 				controllers[i] = val;
@@ -505,7 +506,11 @@ void BJumblr::run (uint32_t n_samples)
 					if (page >= nrPages)
 					{
 						nrPages = LIMIT (page + 1, 1, MAXPAGES);
-						if (playPage >= nrPages) playPage = nrPages - 1;
+						if (playPage >= nrPages)
+						{
+							schedulePage = nrPages - 1;
+							scheduleNotifySchedulePageToGui = true;
+						}
 					}
 				}
 
@@ -583,8 +588,11 @@ void BJumblr::run (uint32_t n_samples)
 					if (newPages != nrPages)
 					{
 						nrPages = LIMIT (newPages, 1, MAXPAGES);
-						pageFade = 1;
-						if (playPage >= nrPages) playPage = nrPages - 1;
+						if (playPage >= nrPages)
+						{
+							schedulePage = nrPages - 1;
+							scheduleNotifyPlaybackPageToGui = true;
+						}
 					}
 				}
 
@@ -594,9 +602,7 @@ void BJumblr::run (uint32_t n_samples)
 					int newPp = ((LV2_Atom_Int*)oPp)->body;
 					if (newPp != playPage)
 					{
-						lastPage = playPage;
 						playPage = LIMIT (newPp, 0, MAXPAGES - 1);
-						pageFade = 0;
 					}
 				}
 
@@ -739,13 +745,8 @@ void BJumblr::run (uint32_t n_samples)
 						)
 					)
 					{
-						if (pageFade > 0.5)
-						{
-							lastPage = playPage;
-							pageFade = 0.0f;
-						}
-						playPage = p;
-						scheduleNotifyPlaybackPageToGui = true;
+						schedulePage = p;
+						scheduleNotifySchedulePageToGui = true;
 						break;
 					}
 				}
@@ -785,6 +786,7 @@ void BJumblr::run (uint32_t n_samples)
 		if (scheduleNotifyPadsToGui) notifyPadsToGui();
 		if (scheduleNotifyWaveformToGui) notifyWaveformToGui (lastWaveformCounter, waveformCounter);
 		if (scheduleNotifySamplePathToGui) notifySamplePathToGui ();
+		if (scheduleNotifySchedulePageToGui) notifySchedulePageToGui ();
 		if (scheduleNotifyPlaybackPageToGui) notifyPlaybackPageToGui ();
 		if (scheduleNotifyMidiLearnedToGui) notifyMidiLearnedToGui ();
 		if (message.isScheduled ()) notifyMessageToGui();
@@ -1219,6 +1221,18 @@ void BJumblr::notifyWaveformToGui (const int start, const int end)
 
 	scheduleNotifyWaveformToGui = false;
 	lastWaveformCounter = end;
+}
+
+void BJumblr::notifySchedulePageToGui ()
+{
+	LV2_Atom_Forge_Frame frame;
+	lv2_atom_forge_frame_time(&notifyForge, 0);
+	lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_statusEvent);
+	lv2_atom_forge_key(&notifyForge, uris.notify_schedulePage);
+	lv2_atom_forge_int(&notifyForge, schedulePage);
+	lv2_atom_forge_pop(&notifyForge, &frame);
+
+	scheduleNotifySchedulePageToGui = false;
 }
 
 void BJumblr::notifyPlaybackPageToGui ()
