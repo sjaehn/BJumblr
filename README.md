@@ -59,7 +59,7 @@ playback. Moving a pad one step to the right results in a one step delayed playb
 respective piece of the audio input stream. Each pad (and thus each piece) can be leveled up or
 down by mouse wheel scrolling.
 
-In addidion, the user can control the playback progession using the playback buttons or the speed
+In addition, the user can control the playback progression using the playback buttons or the speed
 dial. This is facilitated via the progression delay.
 
 
@@ -71,7 +71,7 @@ Select between (live) audio stream or a sample file as source.
 ### Pattern page tabs
 
 Define multiple patterns. Click on a tab to highlight the tab and to edit the respective pattern.
-Press ▶ on the tab to activate playback for the respective pattern. Press the piano keys symbol to
+Press ▸ on the tab to switch playback to the respective pattern. Press the piano keys symbol to
 enable / disable MIDI-controlled playback of the respective pattern.
 
 | Symbol | Description |
@@ -85,7 +85,8 @@ enable / disable MIDI-controlled playback of the respective pattern.
 
 This menu appears upon clicking on the piano keys symbol in the respective tab. Enable / disable
 MIDI-controlled playback of the respective pattern by selection or deselection (= none) of a MIDI
-status.
+status. You can manually set the parameters to which B.Jumblr shall respond or you can use MIDI
+learning. Don't forget to confirm ("OK") or discard changes ("Cancel")!
 
 
 ### Pattern matrix
@@ -147,6 +148,7 @@ speed-induced delay) is displayed in the panel above the buttons.
 ## Acknowledgments
 
 * Milkii Brewster for ideas about principle and features
+* unfa for ideas about multiple patterns and automation
 * Rob van den Berg for the plugin name
 
 
