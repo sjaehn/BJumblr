@@ -198,7 +198,7 @@ protected:
                                                         }
                                                         break;
 
-                                case MIDISYMBOL:        cairo_set_line_width (cr, 0.5);
+                                case MIDISYMBOL:        cairo_set_line_width (cr, 1.0);
                                                         cairo_set_source_rgba (cr, CAIRO_RGBA (*fgColors_.getColor (getState ())));
                                                         for (int i = 0; i < 3; ++i) cairo_rectangle (cr, x0 + 0.5 * w - 0.375 * ext + i * 0.25 * ext, y0 + 0.5 * h - 0.45 * ext, 0.25 * ext, 0.9 * ext);
                                                         cairo_stroke (cr);
