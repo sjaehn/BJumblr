@@ -1296,7 +1296,7 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 	{
 		ui->editMode = ui->editModeListBox.getValue();
 		ui->send_editMode();
-		for (int i = 0; i < MAXPAGES; ++i)
+		for (int i = 0; i < ui->nrPages; ++i)
 		{
 			if (!ui->validatePad(i))
 			{
