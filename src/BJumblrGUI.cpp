@@ -1062,6 +1062,10 @@ void BJumblrGUI::insertPage (const int page)
 		pattern[i] = pattern[i - 1];
 		send_pad (i);
 		if (i == actPage) drawPad();
+		for (int j = 0; j < NR_MIDI_CTRLS; ++j)
+		{
+			tabs[i].midiWidgets[j].setValue (tabs[i - 1].midiWidgets[j].getValue());
+		}
 	}
 
 	// Init new page
@@ -1069,6 +1073,10 @@ void BJumblrGUI::insertPage (const int page)
 	for (int i = 0; i < MAXSTEPS; ++i) pattern[page].setPad (i, i, Pad (1.0));
 	send_pad (page);
 	if (page == actPage) drawPad();
+	tabs[page].midiWidgets[STATUS].setValue (0);
+	tabs[page].midiWidgets[CHANNEL].setValue (0);
+	tabs[page].midiWidgets[NOTE].setValue (128);
+	tabs[page].midiWidgets[VALUE].setValue (128);
 }
 
 void BJumblrGUI::deletePage (const int page)
@@ -1083,7 +1091,16 @@ void BJumblrGUI::deletePage (const int page)
 		pattern[i] = pattern[i + 1];
 		send_pad (i);
 		if (i == actPage) drawPad ();
+		for (int j = 0; j < NR_MIDI_CTRLS; ++j)
+		{
+			tabs[i].midiWidgets[j].setValue (tabs[i + 1].midiWidgets[j].getValue());
+		}
 	}
+
+	tabs[nrPages - 1].midiWidgets[STATUS].setValue (0);
+	tabs[nrPages - 1].midiWidgets[CHANNEL].setValue (0);
+	tabs[nrPages - 1].midiWidgets[NOTE].setValue (128);
+	tabs[nrPages - 1].midiWidgets[VALUE].setValue (128);
 
 	popPage();
 	send_maxPage();
@@ -1106,6 +1123,13 @@ void BJumblrGUI::swapPage (const int page1, const int page2)
 
 	if (pageWidget.getValue() == page1) pageWidget.setValue (page2);
 	else if (pageWidget.getValue() == page2) pageWidget.setValue (page1);
+
+	for (int j = 0; j < NR_MIDI_CTRLS; ++j)
+	{
+		double v = tabs[page1].midiWidgets[j].getValue();
+		tabs[page1].midiWidgets[j].setValue (tabs[page2].midiWidgets[j].getValue());
+		tabs[page2].midiWidgets[j].setValue (v);
+	}
 }
 
 void BJumblrGUI::updatePageContainer()
