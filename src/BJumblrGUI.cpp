@@ -1132,6 +1132,8 @@ void BJumblrGUI::updatePageContainer()
 		}
 	}
 
+	for (int p = nrPages; p < MAXPAGES; ++p ) tabs[p].container.hide();
+
 	pageBackSymbol.moveTo (0, 0);
 	pageBackSymbol.resize (10 * sz, 30 * sz);
 	pageForwardSymbol.moveTo (x0 + 480 * sz, 0);
