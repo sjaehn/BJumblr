@@ -139,7 +139,7 @@ speed-induced delay) is displayed in the panel above the buttons.
 
 ## What's new
 
-* Pattern pages
+* Up to 16 pattern pages
 * More compact GUI <-> DSP data transfer
 * MIDI-controlled pattern playback
 * MIDI learn
@@ -154,3 +154,4 @@ speed-induced delay) is displayed in the panel above the buttons.
 
 ## Links
 * Tutorial video: https://www.youtube.com/watch?v=DFSi7TMqvMw
+* Re-sampling by unfa: https://youtu.be/MmGLTOkNenc?t=4491
