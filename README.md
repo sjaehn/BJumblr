@@ -143,6 +143,7 @@ speed-induced delay) is displayed in the panel above the buttons.
 * More compact GUI <-> DSP data transfer
 * MIDI-controlled pattern playback
 * MIDI learn
+* mp3 support
 
 
 ## Acknowledgments
