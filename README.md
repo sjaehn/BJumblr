@@ -47,6 +47,9 @@ to run it stand-alone and connect it to the JACK system.
 
 **Jack transport is required to get information about beat and bar position (not required for seconds mode)**
 
+**The host must provide information about beat and bar position to use B.Jumblr in these modes.**
+**Pure audio tracks (Ardour) may lack these information. Try to add a MIDI input!**
+
 
 ## Usage
 
