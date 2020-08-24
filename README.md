@@ -142,10 +142,6 @@ speed-induced delay) is displayed in the panel above the buttons.
 
 ## What's new
 
-* Up to 16 pattern pages
-* More compact GUI <-> DSP data transfer
-* MIDI-controlled pattern playback
-* MIDI learn
 * mp3 support
 
 

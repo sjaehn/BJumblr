@@ -14,7 +14,7 @@
    inkscape:export-xdpi="96"
    inkscape:export-filename="/home/sven/dev/c/BJumblr/inc/surface.png"
    sodipodi:docname="surface.svg"
-   inkscape:version="1.0 (6e3e5246a0, 2020-05-07)"
+   inkscape:version="1.0 (b51213c273, 2020-08-10)"
    id="svg8"
    version="1.1"
    viewBox="0 0 269.87499 164.04166"
@@ -1590,6 +1590,6 @@
          y="15.572624"
          x="84.213097"
          id="tspan955"
-         sodipodi:role="line">V 1.4.1</tspan></text>
+         sodipodi:role="line">V 1.4.2</tspan></text>
   </g>
 </svg>
