@@ -37,7 +37,7 @@ public:
 			std::chrono::milliseconds (BWIDGETS_DEFAULT_FOCUS_OUT_MS)),
                 focusText (0, 0, 120, 100, name + "/focus", "", true)
         {
-                focusText.setOversize (true);
+                focusText.setStacking (BWidgets::STACKING_OVERSIZE);
                 focusText.hide ();
                 add (focusText);
         }

@@ -56,7 +56,7 @@ public:
                 symbol_ (symbol),
                 focusLabel_ (0, 0, 80, 20, name_ + BWIDGETS_DEFAULT_FOCUS_NAME, symboltxt[symbol + 1])
         {
-                focusLabel_.setOversize (true);
+                focusLabel_.setStacking (BWidgets::STACKING_OVERSIZE);
    		focusLabel_.resize ();
    		focusLabel_.hide ();
    		add (focusLabel_);
