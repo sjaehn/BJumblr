@@ -278,7 +278,7 @@ private:
 	BColors::ColorSet wvColors = {{{1.0, 1.0, 1.0, 0.15}, {1.0, 1.0, 1.0, 0.15}, {0.25, 0.25, 0.25, 0.15}, {0.0, 0.0, 0.0, 0.15}}};
 	BColors::ColorSet blkColors = {{{0.0, 0.0, 0.0, 0.75}, {0.0, 0.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.25}, {0.0, 0.0, 0.0, 0.0}}};
 	BColors::Color ink = {0.0, 0.25, 0.5, 1.0};
-	BColors::Color evenPadBgColor = {0.0, 0.05, 0.1, 1.0};
+	BColors::Color evenPadBgColor = {0.0, 0.05, 0.2, 1.0};
 	BColors::Color oddPadBgColor = {0.0, 0.0, 0.0, 1.0};
 
 	BStyles::Border border = {{ink, 1.0}, 0.0, 2.0, 0.0};
