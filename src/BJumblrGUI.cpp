@@ -974,7 +974,7 @@ void BJumblrGUI::send_pad (int page)
 	lv2_atom_forge_key(&forge, uris.notify_padPage);
 	lv2_atom_forge_int(&forge, page);
 	lv2_atom_forge_key(&forge, uris.notify_padFullPattern);
-	lv2_atom_forge_vector(&forge, sizeof(float), uris.atom_Float, MAXSTEPS * MAXSTEPS * sizeof(Pad) / sizeof(float), (void*) &padmsg);
+	lv2_atom_forge_vector(&forge, sizeof(float), uris.atom_Float, MAXSTEPS * MAXSTEPS * sizeof(Pad) / sizeof(float), (void*) padmsg);
 	lv2_atom_forge_pop(&forge, &frame);
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }

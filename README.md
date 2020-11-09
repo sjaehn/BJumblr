@@ -142,7 +142,8 @@ speed-induced delay) is displayed in the panel above the buttons.
 
 ## What's new
 
-* mp3 support
+* Colors optimized
+* Bugfix
 
 
 ## Acknowledgments
