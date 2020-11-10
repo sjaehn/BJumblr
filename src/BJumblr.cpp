@@ -853,7 +853,7 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 		if (map_path)
 		{
 			char* abstrPath = map_path->abstract_path(map_path->handle, sample->path);
-			store(handle, uris.notify_samplePath, abstrPath, strlen (sample->path) + 1, uris.atom_Path, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+			store(handle, uris.notify_samplePath, abstrPath, strlen (abstrPath) + 1, uris.atom_Path, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
 			free (abstrPath);
 		}
 		else fprintf (stderr, "BJumblr.lv2: Feature map_path not available! Can't save sample!\n" );
