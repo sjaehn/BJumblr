@@ -156,7 +156,7 @@ BJumblr::Sample::Sample (const char* samplepath) : info {0, 0, 0, 0, 0, 0}, data
 	{
                 SNDFILE* sndfile = sf_open (samplepath, SFM_READ, &info);
 
-                if (!sndfile || !info.frames) throw std::invalid_argument ("Can't open " + std::string (path) + ".");
+                if (!sndfile || !info.frames) throw std::invalid_argument ("Can't open " + std::string (samplepath) + ".");
 
                 // Read & render data
                 data = (float*) malloc (sizeof(float) * info.frames * info.channels);
@@ -516,6 +516,7 @@ void BJumblr::run (uint32_t n_samples)
 				for (int i = 0; i < nrPages; ++i) scheduleNotifyFullPatternToGui[i] = true;
 				scheduleNotifyPadsToGui = true;
 				scheduleNotifyStatusToGui = true;
+				scheduleNotifySamplePathToGui = true;
 			}
 
 			// GUI off
