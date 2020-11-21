@@ -854,5 +854,5 @@
 	] ;
 
 	state:state [
-                <https://www.jahnichen.de/plugins/lv2/BJumblr#notify_playbackPage> 0 ;
+                <https://www.jahnichen.de/plugins/lv2/BJumblr#NOTIFYplaybackPage> 0 ;
         ] .
