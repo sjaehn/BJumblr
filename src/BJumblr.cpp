@@ -201,6 +201,11 @@ float BJumblr::Sample::get (const sf_count_t frame, const int channel, const int
 	return data1 + (f - double (f1)) * (data2 - data1);
 }
 
+BJumblr::~BJumblr()
+{
+	if (sample) delete sample;
+}
+
 void BJumblr::connect_port (uint32_t port, void *data)
 {
 	switch (port)
