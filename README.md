@@ -143,6 +143,7 @@ speed-induced delay) is displayed in the panel above the buttons.
 ## What's new
 
 * Colors optimized
+* Sample loading settings: audio files as default
 * Bugfix
 
 

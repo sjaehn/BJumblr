@@ -2073,12 +2073,13 @@ void BJumblrGUI::loadButtonClickedCallback (BEvents::Event* event)
 		std::vector<BWidgets::FileFilter>
 		{
 			BWidgets::FileFilter {"All files", std::regex (".*")},
-			BWidgets::FileFilter {"Audio files", std::regex (".*\\.((wav)|(wave)|(aif)|(aiff)|(au)|(sd2)|(flac)|(caf)|(ogg))$", std::regex_constants::icase)}
+			BWidgets::FileFilter {"Audio files", std::regex (".*\\.((wav)|(wave)|(aif)|(aiff)|(au)|(sd2)|(flac)|(caf)|(ogg)|(mp3))$", std::regex_constants::icase)}
 		},
 		"Open");
 	if (ui->fileChooser)
 	{
 		RESIZE ((*ui->fileChooser), 200, 120, 300, 400, ui->sz);
+		ui->fileChooser->selectFilter ("Audio files");
 		ui->mContainer.add (*ui->fileChooser);
 	}
 }
