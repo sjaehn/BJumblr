@@ -33,7 +33,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	sz (1.0), bgImageSurface (nullptr),
 	uris (), forge (), editMode (0), clipBoard (),
 	cursor (0), wheelScrolled (false), padPressed (false), deleteMode (false),
-	samplePath ("."),
+	samplePath ("."), sampleStart (0), sampleEnd (0), sampleLoop (false),
 	actPage (0), nrPages (1), pageOffset (0),
 	mContainer (0, 0, 1020, 620, "main"),
 	messageLabel (400, 45, 600, 20, "ctlabel", ""),
@@ -77,7 +77,8 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	monitorWidget (20, 120, 920, 450, "monitor"),
 	sourceListBox (570, 90, 120, 20, 120, 60, "menu", BItems::ItemList ({{0, "Audio stream"}, {1, "Sample"}}), 0),
 	loadButton (710, 90, 20, 20, "menu/button"),
-	sampleNameLabel (740, 90, 180, 20, "boxlabel", ""),
+	sampleNameLabel (740, 90, 160, 20, "boxlabel", ""),
+	sampleAmpDial (918, 88, 24, 24, "dial", 1.0, 0.0, 1.0, 0.0),
 	playButton (18, 588, 24, 24, "widget", "Play"),
 	bypassButton (48, 588, 24, 24, "widget", "Bypass"),
 	stopButton (78, 588, 24, 24, "widget", "Stop"),
@@ -166,6 +167,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	ytButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, ytButtonClickedCallback);
 	loadButton.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, loadButtonClickedCallback);
 	sampleNameLabel.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, loadButtonClickedCallback);
+	sampleAmpDial.setCallbackFunction(BEvents::VALUE_CHANGED_EVENT, valueChangedCallback);
 
 	pageBackSymbol.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, pageScrollClickedCallback);
 	pageForwardSymbol.setCallbackFunction(BEvents::BUTTON_PRESS_EVENT, pageScrollClickedCallback);
@@ -198,6 +200,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	// Configure widgets
 	loadButton.hide();
 	sampleNameLabel.hide();
+	sampleAmpDial.hide();
 	midiBox.hide();
 	pageBackSymbol.setFocusable (false);
 	pageForwardSymbol.setFocusable (false);
@@ -275,6 +278,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (sourceListBox);
 	mContainer.add (loadButton);
 	mContainer.add (sampleNameLabel);
+	mContainer.add (sampleAmpDial);
 	mContainer.add (levelDial);
 	mContainer.add (delayDisplayLabel);
 	mContainer.add (manualProgressionDelayWidget);
@@ -513,13 +517,27 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 			// Path notification
 			else if (obj->body.otype == uris.notify_pathEvent)
 			{
-				const LV2_Atom* data = NULL;
-				lv2_atom_object_get(obj, uris.notify_samplePath, &data, 0);
-				if (data && (data->type == uris.atom_Path))
+				const LV2_Atom* oPath = NULL, *oStart = NULL, *oEnd = NULL, *oAmp = NULL, *oLoop = NULL;
+				lv2_atom_object_get
+				(
+					obj,
+					uris.notify_samplePath, &oPath,
+					uris.notify_sampleStart, &oStart,
+					uris.notify_sampleEnd, &oEnd,
+					uris.notify_sampleAmp, &oAmp,
+					uris.notify_sampleLoop, &oLoop,
+					0
+				);
+				if (oPath && (oPath->type == uris.atom_Path))
 				{
-					sampleNameLabel.setText ((const char*)LV2_ATOM_BODY_CONST(data));
+					sampleNameLabel.setText ((const char*)LV2_ATOM_BODY_CONST(oPath));
 					// TODO Split to path and file name
 				}
+
+				if (oStart && (oStart->type == uris.atom_Long)) sampleStart = ((LV2_Atom_Long*)oStart)->body;
+				if (oEnd && (oEnd->type == uris.atom_Long)) sampleEnd = ((LV2_Atom_Long*)oEnd)->body;
+				if (oAmp && (oAmp->type == uris.atom_Float)) sampleAmpDial.setValue (((LV2_Atom_Float*)oAmp)->body);
+				if (oLoop && (oLoop->type == uris.atom_Bool)) sampleLoop = ((LV2_Atom_Bool*)oLoop)->body;
 			}
 
 			// Status notifications
@@ -649,6 +667,7 @@ void BJumblrGUI::resize ()
 	tLabelFont.setFontSize (12 * sz);
 	tgLabelFont.setFontSize (12 * sz);
 	lfLabelFont.setFontSize (12 * sz);
+	boldLfLabelFont.setFontSize (12 * sz);
 	smLabelFont.setFontSize (8 * sz);
 
 	//Background
@@ -709,7 +728,8 @@ void BJumblrGUI::resize ()
 	sourceListBox.resizeListBox (BUtilities::Point (120 * sz, 60 * sz));
 	sourceListBox.resizeListBoxItems (BUtilities::Point (120 * sz, 20 * sz));
 	RESIZE (loadButton, 710, 90, 20, 20, sz);
-	RESIZE (sampleNameLabel, 740, 90, 180, 20, sz);
+	RESIZE (sampleNameLabel, 740, 90, 160, 20, sz);
+	RESIZE (sampleAmpDial, 918, 88, 24, 24, sz);
 	RESIZE (playButton, 18, 588, 24, 24, sz);
 	RESIZE (bypassButton, 48, 588, 24, 24, sz);
 	RESIZE (stopButton, 78, 588, 24, 24, sz);
@@ -746,7 +766,7 @@ void BJumblrGUI::resize ()
 	RESIZE (speedDial, 960, 530, 40, 48, sz);
 	RESIZE (helpButton, 958, 588, 24, 24, sz);
 	RESIZE (ytButton, 988, 588, 24, 24, sz);
-	if (fileChooser) RESIZE ((*fileChooser), 200, 120, 300, 400, sz);
+	if (fileChooser) RESIZE ((*fileChooser), 200, 140, 640, 400, sz);
 
 	applyTheme (theme);
 	drawPad ();
@@ -790,6 +810,7 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	sourceListBox.applyTheme (theme);
 	loadButton.applyTheme (theme);
 	sampleNameLabel.applyTheme (theme);
+	sampleAmpDial.applyTheme (theme);
 	playButton.applyTheme (theme);
 	bypassButton.applyTheme (theme);
 	stopButton.applyTheme (theme);
@@ -838,6 +859,9 @@ void BJumblrGUI::onCloseRequest (BEvents::WidgetEvent* event)
 		{
 			sampleNameLabel.setText (fileChooser->getFileName());
 			samplePath = fileChooser->getPath();
+			sampleStart = fileChooser->getStart();
+			sampleEnd = fileChooser->getEnd();
+			sampleLoop = fileChooser->getLoop();
 			send_samplePath ();
 		}
 
@@ -899,6 +923,27 @@ void BJumblrGUI::send_samplePath ()
 	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_pathEvent);
 	lv2_atom_forge_key(&forge, uris.notify_samplePath);
 	lv2_atom_forge_path (&forge, path.c_str(), path.size() + 1);
+	lv2_atom_forge_key(&forge, uris.notify_sampleStart);
+	lv2_atom_forge_long(&forge, sampleStart);
+	lv2_atom_forge_key(&forge, uris.notify_sampleEnd);
+	lv2_atom_forge_long(&forge, sampleEnd);
+	lv2_atom_forge_key(&forge, uris.notify_sampleAmp);
+	lv2_atom_forge_float(&forge, sampleAmpDial.getValue());
+	lv2_atom_forge_key(&forge, uris.notify_sampleLoop);
+	lv2_atom_forge_bool(&forge, sampleLoop);
+	lv2_atom_forge_pop(&forge, &frame);
+	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
+}
+
+void BJumblrGUI::send_sampleAmp ()
+{
+	uint8_t obj_buf[1024];
+	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
+
+	LV2_Atom_Forge_Frame frame;
+	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_pathEvent);
+	lv2_atom_forge_key(&forge, uris.notify_sampleAmp);
+	lv2_atom_forge_float(&forge, sampleAmpDial.getValue());
 	lv2_atom_forge_pop(&forge, &frame);
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }
@@ -1277,11 +1322,13 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 						{
 							ui->loadButton.hide();
 							ui->sampleNameLabel.hide();
+							ui->sampleAmpDial.hide();
 						}
 						else
 						{
 							ui->loadButton.show();
 							ui->sampleNameLabel.show();
+							ui->sampleAmpDial.show();
 						}
 						break;
 
@@ -1347,6 +1394,8 @@ void BJumblrGUI::valueChangedCallback(BEvents::Event* event)
 			ui->bypassButton.setValue (0.0);
 		}
 	}
+
+	else if (widget == &ui->sampleAmpDial) ui->send_sampleAmp();
 }
 
 
@@ -2067,9 +2116,9 @@ void BJumblrGUI::loadButtonClickedCallback (BEvents::Event* event)
 	if (!ui) return;
 
 	if (ui->fileChooser) delete ui->fileChooser;
-	ui->fileChooser = new BWidgets::FileChooser
+	ui->fileChooser = new SampleChooser
 	(
-		200, 120, 300, 400, "filechooser", ui->samplePath,
+		200, 140, 640, 400, "filechooser", ui->samplePath,
 		std::vector<BWidgets::FileFilter>
 		{
 			BWidgets::FileFilter {"All files", std::regex (".*")},
@@ -2078,7 +2127,8 @@ void BJumblrGUI::loadButtonClickedCallback (BEvents::Event* event)
 		"Open");
 	if (ui->fileChooser)
 	{
-		RESIZE ((*ui->fileChooser), 200, 120, 300, 400, ui->sz);
+		RESIZE ((*ui->fileChooser), 200, 140, 640, 400, ui->sz);
+		ui->fileChooser->applyTheme (ui->theme);
 		ui->fileChooser->selectFilter ("Audio files");
 		ui->mContainer.add (*ui->fileChooser);
 	}

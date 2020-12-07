@@ -21,10 +21,11 @@
 #include "BJumblr.hpp"
 
 #ifndef SF_FORMAT_MP3
+#ifndef MINIMP3_IMPLEMENTATION
 #define MINIMP3_IMPLEMENTATION
-#define MINIMP3_FLOAT_OUTPUT
-#include "minimp3_ex.h"
-#endif /* SF_FORMAT_MP3 */
+#endif
+#endif
+#include "Sample.hpp"
 
 inline double floorfrac (const double value) {return value - floor (value);}
 inline double floormod (const double numer, const double denom) {return numer - floor(numer / denom) * denom;}
@@ -39,7 +40,7 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	new_controllers {nullptr}, controllers {0},
 	editMode (0), midiLearn (false), nrPages (1),
 	schedulePage (0), playPage (0), lastPage (0),
-	pads {Pad()}, sample (nullptr),
+	pads {Pad()}, sample (nullptr), sampleAmp (1.0f),
 	rate (samplerate), bpm (120.0f), beatsPerBar (4.0f), beatUnit (0),
 	speed (0.0f), bar (0), barBeat (0.0f),
 	outCapacity (0), position (0.0), cursor (0.0f), offset (0.0), refFrame (0),
@@ -111,96 +112,6 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 
 }
 
-BJumblr::Sample::Sample () : info {0, 0, 0, 0, 0, 0}, data (nullptr), path (nullptr) {}
-
-BJumblr::Sample::Sample (const char* samplepath) : info {0, 0, 0, 0, 0, 0}, data (nullptr), path (nullptr)
-{
-	if (!samplepath) return;
-
-	int len = strlen (samplepath);
-        path = (char*) malloc (len + 1);
-        if (!path) throw std::bad_alloc();
-        memcpy (path, samplepath, len + 1);
-
-        // Extract file extension
-        char* extptr = strrchr (path, '.');
-        const int extsz = (extptr ? strlen (extptr) + 1 : 1);
-        char* ext = (char*) malloc (extsz);
-        if (!ext) throw std::bad_alloc();
-        ext[0] = 0;
-        if (extsz > 1) memcpy (ext, extptr, extsz);
-        for (char* s = ext; *s; ++s) *s = tolower ((unsigned char)*s);
-
-
-        // Check for known non-sndfiles
-#ifdef MINIMP3_IMPLEMENTATION
-        if (!strcmp (ext, ".mp3"))
-        {
-                mp3dec_t mp3dec;
-                mp3dec_file_info_t mp3info;
-                if (mp3dec_load (&mp3dec, path, &mp3info, NULL, NULL)) throw std::invalid_argument ("Can't open " + std::string (path) + ".");
-
-                info.samplerate = mp3info.hz;
-                info.channels = mp3info.channels;
-                info.frames = mp3info.samples / mp3info.channels;
-
-                data = (float*) malloc (sizeof(float) * info.frames * info.channels);
-                if (!data) throw std::bad_alloc();
-
-                memcpy (data, mp3info.buffer, sizeof(float) * info.frames * info.channels);
-        }
-
-        else
-#endif /* MINIMP3_IMPLEMENTATION */
-
-	{
-                SNDFILE* sndfile = sf_open (samplepath, SFM_READ, &info);
-
-                if (!sndfile || !info.frames) throw std::invalid_argument ("Can't open " + std::string (samplepath) + ".");
-
-                // Read & render data
-                data = (float*) malloc (sizeof(float) * info.frames * info.channels);
-                if (!data)
-        	{
-        		sf_close (sndfile);
-        		throw std::bad_alloc();
-        	}
-
-                sf_seek (sndfile, 0, SEEK_SET);
-                sf_read_float (sndfile, data, info.frames * info.channels);
-                sf_close (sndfile);
-        }
-}
-
-BJumblr::Sample::~Sample ()
-{
-	if (data) free (data);
-	if (path) free (path);
-}
-
-float BJumblr::Sample::get (const sf_count_t frame, const int channel, const int rate)
-{
-	if (!data) return 0.0f;
-
-	// Direct access if same frame rate
-	if (info.samplerate == rate)
-	{
-		if (frame >= info.frames) return 0.0f;
-		else return data[frame * info.channels + channel];
-	}
-
-	// Linear rendering (TODO) if frame rates differ
-	double f = (frame * info.samplerate) / rate;
-	sf_count_t f1 = f;
-
-	if (f1 + 1 >= info.frames) return 0.0f;
-	if (f1 == f) return data[f1 * info.channels + channel];
-
-	float data1 = data[f1 * info.channels + channel];
-	float data2 = data[(f1 + 1) * info.channels + channel];
-	return data1 + (f - double (f1)) * (data2 - data1);
-}
-
 BJumblr::~BJumblr()
 {
 	if (sample) delete sample;
@@ -260,11 +171,22 @@ void BJumblr::runSequencer (const int start, const int end)
 		}
 		else	// Sample
 		{
+			input1 = 0;
+			input2 = 0;
+
 			if (sample)
 			{
-				uint64_t sampleframe = getFramesFromValue (pos * controllers[NR_OF_STEPS] * controllers[STEP_SIZE]);
-				input1 = sample->get (sampleframe, 0, rate);
-				input2 = sample->get (sampleframe, 1, rate);
+				if (sample->end > sample->start)
+				{
+					const uint64_t f0 = getFramesFromValue (pos * controllers[NR_OF_STEPS] * controllers[STEP_SIZE]);
+					const int64_t frame = (sample->loop ? (f0 % (sample->end - sample->start)) + sample->start : f0 + sample->start);
+
+					if (frame < sample->end)
+					{
+						input1 = sampleAmp * sample->get (frame, 0, rate);
+						input2 = sampleAmp * sample->get (frame, 1, rate);
+					}
+				}
 			}
 		}
 
@@ -663,12 +585,31 @@ void BJumblr::run (uint32_t n_samples)
 			// Sample path notification -> forward to worker
 			else if (obj->body.otype ==uris.notify_pathEvent)
 			{
-				LV2_Atom* oPath = NULL;
-				lv2_atom_object_get (obj, uris.notify_samplePath, &oPath, NULL);
+				LV2_Atom* oPath = NULL, *oStart = NULL, *oEnd = NULL, *oAmp = NULL, *oLoop = NULL;
+				lv2_atom_object_get
+				(
+					obj,
+					uris.notify_samplePath, &oPath,
+					uris.notify_sampleStart, &oStart,
+					uris.notify_sampleEnd, &oEnd,
+					uris.notify_sampleAmp, &oAmp,
+					uris.notify_sampleLoop, &oLoop,
+					NULL
+				);
 
+				// New sample
 				if (oPath && (oPath->type == uris.atom_Path))
 				{
 					workerSchedule->schedule_work (workerSchedule->handle, lv2_atom_total_size(&ev->body), &ev->body);
+				}
+
+				// Only start / end /amp / loop changed
+				else if (sample)
+				{
+					if (oStart && (oStart->type == uris.atom_Long)) sample->start = LIMIT (((LV2_Atom_Long*)oStart)->body, 0, sample->info.frames - 1);
+					if (oEnd && (oEnd->type == uris.atom_Long)) sample->end = LIMIT (((LV2_Atom_Long*)oEnd)->body, 0, sample->info.frames);
+					if (oAmp && (oAmp->type == uris.atom_Float)) sampleAmp = LIMIT (((LV2_Atom_Float*)oAmp)->body, 0.0f, 1.0f);
+					if (oLoop && (oLoop->type == uris.atom_Bool)) sample->loop = ((LV2_Atom_Long*)oEnd)->body;
 				}
 			}
 
@@ -860,6 +801,10 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 		{
 			char* abstrPath = map_path->abstract_path(map_path->handle, sample->path);
 			store(handle, uris.notify_samplePath, abstrPath, strlen (abstrPath) + 1, uris.atom_Path, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+			store(handle, uris.notify_sampleStart, &sample->start, sizeof (sample->start), uris.atom_Long, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+			store(handle, uris.notify_sampleEnd, &sample->end, sizeof (sample->end), uris.atom_Long, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+			store(handle, uris.notify_sampleAmp, &sampleAmp, sizeof (sampleAmp), uris.atom_Float, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+			store(handle, uris.notify_sampleLoop, &sample->loop, sizeof (sample->loop), uris.atom_Bool, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
 			free (abstrPath);
 		}
 		else fprintf (stderr, "BJumblr.lv2: Feature map_path not available! Can't save sample!\n" );
@@ -927,6 +872,38 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 		}
 		scheduleNotifySamplePathToGui = true;
         }
+
+	// Retireve sample start and end
+	if (sample)
+	{
+		const void* startData = retrieve (handle, uris.notify_sampleStart, &size, &type, &valflags);
+	        if (startData && (type == uris.atom_Long))
+		{
+			sample->start = *(sf_count_t*)startData;
+			scheduleNotifySamplePathToGui = true;
+	        }
+
+		const void* endData = retrieve (handle, uris.notify_sampleEnd, &size, &type, &valflags);
+	        if (endData && (type == uris.atom_Long))
+		{
+			sample->end = *(sf_count_t*)endData;
+			scheduleNotifySamplePathToGui = true;
+	        }
+
+		const void* ampData = retrieve (handle, uris.notify_sampleAmp, &size, &type, &valflags);
+	        if (ampData && (type == uris.atom_Float))
+		{
+			sampleAmp = *(float*)ampData;
+			scheduleNotifySamplePathToGui = true;
+	        }
+
+		const void* loopData = retrieve (handle, uris.notify_sampleLoop, &size, &type, &valflags);
+	        if (loopData && (type == uris.atom_Bool))
+		{
+			sample->loop = *(bool*)loopData;
+			scheduleNotifySamplePathToGui = true;
+	        }
+	}
 
 	// Retrieve playbackPage
 	const void* ppData = retrieve (handle, uris.notify_playbackPage, &size, &type, &valflags);
@@ -1081,6 +1058,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 LV2_Worker_Status BJumblr::work (LV2_Worker_Respond_Function respond, LV2_Worker_Respond_Handle handle, uint32_t size, const void* data)
 {
 	const LV2_Atom* atom = (const LV2_Atom*)data;
+	if (!atom) return LV2_WORKER_ERR_UNKNOWN;
 
 	// Free old sample
         if (atom->type == uris.notify_sampleFreeEvent)
@@ -1096,8 +1074,17 @@ LV2_Worker_Status BJumblr::work (LV2_Worker_Respond_Function respond, LV2_Worker
 
 		if (obj->body.otype == uris.notify_pathEvent)
 		{
-			const LV2_Atom* path = NULL;
-			lv2_atom_object_get(obj, uris.notify_samplePath, &path, 0);
+			const LV2_Atom* path = NULL, *oStart = NULL, *oEnd = NULL, *oAmp = NULL, *oLoop = NULL;
+			lv2_atom_object_get
+			(
+				obj,
+				uris.notify_samplePath, &path,
+				uris.notify_sampleStart, &oStart,
+				uris.notify_sampleEnd, &oEnd,
+				uris.notify_sampleAmp, &oAmp,
+				uris.notify_sampleLoop, &oLoop,
+				0
+			);
 
 			if (path && (path->type == uris.atom_Path))
 			{
@@ -1116,6 +1103,18 @@ LV2_Worker_Status BJumblr::work (LV2_Worker_Respond_Function respond, LV2_Worker
 					message.setMessage (CANT_OPEN_SAMPLE);
 					return LV2_WORKER_ERR_UNKNOWN;
 				}
+
+				if (s)
+				{
+					WorkerMessage sAtom;
+					sAtom.atom = {sizeof (s), uris.notify_installSample};
+					sAtom.sample = s;
+					sAtom.start = (oStart && (oStart->type == uris.atom_Long) ? ((LV2_Atom_Long*)oStart)->body : 0);
+					sAtom.end = (oEnd && (oEnd->type == uris.atom_Long) ? ((LV2_Atom_Long*)oEnd)->body : s->info.frames);
+					sAtom.amp = (oAmp && (oAmp->type == uris.atom_Float) ? ((LV2_Atom_Float*)oAmp)->body : 1.0f);
+					sAtom.loop = (oLoop && (oLoop->type == uris.atom_Bool) ? ((LV2_Atom_Bool*)oLoop)->body : false);
+					respond (handle, sizeof(sAtom), &sAtom);
+				}
 				if (s) respond (handle, sizeof(s), &s);
 			}
 
@@ -1128,13 +1127,31 @@ LV2_Worker_Status BJumblr::work (LV2_Worker_Respond_Function respond, LV2_Worker
 
 LV2_Worker_Status BJumblr::work_response (uint32_t size, const void* data)
 {
-	// Schedule worker to free old sample
-	WorkerMessage workerMessage = {{sizeof (Sample*), uris.notify_sampleFreeEvent}, sample};
-	workerSchedule->schedule_work (workerSchedule->handle, sizeof (workerMessage), &workerMessage);
+	const LV2_Atom* atom = (const LV2_Atom*)data;
+	if (!atom) return LV2_WORKER_ERR_UNKNOWN;
 
-	// Install new sample from data
-	sample = *(Sample* const*) data;
-	return LV2_WORKER_SUCCESS;
+	if (atom->type == uris.notify_installSample)
+	{
+		const WorkerMessage* nAtom = (const WorkerMessage*)data;
+		// Schedule worker to free old sample
+		WorkerMessage sAtom = {{sizeof (Sample*), uris.notify_sampleFreeEvent}, sample};
+		workerSchedule->schedule_work (workerSchedule->handle, sizeof (sAtom), &sAtom);
+
+		// Install new sample from data
+		sample = nAtom->sample;
+		if (sample)
+		{
+			sample->start = LIMIT (nAtom->start, 0, sample->info.frames - 1);
+			sample->end = LIMIT (nAtom->end, sample->start, sample->info.frames);
+			sampleAmp = LIMIT (nAtom->amp, 0.0f, 1.0f);
+			sample->loop = nAtom->loop;
+			return LV2_WORKER_SUCCESS;
+		}
+
+		else return LV2_WORKER_ERR_UNKNOWN;
+	}
+
+	else return LV2_WORKER_ERR_UNKNOWN;
 }
 
 /*
@@ -1328,6 +1345,14 @@ void BJumblr::notifySamplePathToGui ()
 		lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_pathEvent);
 		lv2_atom_forge_key(&notifyForge, uris.notify_samplePath);
 		lv2_atom_forge_path (&notifyForge, sample->path, strlen (sample->path) + 1);
+		lv2_atom_forge_key(&notifyForge, uris.notify_sampleStart);
+		lv2_atom_forge_long (&notifyForge, sample->start);
+		lv2_atom_forge_key(&notifyForge, uris.notify_sampleEnd);
+		lv2_atom_forge_long (&notifyForge, sample->end);
+		lv2_atom_forge_key(&notifyForge, uris.notify_sampleAmp);
+		lv2_atom_forge_float (&notifyForge, sampleAmp);
+		lv2_atom_forge_key(&notifyForge, uris.notify_sampleLoop);
+		lv2_atom_forge_bool (&notifyForge, sample->loop);
 		lv2_atom_forge_pop(&notifyForge, &frame);
 	}
 

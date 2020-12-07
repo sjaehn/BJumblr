@@ -62,8 +62,13 @@ struct BJumblrURIs
 	LV2_URID notify_padFullPattern;
 	LV2_URID notify_editMode;
 	LV2_URID notify_sampleFreeEvent;
+	LV2_URID notify_installSample;
 	LV2_URID notify_pathEvent;
 	LV2_URID notify_samplePath;
+	LV2_URID notify_sampleStart;
+	LV2_URID notify_sampleEnd;
+	LV2_URID notify_sampleAmp;
+	LV2_URID notify_sampleLoop;
 	LV2_URID notify_statusEvent;
 	LV2_URID notify_requestMidiLearn;
 	LV2_URID notify_midiLearned;
@@ -110,8 +115,13 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->notify_padFullPattern = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadFullPattern");
 	uris->notify_editMode = m->map(m->handle, BJUMBLR_URI "#NOTIFYeditMode");
 	uris->notify_sampleFreeEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYsampleFreeEvent");
+	uris->notify_installSample = m->map(m->handle, BJUMBLR_URI "#NOTIFYinstallSample");
 	uris->notify_pathEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYpathEvent");
 	uris->notify_samplePath = m->map(m->handle, BJUMBLR_URI "#NOTIFYsamplePath");
+	uris->notify_sampleStart = m->map(m->handle, BJUMBLR_URI "#NOTIFYsampleStart");
+	uris->notify_sampleEnd = m->map(m->handle, BJUMBLR_URI "#NOTIFYsampleEnd");
+	uris->notify_sampleAmp = m->map(m->handle, BJUMBLR_URI "#NOTIFYsampleAmp");
+	uris->notify_sampleLoop = m->map(m->handle, BJUMBLR_URI "#NOTIFYsampleLoop");
 	uris->notify_statusEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYstatusEvent");
 	uris->notify_requestMidiLearn = m->map(m->handle, BJUMBLR_URI "#NOTIFYrequestMidiLearn");
 	uris->notify_midiLearned = m->map(m->handle, BJUMBLR_URI "#NOTIFYmidiLearned");

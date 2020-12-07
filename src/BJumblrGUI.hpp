@@ -39,7 +39,6 @@
 #include "BWidgets/LeftButton.hpp"
 #include "BWidgets/PlusButton.hpp"
 #include "BWidgets/MinusButton.hpp"
-#include "BWidgets/FileChooser.hpp"
 #include "BWidgets/ImageIcon.hpp"
 #include "BWidgets/TextToggleButton.hpp"
 #include "screen.h"
@@ -59,6 +58,7 @@
 #include "MonitorWidget.hpp"
 #include "MarkerWidget.hpp"
 #include "SymbolWidget.hpp"
+#include "SampleChooser.hpp"
 
 #define BG_FILE "inc/surface.png"
 #define HELP_URL "https://github.com/sjaehn/BJumblr/blob/master/README.md"
@@ -92,6 +92,7 @@ public:
 	void send_ui_on ();
 	void send_ui_off ();
 	void send_samplePath ();
+	void send_sampleAmp();
 	void send_editMode ();
 	void send_maxPage ();
 	void send_playbackPage ();
@@ -193,6 +194,9 @@ private:
 	bool deleteMode;
 
 	std::string samplePath;
+	int64_t sampleStart;
+	int64_t sampleEnd;
+	bool sampleLoop;
 
 	// Pages
 	int actPage;
@@ -240,6 +244,7 @@ private:
 	BWidgets::PopupListBox sourceListBox;
 	LoadButton loadButton;
 	BWidgets::Label sampleNameLabel;
+	BWidgets::Dial sampleAmpDial;
 	HaloToggleButton playButton;
 	HaloToggleButton bypassButton;
 	HaloButton stopButton;
@@ -265,7 +270,7 @@ private:
 	BWidgets::DialValue speedDial;
 	HaloButton helpButton;
 	HaloButton ytButton;
-	BWidgets::FileChooser* fileChooser;
+	SampleChooser* fileChooser;
 
 
 	// Definition of styles
@@ -299,6 +304,8 @@ private:
 	BStyles::Font tgLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 12.0,
 						   BStyles::TEXT_ALIGN_CENTER, BStyles::TEXT_VALIGN_MIDDLE);
 	BStyles::Font lfLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 12.0,
+						   BStyles::TEXT_ALIGN_LEFT, BStyles::TEXT_VALIGN_MIDDLE);
+	BStyles::Font boldLfLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD, 12.0,
 						   BStyles::TEXT_ALIGN_LEFT, BStyles::TEXT_VALIGN_MIDDLE);
 	BStyles::Font smLabelFont = BStyles::Font ("Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL, 8.0,
 						   BStyles::TEXT_ALIGN_CENTER, BStyles::TEXT_VALIGN_MIDDLE);
@@ -388,7 +395,60 @@ private:
 					 {"font", STYLEPTR (&lfLabelFont)}}},
 		{"menu/listbox/button",	{{"border", STYLEPTR (&menuBorder)},
 					 {"background", STYLEPTR (&menuBg)},
-					 {"bgcolors", STYLEPTR (&buttonBgColors)}}}
+					 {"bgcolors", STYLEPTR (&buttonBgColors)}}},
+		{"filechooser",	 			{{"border", STYLEPTR (&menuBorder)},
+					 		 {"background", STYLEPTR (&menuBg)}}},
+		{"filechooser/label",			{{"background", STYLEPTR (&menuBg)},
+					 		 {"border", STYLEPTR (&labelborder)},
+					 	 	 {"textcolors", STYLEPTR (&BColors::whites)},
+					 	 	 {"font", STYLEPTR (&lfLabelFont)}}},
+		{"filechooser/textbox", 		{{"background", STYLEPTR (&menuBg)},
+					 		 {"border", STYLEPTR (&boxlabelborder)},
+					 	 	 {"textcolors", STYLEPTR (&BColors::whites)},
+					 	 	 {"font", STYLEPTR (&lfLabelFont)}}},
+		{"filechooser/scrollbar",		{{"uses", STYLEPTR (&defaultStyles)},
+					 		 {"fgcolors", STYLEPTR (&blkColors)},
+				 	 		 {"bgcolors", STYLEPTR (&knobBgColors)}}},
+		{"filechooser/marker",			{{"uses", STYLEPTR (&defaultStyles)},
+				 	 		 {"bgcolors", STYLEPTR (&fgColors)}}},
+		{"filechooser/checkbox",		{{"uses", STYLEPTR (&defaultStyles)},
+				 	 		 {"fgcolors", STYLEPTR (&fgColors)},
+					 		 {"bgcolors", STYLEPTR (&knobBgColors)}}},
+		{"filechooser/listbox",			{{"border", STYLEPTR (&menuBorder)},
+					 		 {"background", STYLEPTR (&menuBg)}}},
+		{"filechooser/listbox/item",		{{"uses", STYLEPTR (&defaultStyles)},
+					 		 {"border", STYLEPTR (&labelborder)},
+					 	 	 {"textcolors", STYLEPTR (&BColors::whites)},
+					 	 	 {"font", STYLEPTR (&lfLabelFont)}}},
+		{"filechooser/listbox/item/dir",	{{"uses", STYLEPTR (&defaultStyles)},
+					 		 {"border", STYLEPTR (&labelborder)},
+					 	 	 {"textcolors", STYLEPTR (&BColors::whites)},
+					 	 	 {"font", STYLEPTR (&boldLfLabelFont)}}},
+		{"filechooser/listbox/item/file",	{{"uses", STYLEPTR (&defaultStyles)},
+					 		 {"border", STYLEPTR (&labelborder)},
+					 	 	 {"textcolors", STYLEPTR (&BColors::whites)},
+					 	 	 {"font", STYLEPTR (&lfLabelFont)}}},
+		{"filechooser/listbox/button",		{{"border", STYLEPTR (&menuBorder)},
+					 		 {"background", STYLEPTR (&menuBg)},
+					 	 	 {"bgcolors", STYLEPTR (&buttonBgColors)}}},
+		{"filechooser/popup",	 		{{"border", STYLEPTR (&menuBorder)},
+					 		 {"background", STYLEPTR (&menuBg)}}},
+		{"filechooser/popup/item",	 	{{"uses", STYLEPTR (&defaultStyles)},
+					 		 {"border", STYLEPTR (&labelborder)},
+					 	 	 {"textcolors", STYLEPTR (&BColors::whites)},
+					 	 	 {"font", STYLEPTR (&lfLabelFont)}}},
+		{"filechooser/popup/button",	 	{{"border", STYLEPTR (&menuBorder)},
+					 		 {"background", STYLEPTR (&menuBg)},
+					 	 	 {"bgcolors", STYLEPTR (&buttonBgColors)}}},
+		{"filechooser/popup/listbox",		{{"border", STYLEPTR (&menuBorder)},
+					 		 {"background", STYLEPTR (&menuBg)}}},
+		{"filechooser/popup/listbox/item",	{{"uses", STYLEPTR (&defaultStyles)},
+					 		 {"border", STYLEPTR (&labelborder)},
+					 	 	 {"textcolors", STYLEPTR (&BColors::whites)},
+					 	 	 {"font", STYLEPTR (&lfLabelFont)}}},
+		{"filechooser/popup/listbox/button",	{{"border", STYLEPTR (&menuBorder)},
+					 		 {"background", STYLEPTR (&menuBg)},
+					 	 	 {"bgcolors", STYLEPTR (&buttonBgColors)}}}
 	});
 };
 

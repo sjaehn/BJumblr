@@ -48,6 +48,8 @@
 #include "Message.hpp"
 #include "sndfile.h"
 
+class Sample;	// Forward declaration
+
 struct Limit
 {
 	float min;
@@ -199,24 +201,18 @@ private:
 	int playPage;
 	int lastPage;
 	Pad pads [MAXPAGES] [MAXSTEPS] [MAXSTEPS];
-	// Sample
-	struct Sample
-	{
-		Sample ();
-		Sample (const char* samplepath);
-		~Sample();
-		//void load (const char* samplepath);
-		float get (const sf_count_t frame, const int channel, const int rate);
-		SF_INFO  info;      // Info about sample from sndfile
-	        float*   data;      // Sample data in float
-	        char*    path;      // Path of file
-	};
+
 	Sample* sample;
+	float sampleAmp;
 
 	struct WorkerMessage
 	{
 		LV2_Atom atom;
         	Sample*  sample;
+		int64_t start;
+		int64_t end;
+		float amp;
+		bool loop;
 	};
 
 	// Host communicated data

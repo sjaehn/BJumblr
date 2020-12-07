@@ -68,7 +68,13 @@ dial. This is facilitated via the progression delay.
 
 ### Source
 
-Select between (live) audio stream or a sample file as source.
+Select between (live) audio stream or a sample file as source. In the sample mode you can select an
+audio file (supported formats include wav, aiff, au, sd2, flac, caf, ogg, and mp3) and the range of
+the audio file to be used. The playback of the selected range now always starts with the first step
+in the sequencer.
+
+You can also choose if the sample is played as a loop or not. But this will only be relevant if the
+selected range is shorter than the sequencer loop.
 
 
 ### Pattern page tabs
@@ -143,7 +149,7 @@ speed-induced delay) is displayed in the panel above the buttons.
 ## What's new
 
 * Colors optimized
-* Sample loading settings: audio files as default
+* Sample options: start, end, amp, loop
 * Bugfix
 
 

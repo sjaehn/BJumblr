@@ -1,7 +1,7 @@
 SHELL = /bin/sh
 
 PKG_CONFIG ?= pkg-config
-GUI_LIBS += lv2 x11 cairo
+GUI_LIBS += lv2 x11 cairo sndfile
 LV2_LIBS += lv2 sndfile
 ifneq ($(shell $(PKG_CONFIG) --exists fontconfig || echo no), no)
   GUI_LIBS += fontconfig
@@ -48,6 +48,7 @@ INCFILES = inc/*.png
 B_FILES = $(addprefix $(BUNDLE)/, $(ROOTFILES) $(INCFILES))
 
 GUI_INCL = \
+	src/SampleChooser.cpp \
 	src/BWidgets/ImageIcon.cpp \
 	src/BWidgets/Icon.cpp \
 	src/BWidgets/FileChooser.cpp \
