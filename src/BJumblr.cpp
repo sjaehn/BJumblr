@@ -26,6 +26,7 @@
 #endif
 #endif
 #include "Sample.hpp"
+#include "lv2/core/lv2_util.h"
 
 inline double floorfrac (const double value) {return value - floor (value);}
 inline double floormod (const double numer, const double denom) {return numer - floor(numer / denom) * denom;}
@@ -49,6 +50,7 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	audioBuffer1 (maxBufferSize, 0.0f),
 	audioBuffer2 (maxBufferSize, 0.0f),
 	audioBufferCounter (0), audioBufferSize (samplerate * 8),
+	activated (false),
 	ui_on (false), scheduleNotifyPadsToGui (false), scheduleNotifyFullPatternToGui {false},
 	scheduleNotifySchedulePageToGui (false),
 	scheduleNotifyPlaybackPageToGui (false),
@@ -357,6 +359,10 @@ uint64_t BJumblr::getFramesFromValue (const double value) const
 		default:	return 0;
 	}
 }
+
+void BJumblr::activate() {activated = true;}
+
+void BJumblr::deactivate() {activated = false;}
 
 void BJumblr::run (uint32_t n_samples)
 {
@@ -848,61 +854,106 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, LV2_State_Handle handle, uint32_t flags,
 			const LV2_Feature* const* features)
 {
+	// Get host features
+	LV2_Worker_Schedule* schedule = nullptr;
+	LV2_State_Map_Path* mapPath = nullptr;
+	const char* missing  = lv2_features_query
+	(
+		features,
+		LV2_STATE__mapPath, &mapPath, true,
+		LV2_WORKER__schedule, &schedule, false,
+		nullptr
+	);
+
+	if (missing)
+	{
+		fprintf (stderr, "BJumblr.lv2: Host doesn't support required features.\n");
+		return LV2_STATE_ERR_NO_FEATURE;
+	}
+
 	size_t   size;
 	uint32_t type;
 	uint32_t valflags;
 
-	// Retireve sample path
-	const void* pathData = retrieve (handle, uris.notify_samplePath, &size, &type, &valflags);
-        if (pathData)
+	// Retireve sample data
 	{
-		message.deleteMessage (CANT_OPEN_SAMPLE);
-		const char* path = (const char*)pathData;
-		if (sample) delete sample;
-		try {sample = new Sample (path);}
-		catch (std::bad_alloc &ba)
-		{
-			fprintf (stderr, "BJumblr.lv2: Can't allocate enoug memory to open sample file.\n");
-			message.setMessage (CANT_OPEN_SAMPLE);
-		}
-		catch (std::invalid_argument &ia)
-		{
-			fprintf (stderr, "%s\n", ia.what());
-			message.setMessage (CANT_OPEN_SAMPLE);
-		}
-		scheduleNotifySamplePathToGui = true;
-        }
+		char samplePath[1024] = {0};
+		int64_t sampleStart = 0;
+		int64_t sampleEnd = 0;
+		float sampleAmp = 1.0;
+		bool sampleLoop = false;
 
-	// Retireve sample start and end
-	if (sample)
-	{
+		const void* pathData = retrieve (handle, uris.notify_samplePath, &size, &type, &valflags);
+		if (pathData)
+		{
+			const char* absPath  = mapPath->absolute_path (mapPath->handle, (char*)pathData);
+		        if (absPath)
+			{
+				if (strlen (absPath) < 1024) strcpy (samplePath, absPath);
+				else
+				{
+					fprintf (stderr, "BJumblr.lv2: Sample path too long.\n");
+					message.setMessage (CANT_OPEN_SAMPLE);
+				}
+		        }
+		}
+
 		const void* startData = retrieve (handle, uris.notify_sampleStart, &size, &type, &valflags);
-	        if (startData && (type == uris.atom_Long))
-		{
-			sample->start = *(sf_count_t*)startData;
-			scheduleNotifySamplePathToGui = true;
-	        }
-
+	        if (startData && (type == uris.atom_Long)) sampleStart = *(int64_t*)startData;
 		const void* endData = retrieve (handle, uris.notify_sampleEnd, &size, &type, &valflags);
-	        if (endData && (type == uris.atom_Long))
-		{
-			sample->end = *(sf_count_t*)endData;
-			scheduleNotifySamplePathToGui = true;
-	        }
-
+	        if (endData && (type == uris.atom_Long)) sampleEnd = *(int64_t*)endData;
 		const void* ampData = retrieve (handle, uris.notify_sampleAmp, &size, &type, &valflags);
-	        if (ampData && (type == uris.atom_Float))
-		{
-			sampleAmp = *(float*)ampData;
-			scheduleNotifySamplePathToGui = true;
-	        }
-
+	        if (ampData && (type == uris.atom_Float)) sampleAmp = *(float*)ampData;
 		const void* loopData = retrieve (handle, uris.notify_sampleLoop, &size, &type, &valflags);
-	        if (loopData && (type == uris.atom_Bool))
+	        if (loopData && (type == uris.atom_Bool)) sampleLoop = *(bool*)loopData;
+
+		if (activated && schedule)
 		{
-			sample->loop = *(bool*)loopData;
+			LV2_Atom_Forge forge;
+			lv2_atom_forge_init(&forge, map);
+			uint8_t buf[1200];
+			lv2_atom_forge_set_buffer(&forge, buf, sizeof(buf));
+			LV2_Atom_Forge_Frame frame;
+			LV2_Atom* msg = (LV2_Atom*)forgeSamplePath (&forge, &frame, samplePath, sampleStart, sampleEnd, sampleAmp, sampleLoop);
+			lv2_atom_forge_pop(&forge, &frame);
+			if (msg) schedule->schedule_work(schedule->handle, lv2_atom_total_size(msg), msg);
+		}
+
+		else
+		{
+			// Free old sample
+			if (sample)
+			{
+				delete sample;
+				sample = nullptr;
+				sampleAmp = 1.0;
+			}
+
+			// Load new sample
+			message.deleteMessage (CANT_OPEN_SAMPLE);
+			try {sample = new Sample (samplePath);}
+			catch (std::bad_alloc &ba)
+			{
+				fprintf (stderr, "Jumblr.lv2: Can't allocate enoug memory to open sample file.\n");
+				message.setMessage (CANT_OPEN_SAMPLE);
+			}
+			catch (std::invalid_argument &ia)
+			{
+				fprintf (stderr, "%s\n", ia.what());
+				message.setMessage (CANT_OPEN_SAMPLE);
+			}
+
+			// Set new sample properties
+			if  (sample)
+			{
+				sample->start = sampleStart;
+				sample->end = sampleEnd;
+				sample->loop = sampleLoop;
+				this->sampleAmp = sampleAmp;
+			}
+
 			scheduleNotifySamplePathToGui = true;
-	        }
+		}
 	}
 
 	// Retrieve playbackPage
@@ -1195,6 +1246,25 @@ bool BJumblr::padMessageBufferAppendPad (int page, int row, int step, Pad pad)
 	return false;
 }
 
+LV2_Atom_Forge_Ref BJumblr::forgeSamplePath (LV2_Atom_Forge* forge, LV2_Atom_Forge_Frame* frame, const char* path, const int64_t start, const int64_t end, const float amp, const bool loop)
+{
+	const LV2_Atom_Forge_Ref msg = lv2_atom_forge_object (forge, frame, 0, uris.notify_pathEvent);
+	if (msg)
+	{
+		lv2_atom_forge_key (forge, uris.notify_samplePath);
+		lv2_atom_forge_path (forge, path, strlen (path) + 1);
+		lv2_atom_forge_key (forge, uris.notify_sampleStart);
+		lv2_atom_forge_long (forge, start);
+		lv2_atom_forge_key (forge, uris.notify_sampleEnd);
+		lv2_atom_forge_long (forge, end);
+		lv2_atom_forge_key (forge, uris.notify_sampleAmp);
+		lv2_atom_forge_float (forge, amp);
+		lv2_atom_forge_key (forge, uris.notify_sampleLoop);
+		lv2_atom_forge_bool (forge, loop);
+	}
+	return msg;
+}
+
 void BJumblr::notifyPadsToGui ()
 {
 	PadMessage endmsg (ENDPADMESSAGE);
@@ -1342,17 +1412,14 @@ void BJumblr::notifySamplePathToGui ()
 	{
 		LV2_Atom_Forge_Frame frame;
 		lv2_atom_forge_frame_time(&notifyForge, 0);
-		lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_pathEvent);
-		lv2_atom_forge_key(&notifyForge, uris.notify_samplePath);
-		lv2_atom_forge_path (&notifyForge, sample->path, strlen (sample->path) + 1);
-		lv2_atom_forge_key(&notifyForge, uris.notify_sampleStart);
-		lv2_atom_forge_long (&notifyForge, sample->start);
-		lv2_atom_forge_key(&notifyForge, uris.notify_sampleEnd);
-		lv2_atom_forge_long (&notifyForge, sample->end);
-		lv2_atom_forge_key(&notifyForge, uris.notify_sampleAmp);
-		lv2_atom_forge_float (&notifyForge, sampleAmp);
-		lv2_atom_forge_key(&notifyForge, uris.notify_sampleLoop);
-		lv2_atom_forge_bool (&notifyForge, sample->loop);
+
+		if (sample && sample->path) forgeSamplePath (&notifyForge, &frame, sample->path, sample->start, sample->end, sampleAmp, sample->loop);
+		else
+		{
+			const char* path = "";
+			forgeSamplePath (&notifyForge, &frame, path, 0, 0, sampleAmp, false);
+		}
+
 		lv2_atom_forge_pop(&notifyForge, &frame);
 	}
 
@@ -1386,10 +1453,22 @@ static void connect_port (LV2_Handle instance, uint32_t port, void *data)
 	inst->connect_port (port, data);
 }
 
+void activate (LV2_Handle instance)
+{
+	BJumblr* inst = (BJumblr*) instance;
+	if (inst) inst->activate();
+}
+
 static void run (LV2_Handle instance, uint32_t n_samples)
 {
 	BJumblr* inst = (BJumblr*) instance;
 	if (inst) inst->run (n_samples);
+}
+
+void deactivate (LV2_Handle instance)
+{
+	BJumblr* inst = (BJumblr*) instance;
+	if (inst) inst->deactivate();
 }
 
 static LV2_State_Status state_save(LV2_Handle instance, LV2_State_Store_Function store, LV2_State_Handle handle, uint32_t flags,
@@ -1449,9 +1528,9 @@ static const LV2_Descriptor descriptor =
 		BJUMBLR_URI,
 		instantiate,
 		connect_port,
-		NULL,	// activate
+		activate,
 		run,
-		NULL,	// deactivate
+		deactivate,
 		cleanup,
 		extension_data
 };

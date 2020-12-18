@@ -64,6 +64,8 @@ public:
 	~BJumblr();
 	void connect_port(uint32_t port, void *data);
 	void run(uint32_t n_samples);
+	void activate();
+	void deactivate();
 	LV2_State_Status state_save(LV2_State_Store_Function store, LV2_State_Handle handle, uint32_t flags, const LV2_Feature* const* features);
 	LV2_State_Status state_restore(LV2_State_Retrieve_Function retrieve, LV2_State_Handle handle, uint32_t flags, const LV2_Feature* const* features);
 	LV2_Worker_Status work (LV2_Worker_Respond_Function respond, LV2_Worker_Respond_Handle handle, uint32_t size, const void* data);
@@ -79,6 +81,7 @@ private:
 	float validateValue (float value, const Limit limit);
 	Pad validatePad (Pad pad);
 	bool padMessageBufferAppendPad (int page, int row, int step, Pad pad);
+	LV2_Atom_Forge_Ref forgeSamplePath (LV2_Atom_Forge* forge, LV2_Atom_Forge_Frame* frame, const char* path, const int64_t start, const int64_t end, const float amp, const bool loop);
 	void notifyPadsToGui ();
 	void notifyStatusToGui ();
 	void notifyWaveformToGui (const int start, const int end);
@@ -240,6 +243,7 @@ private:
 	size_t audioBufferSize;
 
 	// Internals
+	bool activated;
 	bool ui_on;
 	bool scheduleNotifyPadsToGui;
 	bool scheduleNotifyFullPatternToGui[MAXPAGES];

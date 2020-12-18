@@ -151,6 +151,7 @@ speed-induced delay) is displayed in the panel above the buttons.
 
 * Colors optimized
 * Sample options: start, end, amp, loop
+* Thread safe sample restore
 * Bugfix
 
 
