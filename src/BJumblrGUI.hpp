@@ -126,6 +126,7 @@ private:
 	static void loadButtonClickedCallback (BEvents::Event* event);
 	static void syncButtonClickedCallback (BEvents::Event* event);
 	static void delayButtonsClickedCallback (BEvents::Event* event);
+	static void patternFlippedClickedCallback (BEvents::Event* event);
 	static void helpButtonClickedCallback (BEvents::Event* event);
 	static void ytButtonClickedCallback (BEvents::Event* event);
 	virtual void resize () override;
@@ -138,6 +139,8 @@ private:
 	void updatePageContainer ();
 	bool validatePad (int page);
 	bool validatePad (int page, int row, int step, Pad& pad);
+
+	void setMarkers();
 	void drawPad ();
 	void drawPad (int row, int step);
 	void drawPad (cairo_t* cr, int row, int step);
@@ -175,6 +178,7 @@ private:
 	};
 
 	std::array<Pattern, MAXPAGES> pattern;
+	bool patternFlipped;
 
 	struct ClipBoard
 	{
@@ -236,7 +240,7 @@ private:
 	BWidgets::TextButton midiCancelButton;
 	BWidgets::TextButton midiOkButton;
 
-
+	BWidgets::Widget flipButton;
 	PadSurface padSurface;
 	MarkerWidget markerFwd;
 	MarkerWidget markerRev;

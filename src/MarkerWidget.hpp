@@ -24,15 +24,17 @@
 
 enum MarkerIndex
 {
-	MARKER_FWD,
-	MARKER_REV
+	MARKER_RIGHT,
+	MARKER_LEFT,
+	MARKER_DOWN,
+	MARKER_UP
 };
 
 class MarkerWidget : public BWidgets::Widget
 {
 public:
 	MarkerWidget () : MarkerWidget (0.0, 0.0, 0.0, 0.0, "marker") {}
-	MarkerWidget (const double x, const double y, const double width, const double height, const std::string& name, MarkerIndex index = MARKER_FWD) :
+	MarkerWidget (const double x, const double y, const double width, const double height, const std::string& name, MarkerIndex index = MARKER_RIGHT) :
 		Widget (x, y, width, height, name),
 		index_ (index)
 	{}
@@ -42,6 +44,12 @@ public:
 	 * its properties.
 	 */
 	virtual Widget* clone () const override {return new MarkerWidget (*this);}
+
+	void setMarker (MarkerIndex index)
+	{
+		index_ = index;
+		update();
+	};
 
 protected:
 	MarkerIndex index_;
@@ -72,14 +80,24 @@ protected:
 				cairo_set_line_width (cr, 0);
 				switch (index_)
 				{
-					case MARKER_FWD:	cairo_move_to (cr, x0 + w/2 - 0.25 * size, y0 + h/2 - 0.375 * size);
+					case MARKER_RIGHT:	cairo_move_to (cr, x0 + w/2 - 0.25 * size, y0 + h/2 - 0.375 * size);
 								cairo_line_to (cr, x0 + w/2 + 0.25 * size, y0 + h/2);
 								cairo_line_to (cr, x0 + w/2 - 0.25 * size, y0 + h/2 + 0.375 * size);
 								break;
 
-					case MARKER_REV:	cairo_move_to (cr, x0 + w/2 + 0.25 * size, y0 + h/2 - 0.375 * size);
+					case MARKER_LEFT:	cairo_move_to (cr, x0 + w/2 + 0.25 * size, y0 + h/2 - 0.375 * size);
 								cairo_line_to (cr, x0 + w/2 - 0.25 * size, y0 + h/2);
 								cairo_line_to (cr, x0 + w/2 + 0.25 * size, y0 + h/2 + 0.375 * size);
+								break;
+
+					case MARKER_DOWN:	cairo_move_to (cr, x0 + w/2 - 0.375 * size, y0 + h/2 - 0.25 * size);
+								cairo_line_to (cr, x0 + w/2, y0 + h/2 + 0.25 * size);
+								cairo_line_to (cr, x0 + w/2 + 0.375 * size, y0 + h/2 - 0.25 * size);
+								break;
+
+					case MARKER_UP:		cairo_move_to (cr, x0 + w/2 - 0.375 * size, y0 + h/2 + 0.25 * size);
+								cairo_line_to (cr, x0 + w/2, y0 + h/2 - 0.25 * size);
+								cairo_line_to (cr, x0 + w/2 + 0.375 * size, y0 + h/2 + 0.25 * size);
 								break;
 				}
 				cairo_close_path (cr);

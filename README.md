@@ -57,9 +57,9 @@ to run it stand-alone and connect it to the JACK system.
 B.Jumblr is neither a sample slicer nor a step sequencer. From the technical POV B.Jumblr is a
 sequencer pattern-controlled audio delay effect.
 
-The pattern defines at when (vertical) and which (horizontal) piece of the audio input stream is
-sent to the audio output. Use the default diagonal line (zero delay line) pattern for live
-playback. Moving a pad one step to the right results in a one step delayed playback of the
+The pattern defines at when (default: vertical) and which (default: horizontal) piece of the audio
+input stream is sent to the audio output. Use the default diagonal line (zero delay line) pattern
+for live playback. Moving a pad one step to the right results in a one step delayed playback of the
 respective piece of the audio input stream. Each pad (and thus each piece) can be leveled up or
 down by mouse wheel scrolling.
 
@@ -91,6 +91,7 @@ enable / disable MIDI-controlled playback of the respective pattern.
 | < | Move pattern page backward. |
 | > | Move pattern page forward. |
 
+
 ### MIDI control page
 
 This menu appears upon clicking on the piano keys symbol in the respective tab. Enable / disable
@@ -105,6 +106,10 @@ learning. Don't forget to confirm ("OK") or discard changes ("Cancel")!
 * **Right click**: Pick pad level
 * **Scroll**: Increase or decrease pad value
 * **Shift scroll**: Resize waveform
+
+You may change the orientation of the pattern matrix from vertical progression (default) to
+horizontal progression by clicking on the flip symbol on the top right of the pattern.
+
 
 ### Calibration
 
@@ -150,6 +155,7 @@ speed-induced delay) is displayed in the panel above the buttons.
 ## What's new
 
 * Colors optimized
+* Flip pad orientation option
 * Sample options: start, end, amp, loop
 * Thread safe sample restore
 * Bugfix

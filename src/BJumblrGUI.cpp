@@ -31,7 +31,9 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	controller (NULL), write_function (NULL),
 	pluginPath (bundle_path ? std::string (bundle_path) : std::string ("")),
 	sz (1.0), bgImageSurface (nullptr),
-	uris (), forge (), editMode (0), clipBoard (),
+	uris (), forge (), editMode (0),
+	patternFlipped (false),
+	clipBoard (),
 	cursor (0), wheelScrolled (false), padPressed (false), deleteMode (false),
 	samplePath ("."), sampleStart (0), sampleEnd (0), sampleLoop (false),
 	actPage (0), nrPages (1), pageOffset (0),
@@ -71,10 +73,11 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	midiCancelButton (170, 90, 60, 20, "menu/button", "Cancel"),
 	midiOkButton (280, 90, 60, 20, "menu/button", "OK"),
 
-	padSurface (18, 118, 924, 454, "box"),
-	markerFwd (0, 120 + 15.5 * (450.0 / 16.0) - 10, 20, 20, "widget", MARKER_FWD),
-	markerRev (940, 120 + 15.5 * (450.0 / 16.0) - 10, 20, 20, "widget", MARKER_REV),
-	monitorWidget (20, 120, 920, 450, "monitor"),
+	flipButton (940, 120, 10, 10, "widget"),
+	padSurface (18, 128, 924, 434, "box"),
+	markerFwd (0, 130 + 15.5 * (430.0 / 16.0) - 10, 20, 20, "widget", MARKER_RIGHT),
+	markerRev (940, 130 + 15.5 * (430.0 / 16.0) - 10, 20, 20, "widget", MARKER_LEFT),
+	monitorWidget (20, 130, 920, 430, "monitor"),
 	sourceListBox (570, 90, 120, 20, 120, 60, "menu", BItems::ItemList ({{0, "Audio stream"}, {1, "Sample"}}), 0),
 	loadButton (710, 90, 20, 20, "menu/button"),
 	sampleNameLabel (740, 90, 160, 20, "boxlabel", ""),
@@ -197,6 +200,9 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	padSurface.setCallbackFunction (BEvents::FOCUS_IN_EVENT, padsFocusedCallback);
 	padSurface.setCallbackFunction (BEvents::FOCUS_OUT_EVENT, padsFocusedCallback);
 
+	flipButton.setClickable (true);
+	flipButton.setCallbackFunction (BEvents::BUTTON_CLICK_EVENT, patternFlippedClickedCallback);
+
 	// Configure widgets
 	loadButton.hide();
 	sampleNameLabel.hide();
@@ -271,6 +277,7 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	mContainer.add (stepBaseListBox);
 	mContainer.add (padSizeListBox);
 	mContainer.add (padSurface);
+	mContainer.add (flipButton);
 	mContainer.add (markerFwd);
 	mContainer.add (markerRev);
 	mContainer.add (monitorWidget);
@@ -604,9 +611,7 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 					cursor = ((LV2_Atom_Float*)oCursor)->body;
 					if (int (cursor) != iOldCursor)
 					{
-						const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
-						markerFwd.moveTo (0, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10) * sz);
-						markerRev.moveTo (940 * sz, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10) *sz);
+						setMarkers();
 						drawPad ();
 					}
 				}
@@ -719,11 +724,10 @@ void BJumblrGUI::resize ()
 	RESIZE (midiCancelButton, 170, 90, 60, 20, sz);
 	RESIZE (midiOkButton, 280, 90, 60, 20, sz);
 
-	RESIZE (padSurface, 18, 118, 924, 454, sz);
-	const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
-	RESIZE (markerFwd, 0, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10), 20, 20, sz);
-	RESIZE (markerRev, 940, (120 + (maxstep - 0.5 - int (cursor)) * (450.0 / maxstep) - 10), 20, 20, sz);
-	RESIZE (monitorWidget, 20, 120, 920, 450, sz);
+	RESIZE (flipButton, 940, 120, 10, 10, sz);
+	RESIZE (padSurface, 18, 128, 924, 434, sz);
+	setMarkers();
+	RESIZE (monitorWidget, 20, 130, 920, 430, sz);
 	RESIZE (sourceListBox, 570, 90, 120, 20, sz);
 	sourceListBox.resizeListBox (BUtilities::Point (120 * sz, 60 * sz));
 	sourceListBox.resizeListBoxItems (BUtilities::Point (120 * sz, 20 * sz));
@@ -803,6 +807,7 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 	midiCancelButton.applyTheme (theme);
 	midiOkButton.applyTheme (theme);
 
+	flipButton.applyTheme (theme);
 	padSurface.applyTheme (theme);
 	markerFwd.applyTheme (theme);
 	markerRev.applyTheme (theme);
@@ -1771,9 +1776,12 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 		const double width = ui->padSurface.getEffectiveWidth ();
 		const double height = ui->padSurface.getEffectiveHeight ();
 
-		int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
-		int step = maxstep - 1 - int ((pointerEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
-		int row = (pointerEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
+		const int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
+		const int s0 = maxstep - 1 - int ((pointerEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
+		const int r0 = (pointerEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
+		const int step = (ui->patternFlipped ? r0 : s0);
+		const int row = (ui->patternFlipped ? s0 : r0);
+
 
 		if ((event->getEventType () == BEvents::BUTTON_PRESS_EVENT) || (event->getEventType () == BEvents::POINTER_DRAG_EVENT))
 		{
@@ -1825,23 +1833,26 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 							if (!ui->clipBoard.data.empty ())
 							{
 								bool valid = true;
+								const int f = (ui->patternFlipped ? -1 : 1);
 								for (int r = 0; r < int (ui->clipBoard.data.size ()); ++r)
 								{
 									for (int s = 0; s < int (ui->clipBoard.data[r].size ()); ++s)
 									{
 										if
 										(
-											(row + r >= 0) &&
-											(row + r < maxstep) &&
-											(step - s >= 0) &&
-											(step - s < maxstep)
+											(row + f * r >= 0) &&
+											(row + f * r < maxstep) &&
+											(step - f * s >= 0) &&
+											(step - f * s < maxstep)
 										)
 										{
-											if (!ui->validatePad (page, row + r, step - s, ui->clipBoard.data.at(r).at(s)))
+											const int clr = (ui->patternFlipped ? ui->clipBoard.data.size () - 1 - r : r);
+											const int cls = (ui->patternFlipped ? ui->clipBoard.data[r].size () - 1 - s : s);
+											if (!ui->validatePad (page, row + f * r, step - f * s, ui->clipBoard.data.at(clr).at(cls)))
 											{
 												valid = false;
 											}
-											else if (valid) ui->drawPad (row + r, step - s);
+											else if (valid) ui->drawPad (row + f * r, step - f * s);
 										}
 									}
 								}
@@ -1897,7 +1908,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 
 					// XFLIP
 					// No need to validate
-					if (editNr == EDIT_XFLIP)
+					if (((editNr == EDIT_XFLIP) && (!ui->patternFlipped)) || ((editNr == EDIT_YFLIP) && (ui->patternFlipped)))
 					{
 						for (int dr = 0; dr < int ((clipRMax + 1 - clipRMin) / 2); ++dr)
 						{
@@ -1915,7 +1926,7 @@ void BJumblrGUI::padsPressedCallback (BEvents::Event* event)
 
 					// YFLIP
 					// Validation required for REPLACE mode
-					if (editNr == EDIT_YFLIP)
+					if (((editNr == EDIT_YFLIP) && (!ui->patternFlipped)) || ((editNr == EDIT_XFLIP) && (ui->patternFlipped)))
 					{
 						// Temp. copy selection
 						Pad pads[clipRMax + 1 - clipRMin][clipSMax + 1 - clipSMin];
@@ -2028,10 +2039,12 @@ void BJumblrGUI::padsScrolledCallback (BEvents::Event* event)
 		const double width = ui->padSurface.getEffectiveWidth ();
 		const double height = ui->padSurface.getEffectiveHeight ();
 
-		int page = ui->actPage;
-		int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
-		int step = maxstep - 1 - int ((wheelEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
-		int row = (wheelEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
+		const int page = ui->actPage;
+		const int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
+		const int s0 = maxstep - 1 - int ((wheelEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
+		const int r0 = (wheelEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
+		const int step = (ui->patternFlipped ? r0 : s0);
+		const int row = (ui->patternFlipped ? s0 : r0);
 
 		if ((row >= 0) && (row < maxstep) && (step >= 0) && (step < maxstep))
 		{
@@ -2057,10 +2070,12 @@ void BJumblrGUI::padsFocusedCallback (BEvents::Event* event)
 	const double width = ui->padSurface.getEffectiveWidth ();
 	const double height = ui->padSurface.getEffectiveHeight ();
 
-	int page = ui->actPage;
-	int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
-	int step = maxstep - 1 - int ((focusEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
-	int row = (focusEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
+	const int page = ui->actPage;
+	const int maxstep = ui->controllerWidgets[NR_OF_STEPS]->getValue ();
+	const int s0 = maxstep - 1 - int ((focusEvent->getPosition ().y - widget->getYOffset()) / (height / maxstep));
+	const int r0 = (focusEvent->getPosition ().x - widget->getXOffset()) / (width / maxstep);
+	const int step = (ui->patternFlipped ? r0 : s0);
+	const int row = (ui->patternFlipped ? s0 : r0);
 
 	if ((row >= 0) && (row < maxstep) && (step >= 0) && (step < maxstep))
 	{
@@ -2160,6 +2175,18 @@ void BJumblrGUI::delayButtonsClickedCallback (BEvents::Event* event)
 	}
 }
 
+void BJumblrGUI::patternFlippedClickedCallback (BEvents::Event* event)
+{
+	if (!event) return;
+	BWidgets::Widget* widget = event->getWidget ();
+	if (!widget) return;
+	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
+	if (!ui) return;
+	ui->patternFlipped = !ui->patternFlipped;
+	ui->setMarkers();
+	ui->drawPad();
+}
+
 void BJumblrGUI::helpButtonClickedCallback (BEvents::Event* event)
 {
 	if (system(OPEN_CMD " " HELP_URL)) std::cerr << "BJumblr.lv2#GUI: Can't open " << HELP_URL << ". You can try to call it maually.";
@@ -2167,6 +2194,27 @@ void BJumblrGUI::helpButtonClickedCallback (BEvents::Event* event)
 void BJumblrGUI::ytButtonClickedCallback (BEvents::Event* event)
 {
 	if (system(OPEN_CMD " " YT_URL))  std::cerr << "BJumblr.lv2#GUI: Can't open " << YT_URL << ". You can try to call it maually.";
+}
+
+void BJumblrGUI::setMarkers()
+{
+	const double maxstep = controllerWidgets[NR_OF_STEPS]->getValue ();
+	markerFwd.resize (20 * sz, 20 * sz);
+	markerRev.resize (20 * sz, 20 * sz);
+	if (patternFlipped)
+	{
+		markerFwd.setMarker (MARKER_DOWN);
+		markerRev.setMarker (MARKER_UP);
+		markerFwd.moveTo ((20 + (0.5 + int (cursor)) * (920.0 / maxstep) - 10) * sz, 110 * sz);
+		markerRev.moveTo ((20 + (0.5 + int (cursor)) * (920.0 / maxstep) - 10) * sz, 560 * sz);
+	}
+	else
+	{
+		markerFwd.setMarker (MARKER_RIGHT);
+		markerRev.setMarker (MARKER_LEFT);
+		markerFwd.moveTo (0, (130 + (maxstep - 0.5 - int (cursor)) * (430.0 / maxstep) - 10) * sz);
+		markerRev.moveTo (940 * sz, (130 + (maxstep - 0.5 - int (cursor)) * (430.0 / maxstep) - 10) *sz);
+	}
 }
 
 void BJumblrGUI::drawPad ()
@@ -2202,8 +2250,8 @@ void BJumblrGUI::drawPad (cairo_t* cr, int row, int step)
 	const double height = padSurface.getEffectiveHeight ();
 	const double w = width / maxstep;
 	const double h = height / maxstep;
-	const double x = row * w;
-	const double y = (maxstep - 1 - step) * h;
+	const double x = (patternFlipped ? step : row) * w;
+	const double y = (maxstep - 1 - (patternFlipped ? row : step)) * h;
 	const double xr = round (x);
 	const double yr = round (y);
 	const double wr = round (x + w) - xr;
