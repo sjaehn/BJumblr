@@ -2183,6 +2183,7 @@ void BJumblrGUI::patternFlippedClickedCallback (BEvents::Event* event)
 	BJumblrGUI* ui = (BJumblrGUI*) widget->getMainWindow();
 	if (!ui) return;
 	ui->patternFlipped = !ui->patternFlipped;
+	ui->monitorWidget.flip (ui->patternFlipped);
 	ui->setMarkers();
 	ui->drawPad();
 }

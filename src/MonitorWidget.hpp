@@ -32,7 +32,7 @@ public:
 
         MonitorWidget (const double x, const double y, const double width, const double height, const std::string& name) :
                 Widget (x, y, width, height, name),
-                fgColors (BColors::whites), zoom (0.5)
+                fgColors (BColors::whites), zoom (0.5), flipped (false)
         {
                 clear ();
                 setClickable (false);
@@ -54,6 +54,14 @@ public:
         }
 
         double getZoom () const {return zoom;}
+
+        void flip (const bool flip)
+        {
+                flipped = flip;
+                update();
+        }
+
+        bool isFlipped () const {return flipped;}
 
         void redrawRange (const unsigned int start, const unsigned int size)
         {
@@ -107,9 +115,18 @@ protected:
         	{
         		// Limit cairo-drawing area
                         cairo_set_line_width (cr, 0);
-                        double x0 = ceil (getWidth() * start / (WAVEFORMSIZE - 1));
-                        double x1 = floor (getWidth() * end / (WAVEFORMSIZE - 1));
-        		cairo_rectangle (cr, x0, 0, x1 - x0, getHeight());
+                        if (!flipped)
+                        {
+                                const double p0 = ceil (getWidth() * start / (WAVEFORMSIZE - 1));
+                                const double p1 = floor (getWidth() * end / (WAVEFORMSIZE - 1));
+                		cairo_rectangle (cr, p0, 0, p1 - p0, getHeight());
+                        }
+                        else
+                        {
+                                const double p0 = ceil (getHeight() * start / (WAVEFORMSIZE - 1));
+                                const double p1 = floor (getHeight() * end / (WAVEFORMSIZE - 1));
+                                cairo_rectangle (cr, 0, p0, getWidth(), p1 - p0);
+                        }
         		cairo_clip (cr);
 
         		cairo_set_source_rgba (cr, 0.0, 0.0, 0.0, 0.0);
@@ -117,10 +134,12 @@ protected:
         		cairo_paint (cr);
 
                         cairo_set_line_width (cr, 1);
-                        cairo_move_to (cr, getWidth() * double (start) / (WAVEFORMSIZE - 1), getHeight() * (0.5  - (0.48 * data[start] / zoom)));
+                        if (!flipped) cairo_move_to (cr, getWidth() * double (start) / (WAVEFORMSIZE - 1), getHeight() * (0.5  - (0.48 * data[start] / zoom)));
+                        else cairo_move_to (cr, getWidth() * (0.5  - (0.48 * data[start] / zoom)), getHeight() * double (start) / (WAVEFORMSIZE - 1));
                         for (int i = start + 1; i <= int (end); ++i)
                         {
-                                cairo_line_to (cr, getWidth() * double (i) / (WAVEFORMSIZE - 1), getHeight() * (0.5  - (0.48 * data[i] / zoom)));
+                                if (!flipped) cairo_line_to (cr, getWidth() * double (i) / (WAVEFORMSIZE - 1), getHeight() * (0.5  - (0.48 * data[i] / zoom)));
+                                else cairo_line_to (cr, getWidth() * (0.5  - (0.48 * data[i] / zoom)), getHeight() * double (i) / (WAVEFORMSIZE - 1));
                         }
                         cairo_set_source_rgba (cr, CAIRO_RGBA (col));
                         cairo_stroke (cr);
@@ -137,6 +156,7 @@ protected:
         std::array<float, WAVEFORMSIZE> data;
         BColors::ColorSet fgColors;
         double zoom;
+        bool flipped;
 };
 
 #endif /* MONITORWIDGET_HPP_ */
