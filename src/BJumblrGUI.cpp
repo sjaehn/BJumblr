@@ -550,7 +550,7 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 			// Status notifications
 			else if (obj->body.otype == uris.notify_statusEvent)
 			{
-				LV2_Atom *oMax = NULL, *oSched = NULL, *oPlay = NULL, *oMid = NULL, *oCursor = NULL, *oDelay = NULL;
+				LV2_Atom *oMax = NULL, *oSched = NULL, *oPlay = NULL, *oMid = NULL, *oCursor = NULL, *oDelay = NULL, *oFlip = NULL;
 				lv2_atom_object_get
 				(
 					obj,
@@ -560,6 +560,7 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 					uris.notify_midiLearned, &oMid,
 					uris.notify_cursor, &oCursor,
 					uris.notify_progressionDelay, &oDelay,
+					uris.notify_padFlipped, &oFlip,
 					NULL
 				);
 
@@ -622,6 +623,19 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 					float delay = ((LV2_Atom_Float*)oDelay)->body;
 					std::string delaytxt = BUtilities::to_string (delay, "%5.2f");
 					if (delaytxt != delayDisplayLabel.getText()) delayDisplayLabel.setText (delaytxt);
+				}
+
+				// Flip notification
+				if (oFlip && (oFlip->type == uris.atom_Bool))
+				{
+					const bool newFlip = ((LV2_Atom_Bool*)oFlip)->body;
+					if (newFlip != patternFlipped)
+					{
+						patternFlipped = newFlip;
+						monitorWidget.flip (patternFlipped);
+						setMarkers();
+						drawPad();
+					}
 				}
 			}
 
@@ -1042,6 +1056,19 @@ void BJumblrGUI::send_pad (int page, int row, int step)
 	lv2_atom_forge_int(&forge, page);
 	lv2_atom_forge_key(&forge, uris.notify_pad);
 	lv2_atom_forge_vector(&forge, sizeof(float), uris.atom_Float, sizeof(PadMessage) / sizeof(float), (void*) &padmsg);
+	lv2_atom_forge_pop(&forge, &frame);
+	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
+}
+
+void BJumblrGUI::send_flip ()
+{
+	uint8_t obj_buf[128];
+	lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf));
+
+	LV2_Atom_Forge_Frame frame;
+	LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.notify_statusEvent);
+	lv2_atom_forge_key(&forge, uris.notify_padFlipped);
+	lv2_atom_forge_bool(&forge, patternFlipped);
 	lv2_atom_forge_pop(&forge, &frame);
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }
@@ -2186,6 +2213,7 @@ void BJumblrGUI::patternFlippedClickedCallback (BEvents::Event* event)
 	ui->monitorWidget.flip (ui->patternFlipped);
 	ui->setMarkers();
 	ui->drawPad();
+	ui->send_flip();
 }
 
 void BJumblrGUI::helpButtonClickedCallback (BEvents::Event* event)

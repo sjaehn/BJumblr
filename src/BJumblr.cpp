@@ -41,7 +41,8 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	new_controllers {nullptr}, controllers {0},
 	editMode (0), midiLearn (false), nrPages (1),
 	schedulePage (0), playPage (0), lastPage (0),
-	pads {Pad()}, sample (nullptr), sampleAmp (1.0f),
+	pads {Pad()}, patternFlipped (false),
+	sample (nullptr), sampleAmp (1.0f),
 	rate (samplerate), bpm (120.0f), beatsPerBar (4.0f), beatUnit (0),
 	speed (0.0f), bar (0), barBeat (0.0f),
 	outCapacity (0), position (0.0), cursor (0.0f), offset (0.0), refFrame (0),
@@ -51,7 +52,8 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	audioBuffer2 (maxBufferSize, 0.0f),
 	audioBufferCounter (0), audioBufferSize (samplerate * 8),
 	activated (false),
-	ui_on (false), scheduleNotifyPadsToGui (false), scheduleNotifyFullPatternToGui {false},
+	ui_on (false), scheduleNotifyPadsToGui (false),
+	scheduleNotifyFullPatternToGui {false},
 	scheduleNotifySchedulePageToGui (false),
 	scheduleNotifyPlaybackPageToGui (false),
 	scheduleNotifyStatusToGui (false),
@@ -548,11 +550,12 @@ void BJumblr::run (uint32_t n_samples)
 			// Status notifications
 			else if (obj->body.otype == uris.notify_statusEvent)
 			{
-				LV2_Atom *oMx = NULL, *oPp = NULL, *oMl = NULL;
+				LV2_Atom *oMx = NULL, *oPp = NULL, *oMl = NULL, *oFlip = NULL;
 				lv2_atom_object_get (obj,
 					 	     uris.notify_maxPage, &oMx,
 						     uris.notify_playbackPage, &oPp,
 						     uris.notify_requestMidiLearn, &oMl,
+						     uris.notify_padFlipped, &oFlip,
 						     NULL);
 
 				// padMaxPage notification
@@ -581,11 +584,10 @@ void BJumblr::run (uint32_t n_samples)
 				}
 
 				// Midi learn request notification
-				if (oMl && (oMl->type == uris.atom_Bool))
-				{
-					bool newMl = ((LV2_Atom_Bool*)oMl)->body;
-					if (newMl != midiLearn) midiLearn = newMl;
-				}
+				if (oMl && (oMl->type == uris.atom_Bool)) midiLearn = ((LV2_Atom_Bool*)oMl)->body;
+
+				// Pattern orientation
+				if (oFlip && (oFlip->type == uris.atom_Bool)) patternFlipped = ((LV2_Atom_Bool*)oFlip)->body;
 			}
 
 			// Sample path notification -> forward to worker
@@ -816,6 +818,9 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 		else fprintf (stderr, "BJumblr.lv2: Feature map_path not available! Can't save sample!\n" );
 	}
 
+	// Store pattern orientation
+	store(handle, uris.notify_padFlipped, &patternFlipped, sizeof (patternFlipped), uris.atom_Bool, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+
 	// Store playbackPage
 	uint32_t pp = playPage;
 	store (handle, uris.notify_playbackPage, &pp, sizeof(uint32_t), uris.atom_Int, LV2_STATE_IS_POD);
@@ -955,6 +960,14 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 			scheduleNotifySamplePathToGui = true;
 		}
 	}
+
+	// Retrieve pattern orientation
+	const void* flipData = retrieve (handle, uris.notify_padFlipped, &size, &type, &valflags);
+        if (flipData && (type == uris.atom_Bool))
+	{
+		patternFlipped = *(bool*) flipData;
+		scheduleNotifyStatusToGui = true;
+        }
 
 	// Retrieve playbackPage
 	const void* ppData = retrieve (handle, uris.notify_playbackPage, &size, &type, &valflags);
@@ -1316,10 +1329,11 @@ void BJumblr::notifyStatusToGui ()
 	lv2_atom_forge_object(&notifyForge, &frame, 0, uris.notify_statusEvent);
 	lv2_atom_forge_key(&notifyForge, uris.notify_cursor);
 	lv2_atom_forge_float(&notifyForge, cursor);
-
 	float delay = progressionDelay + controllers[MANUAL_PROGRSSION_DELAY];
 	lv2_atom_forge_key(&notifyForge, uris.notify_progressionDelay);
 	lv2_atom_forge_float(&notifyForge, delay);
+	lv2_atom_forge_key(&notifyForge, uris.notify_padFlipped);
+	lv2_atom_forge_bool(&notifyForge, patternFlipped);
 	lv2_atom_forge_pop(&notifyForge, &frame);
 
 	scheduleNotifyStatusToGui = false;

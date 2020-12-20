@@ -60,6 +60,7 @@ struct BJumblrURIs
 	LV2_URID notify_padPage;
 	LV2_URID notify_pad;
 	LV2_URID notify_padFullPattern;
+	LV2_URID notify_padFlipped;
 	LV2_URID notify_editMode;
 	LV2_URID notify_sampleFreeEvent;
 	LV2_URID notify_installSample;
@@ -113,6 +114,7 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->notify_padPage = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadPage");
 	uris->notify_pad = m->map(m->handle, BJUMBLR_URI "#NOTIFYpad");
 	uris->notify_padFullPattern = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadFullPattern");
+	uris->notify_padFlipped = m->map(m->handle, BJUMBLR_URI "#NOTIFYpadFlipped");
 	uris->notify_editMode = m->map(m->handle, BJUMBLR_URI "#NOTIFYeditMode");
 	uris->notify_sampleFreeEvent = m->map(m->handle, BJUMBLR_URI "#NOTIFYsampleFreeEvent");
 	uris->notify_installSample = m->map(m->handle, BJUMBLR_URI "#NOTIFYinstallSample");

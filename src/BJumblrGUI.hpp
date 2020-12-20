@@ -99,6 +99,7 @@ public:
 	void send_requestMidiLearn ();
 	void send_pad (int page);
 	void send_pad (int page, int row, int step);
+	void send_flip ();
 	virtual void onConfigureRequest (BEvents::ExposeEvent* event) override;
 	virtual void onCloseRequest (BEvents::WidgetEvent* event) override;
 	virtual void onKeyPressed (BEvents::KeyEvent* event) override;

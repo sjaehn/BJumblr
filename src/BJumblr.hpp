@@ -204,6 +204,7 @@ private:
 	int playPage;
 	int lastPage;
 	Pad pads [MAXPAGES] [MAXSTEPS] [MAXSTEPS];
+	bool patternFlipped;
 
 	Sample* sample;
 	float sampleAmp;
