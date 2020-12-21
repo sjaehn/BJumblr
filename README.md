@@ -156,10 +156,6 @@ speed-induced delay) is displayed in the panel above the buttons.
 
 ## What's new
 
-* Colors optimized
-* Flip pad orientation option
-* Sample options: start, end, amp, loop
-* Thread safe sample restore
 * Bugfix
 
 
