@@ -72,8 +72,9 @@ dial. This is facilitated via the progression delay.
 
 Select between (live) audio stream or a sample file as source. In the sample mode you can select an
 audio file (supported formats include wav, aiff, au, sd2, flac, caf, ogg, and mp3) and the range of
-the audio file to be used. The playback of the selected range now always starts with the first step
-in the sequencer.
+the audio file to be used. Set the start and the end point of the playback range by dragging the
+respective vertical yellow line. You can also zoom in and out by resizing the horizontal scroll bar.
+The playback of the selected range now always starts with the first step in the sequencer.
 
 You can also choose if the sample is played as a loop or not. But this will only be relevant if the
 selected range is shorter than the sequencer loop.
