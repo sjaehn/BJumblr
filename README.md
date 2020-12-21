@@ -11,7 +11,7 @@ Description: B.Jumblr is a pattern-controlled audio stream / sample re-sequencer
 a) Install the bjumblr package for your system
 * [Arch user repository](https://aur.archlinux.org/packages/bjumblr.lv2-git) by Milkii Brewster
 * [FreeBSD](https://www.freshports.org/audio/bjumblr-lv2) by yurivict
-* [NixOS] (https://github.com/NixOS/nixpkgs/blob/release-20.09/pkgs/applications/audio/bjumblr/default.nix) by Bart Brouns
+* [NixOS](https://github.com/NixOS/nixpkgs/blob/release-20.09/pkgs/applications/audio/bjumblr/default.nix) by Bart Brouns
 * Check https://repology.org/project/bjumblr/versions for other systems
 
 b) Build your own binaries in the following three steps.
