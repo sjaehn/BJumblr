@@ -882,7 +882,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 
 	// Retireve sample data
 	{
-		char samplePath[1024] = {0};
+		char samplePath[PATH_MAX] = {0};
 		int64_t sampleStart = 0;
 		int64_t sampleEnd = 0;
 		float sampleAmp = 1.0;
@@ -894,7 +894,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 			const char* absPath  = mapPath->absolute_path (mapPath->handle, (char*)pathData);
 		        if (absPath)
 			{
-				if (strlen (absPath) < 1024) strcpy (samplePath, absPath);
+				if (strlen (absPath) < PATH_MAX) strcpy (samplePath, absPath);
 				else
 				{
 					fprintf (stderr, "BJumblr.lv2: Sample path too long.\n");
