@@ -793,7 +793,7 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 			const LV2_Feature* const* features)
 {
 	// Store sample path
-	if (sample && sample->path && (controllers[SOURCE] == 1.0))
+	if (sample && sample->path && (sample->path[0] != 0) && (controllers[SOURCE] == 1.0))
 	{
 		LV2_State_Map_Path* map_path = NULL;
 	        for (int i = 0; features[i]; ++i)
@@ -1427,10 +1427,10 @@ void BJumblr::notifySamplePathToGui ()
 		LV2_Atom_Forge_Frame frame;
 		lv2_atom_forge_frame_time(&notifyForge, 0);
 
-		if (sample && sample->path) forgeSamplePath (&notifyForge, &frame, sample->path, sample->start, sample->end, sampleAmp, sample->loop);
+		if (sample && sample->path && (sample->path[0] != 0)) forgeSamplePath (&notifyForge, &frame, sample->path, sample->start, sample->end, sampleAmp, sample->loop);
 		else
 		{
-			const char* path = "";
+			const char* path = ".";
 			forgeSamplePath (&notifyForge, &frame, path, 0, 0, sampleAmp, false);
 		}
 
