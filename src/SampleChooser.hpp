@@ -1,5 +1,5 @@
-/* B.Jumblr
- * Pattern-controlled audio stream / sample re-sequencer LV2 plugin
+/* B.Oops
+ * Glitch effect sequencer LV2 plugin
  *
  * Copyright (C) 2020 by Sven Jähnichen
  *
@@ -49,8 +49,12 @@ public:
 	SampleChooser& operator= (const SampleChooser& that);
 	virtual Widget* clone () const override;
 
+	virtual void setFileName (const std::string& filename);
+	void setStart (const int64_t start);
 	int64_t getStart() const;
+	void setEnd (const int64_t end);
 	int64_t getEnd() const;
+	void setLoop (const bool loop);
 	bool getLoop() const;
 
 	virtual void resize () override;
@@ -62,6 +66,7 @@ public:
 	static void sfileListBoxClickedCallback (BEvents::Event* event);
 	static void scrollbarChangedCallback (BEvents::Event* event);
 	static void lineDraggedCallback (BEvents::Event* event);
+	static void filenameEnteredCallback (BEvents::Event* event);
 
 protected:
 	BWidgets::DrawingSurface waveform;
