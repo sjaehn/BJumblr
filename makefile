@@ -82,7 +82,8 @@ GUI_INCL = \
 	src/BWidgets/cairoplus.c \
 	src/BWidgets/pugl/pugl_x11_cairo.c \
 	src/BWidgets/pugl/pugl_x11.c \
-	src/BUtilities/to_string.cpp
+	src/BUtilities/to_string.cpp \
+	src/BUtilities/stof.cpp
 
 ifeq ($(shell $(PKG_CONFIG) --exists sndfile || echo no), no)
   $(error libsndfile not found. Please install libsndfile first.)
