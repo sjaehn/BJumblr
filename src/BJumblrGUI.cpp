@@ -28,7 +28,7 @@ inline double floorfrac (const double value) {return value - floor (value);}
 inline double floormod (const double numer, const double denom) {return numer - floor(numer / denom) * denom;}
 
 BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow) :
-	Window (1020, 620, "B.Jumblr", parentWindow, true),
+	Window (1020, 620, "B.Jumblr", parentWindow, true, PUGL_MODULE, 0),
 	controller (NULL), write_function (NULL),
 	pluginPath (bundle_path ? std::string (bundle_path) : std::string ("")),
 	sz (1.0), bgImageSurface (nullptr),
