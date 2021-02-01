@@ -159,6 +159,7 @@ speed-induced delay) is displayed in the panel above the buttons.
 * Improved sample browser
 * Enable enter dial values via keyboard
 * Update pugl
+* Support ui:resize (qtractor)
 * Bugfixes
 
 
