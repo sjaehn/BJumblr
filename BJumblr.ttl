@@ -38,7 +38,7 @@
 	lv2:microVersion 1 ;
 	lv2:minorVersion 6 ;
         doap:maintainer <http://www.jahnichen.de/sjaehn#me> ;
-        lv2:optionalFeature lv2:hardRTCapable , state:threadSafeRestore ;
+        lv2:optionalFeature lv2:hardRTCapable , state:loadDefaultState , state:threadSafeRestore ;
         lv2:extensionData state:interface , work:interface ;
 	lv2:requiredFeature urid:map , work:schedule ;
 	ui:ui <https://www.jahnichen.de/plugins/lv2/BJumblr#gui> ;
