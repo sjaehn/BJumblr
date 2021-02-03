@@ -795,26 +795,41 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 	// Store sample path
 	if (sample && sample->path && (sample->path[0] != 0) && (controllers[SOURCE] == 1.0))
 	{
-		LV2_State_Map_Path* map_path = NULL;
-	        for (int i = 0; features[i]; ++i)
-		{
-	                if (!strcmp(features[i]->URI, LV2_STATE__mapPath))
-			{
-	                        map_path = (LV2_State_Map_Path*)features[i]->data;
-				break;
-	                }
-	        }
+		LV2_State_Map_Path* mapPath = NULL;
+		LV2_State_Free_Path* freePath = NULL;
+		const char* missing  = lv2_features_query
+		(
+			features,
+			LV2_STATE__mapPath, &mapPath, true,
+			LV2_STATE__freePath, &freePath, false,
+			nullptr
+		);
 
-		if (map_path)
+		if (missing)
 		{
-			char* abstrPath = map_path->abstract_path(map_path->handle, sample->path);
-			store(handle, uris.notify_samplePath, abstrPath, strlen (abstrPath) + 1, uris.atom_Path, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
-			store(handle, uris.notify_sampleStart, &sample->start, sizeof (sample->start), uris.atom_Long, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
-			store(handle, uris.notify_sampleEnd, &sample->end, sizeof (sample->end), uris.atom_Long, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
-			store(handle, uris.notify_sampleAmp, &sampleAmp, sizeof (sampleAmp), uris.atom_Float, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
-			const int32_t sloop = int32_t (sample->loop);
-			store(handle, uris.notify_sampleLoop, &sloop, sizeof (sloop), uris.atom_Bool, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
-			free (abstrPath);
+			fprintf (stderr, "BJumblr.lv2: Host doesn't support required features.\n");
+			return LV2_STATE_ERR_NO_FEATURE;
+		}
+
+		if (mapPath)
+		{
+			char* abstrPath = mapPath->abstract_path(mapPath->handle, sample->path);
+
+			if (abstrPath)
+			{
+				fprintf(stderr, "BJumblr.lv2: Save abstr_path:%s\n", abstrPath);
+				store(handle, uris.notify_samplePath, abstrPath, strlen (abstrPath) + 1, uris.atom_Path, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+				store(handle, uris.notify_sampleStart, &sample->start, sizeof (sample->start), uris.atom_Long, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+				store(handle, uris.notify_sampleEnd, &sample->end, sizeof (sample->end), uris.atom_Long, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+				store(handle, uris.notify_sampleAmp, &sampleAmp, sizeof (sampleAmp), uris.atom_Float, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+				const int32_t sloop = int32_t (sample->loop);
+				store(handle, uris.notify_sampleLoop, &sloop, sizeof (sloop), uris.atom_Bool, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+
+				if (freePath) freePath->free_path (freePath->handle, abstrPath);
+				else free (abstrPath);
+			}
+
+			else fprintf(stderr, "BJumblr.lv2: Can't generate abstr_path from %s\n", sample->path);
 		}
 		else fprintf (stderr, "BJumblr.lv2: Feature map_path not available! Can't save sample!\n" );
 	}
@@ -863,10 +878,12 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 	// Get host features
 	LV2_Worker_Schedule* schedule = nullptr;
 	LV2_State_Map_Path* mapPath = nullptr;
+	LV2_State_Free_Path* freePath = NULL;
 	const char* missing  = lv2_features_query
 	(
 		features,
 		LV2_STATE__mapPath, &mapPath, true,
+		LV2_STATE__freePath, &freePath, false,
 		LV2_WORKER__schedule, &schedule, false,
 		nullptr
 	);
@@ -892,7 +909,8 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 		const void* pathData = retrieve (handle, uris.notify_samplePath, &size, &type, &valflags);
 		if (pathData)
 		{
-			const char* absPath  = mapPath->absolute_path (mapPath->handle, (char*)pathData);
+			char* absPath  = mapPath->absolute_path (mapPath->handle, (char*)pathData);
+			
 		        if (absPath)
 			{
 				if (strlen (absPath) < PATH_MAX) strcpy (samplePath, absPath);
@@ -901,6 +919,11 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 					fprintf (stderr, "BJumblr.lv2: Sample path too long.\n");
 					message.setMessage (CANT_OPEN_SAMPLE);
 				}
+
+				fprintf(stderr, "BJumblr.lv2: Restore abs_path:%s\n", absPath);
+
+				if (freePath) freePath->free_path (freePath->handle, absPath);
+				else free (absPath);
 		        }
 		}
 
