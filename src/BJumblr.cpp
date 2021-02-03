@@ -617,7 +617,7 @@ void BJumblr::run (uint32_t n_samples)
 					if (oStart && (oStart->type == uris.atom_Long)) sample->start = LIMIT (((LV2_Atom_Long*)oStart)->body, 0, sample->info.frames - 1);
 					if (oEnd && (oEnd->type == uris.atom_Long)) sample->end = LIMIT (((LV2_Atom_Long*)oEnd)->body, 0, sample->info.frames);
 					if (oAmp && (oAmp->type == uris.atom_Float)) sampleAmp = LIMIT (((LV2_Atom_Float*)oAmp)->body, 0.0f, 1.0f);
-					if (oLoop && (oLoop->type == uris.atom_Bool)) sample->loop = ((LV2_Atom_Long*)oEnd)->body;
+					if (oLoop && (oLoop->type == uris.atom_Bool)) sample->loop = bool(((LV2_Atom_Bool*)oLoop)->body);
 				}
 			}
 
@@ -812,7 +812,8 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 			store(handle, uris.notify_sampleStart, &sample->start, sizeof (sample->start), uris.atom_Long, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
 			store(handle, uris.notify_sampleEnd, &sample->end, sizeof (sample->end), uris.atom_Long, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
 			store(handle, uris.notify_sampleAmp, &sampleAmp, sizeof (sampleAmp), uris.atom_Float, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
-			store(handle, uris.notify_sampleLoop, &sample->loop, sizeof (sample->loop), uris.atom_Bool, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
+			const int32_t sloop = int32_t (sample->loop);
+			store(handle, uris.notify_sampleLoop, &sloop, sizeof (sloop), uris.atom_Bool, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
 			free (abstrPath);
 		}
 		else fprintf (stderr, "BJumblr.lv2: Feature map_path not available! Can't save sample!\n" );
@@ -886,7 +887,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 		int64_t sampleStart = 0;
 		int64_t sampleEnd = 0;
 		float sampleAmp = 1.0;
-		bool sampleLoop = false;
+		int32_t sampleLoop = false;
 
 		const void* pathData = retrieve (handle, uris.notify_samplePath, &size, &type, &valflags);
 		if (pathData)
@@ -910,7 +911,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 		const void* ampData = retrieve (handle, uris.notify_sampleAmp, &size, &type, &valflags);
 	        if (ampData && (type == uris.atom_Float)) sampleAmp = *(float*)ampData;
 		const void* loopData = retrieve (handle, uris.notify_sampleLoop, &size, &type, &valflags);
-	        if (loopData && (type == uris.atom_Bool)) sampleLoop = *(bool*)loopData;
+	        if (loopData && (type == uris.atom_Bool)) sampleLoop = *(int32_t*)loopData;
 
 		if (activated && schedule)
 		{
@@ -953,7 +954,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 			{
 				sample->start = sampleStart;
 				sample->end = sampleEnd;
-				sample->loop = sampleLoop;
+				sample->loop = bool (sampleLoop);
 				this->sampleAmp = sampleAmp;
 			}
 
@@ -1176,7 +1177,7 @@ LV2_Worker_Status BJumblr::work (LV2_Worker_Respond_Function respond, LV2_Worker
 					sAtom.start = (oStart && (oStart->type == uris.atom_Long) ? ((LV2_Atom_Long*)oStart)->body : 0);
 					sAtom.end = (oEnd && (oEnd->type == uris.atom_Long) ? ((LV2_Atom_Long*)oEnd)->body : s->info.frames);
 					sAtom.amp = (oAmp && (oAmp->type == uris.atom_Float) ? ((LV2_Atom_Float*)oAmp)->body : 1.0f);
-					sAtom.loop = (oLoop && (oLoop->type == uris.atom_Bool) ? ((LV2_Atom_Bool*)oLoop)->body : false);
+					sAtom.loop = (oLoop && (oLoop->type == uris.atom_Bool) ? ((LV2_Atom_Bool*)oLoop)->body : 0);
 					respond (handle, sizeof(sAtom), &sAtom);
 				}
 				if (s) respond (handle, sizeof(s), &s);
@@ -1208,7 +1209,7 @@ LV2_Worker_Status BJumblr::work_response (uint32_t size, const void* data)
 			sample->start = LIMIT (nAtom->start, 0, sample->info.frames - 1);
 			sample->end = LIMIT (nAtom->end, sample->start, sample->info.frames);
 			sampleAmp = LIMIT (nAtom->amp, 0.0f, 1.0f);
-			sample->loop = nAtom->loop;
+			sample->loop = bool (nAtom->loop);
 			return LV2_WORKER_SUCCESS;
 		}
 
@@ -1259,7 +1260,7 @@ bool BJumblr::padMessageBufferAppendPad (int page, int row, int step, Pad pad)
 	return false;
 }
 
-LV2_Atom_Forge_Ref BJumblr::forgeSamplePath (LV2_Atom_Forge* forge, LV2_Atom_Forge_Frame* frame, const char* path, const int64_t start, const int64_t end, const float amp, const bool loop)
+LV2_Atom_Forge_Ref BJumblr::forgeSamplePath (LV2_Atom_Forge* forge, LV2_Atom_Forge_Frame* frame, const char* path, const int64_t start, const int64_t end, const float amp, const int32_t loop)
 {
 	const LV2_Atom_Forge_Ref msg = lv2_atom_forge_object (forge, frame, 0, uris.notify_pathEvent);
 	if (msg)
@@ -1427,7 +1428,10 @@ void BJumblr::notifySamplePathToGui ()
 		LV2_Atom_Forge_Frame frame;
 		lv2_atom_forge_frame_time(&notifyForge, 0);
 
-		if (sample && sample->path && (sample->path[0] != 0)) forgeSamplePath (&notifyForge, &frame, sample->path, sample->start, sample->end, sampleAmp, sample->loop);
+		if (sample && sample->path && (sample->path[0] != 0))
+		{
+			forgeSamplePath (&notifyForge, &frame, sample->path, sample->start, sample->end, sampleAmp, int32_t (sample->loop));
+		}
 		else
 		{
 			const char* path = ".";

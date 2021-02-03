@@ -81,7 +81,7 @@ private:
 	float validateValue (float value, const Limit limit);
 	Pad validatePad (Pad pad);
 	bool padMessageBufferAppendPad (int page, int row, int step, Pad pad);
-	LV2_Atom_Forge_Ref forgeSamplePath (LV2_Atom_Forge* forge, LV2_Atom_Forge_Frame* frame, const char* path, const int64_t start, const int64_t end, const float amp, const bool loop);
+	LV2_Atom_Forge_Ref forgeSamplePath (LV2_Atom_Forge* forge, LV2_Atom_Forge_Frame* frame, const char* path, const int64_t start, const int64_t end, const float amp, const int32_t loop);
 	void notifyPadsToGui ();
 	void notifyStatusToGui ();
 	void notifyWaveformToGui (const int start, const int end);
@@ -216,7 +216,7 @@ private:
 		int64_t start;
 		int64_t end;
 		float amp;
-		bool loop;
+		int32_t loop;
 	};
 
 	// Host communicated data

@@ -546,7 +546,7 @@ void BJumblrGUI::port_event(uint32_t port, uint32_t buffer_size,
 				if (oStart && (oStart->type == uris.atom_Long)) sampleStart = ((LV2_Atom_Long*)oStart)->body;
 				if (oEnd && (oEnd->type == uris.atom_Long)) sampleEnd = ((LV2_Atom_Long*)oEnd)->body;
 				if (oAmp && (oAmp->type == uris.atom_Float)) sampleAmpDial.setValue (((LV2_Atom_Float*)oAmp)->body);
-				if (oLoop && (oLoop->type == uris.atom_Bool)) sampleLoop = ((LV2_Atom_Bool*)oLoop)->body;
+				if (oLoop && (oLoop->type == uris.atom_Bool)) sampleLoop = bool (((LV2_Atom_Bool*)oLoop)->body);
 			}
 
 			// Status notifications
@@ -951,7 +951,7 @@ void BJumblrGUI::send_samplePath ()
 	lv2_atom_forge_key(&forge, uris.notify_sampleAmp);
 	lv2_atom_forge_float(&forge, sampleAmpDial.getValue());
 	lv2_atom_forge_key(&forge, uris.notify_sampleLoop);
-	lv2_atom_forge_bool(&forge, sampleLoop);
+	lv2_atom_forge_bool(&forge, int32_t (sampleLoop));
 	lv2_atom_forge_pop(&forge, &frame);
 	write_function(controller, CONTROL, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }
