@@ -59,6 +59,7 @@ BJumblr::BJumblr (double samplerate, const LV2_Feature* const* features) :
 	scheduleNotifyStatusToGui (false),
 	scheduleNotifyWaveformToGui (false), scheduleNotifySamplePathToGui (false),
 	scheduleNotifyMidiLearnedToGui (false),
+	scheduleNotifyStateChanged (false),
 	message ()
 
 {
@@ -230,6 +231,7 @@ void BJumblr::runSequencer (const int start, const int end)
 				{
 					playPage = schedulePage;
 					scheduleNotifyPlaybackPageToGui = true;
+					scheduleNotifyStateChanged = true;
 				}
 
 				int iPrevStep = (fade < 1.0 ? (iStep + iNrOfSteps - 1) % iNrOfSteps : iStep);	// Previous step
@@ -516,6 +518,7 @@ void BJumblr::run (uint32_t n_samples)
 									padMessageBufferAppendPad (page, row, step, valPad);
 									scheduleNotifyPadsToGui = true;
 								}
+								scheduleNotifyStateChanged = true;
 							}
 						}
 					}
@@ -540,6 +543,8 @@ void BJumblr::run (uint32_t n_samples)
 									pads[page][r][s] = data[r * MAXSTEPS + s];
 								}
 							}
+
+							scheduleNotifyStateChanged = true;
 						}
 
 						else fprintf (stderr, "BJumblr.lv2: Corrupt pattern size of %i for page %i.\n", size, page);
@@ -580,6 +585,7 @@ void BJumblr::run (uint32_t n_samples)
 					if (newPp != playPage)
 					{
 						playPage = LIMIT (newPp, 0, MAXPAGES - 1);
+						scheduleNotifyStateChanged = true;
 					}
 				}
 
@@ -587,7 +593,11 @@ void BJumblr::run (uint32_t n_samples)
 				if (oMl && (oMl->type == uris.atom_Bool)) midiLearn = ((LV2_Atom_Bool*)oMl)->body;
 
 				// Pattern orientation
-				if (oFlip && (oFlip->type == uris.atom_Bool)) patternFlipped = ((LV2_Atom_Bool*)oFlip)->body;
+				if (oFlip && (oFlip->type == uris.atom_Bool))
+				{
+					patternFlipped = ((LV2_Atom_Bool*)oFlip)->body;
+					scheduleNotifyStateChanged = true;
+				}
 			}
 
 			// Sample path notification -> forward to worker
@@ -618,6 +628,7 @@ void BJumblr::run (uint32_t n_samples)
 					if (oEnd && (oEnd->type == uris.atom_Long)) sample->end = LIMIT (((LV2_Atom_Long*)oEnd)->body, 0, sample->info.frames);
 					if (oAmp && (oAmp->type == uris.atom_Float)) sampleAmp = LIMIT (((LV2_Atom_Float*)oAmp)->body, 0.0f, 1.0f);
 					if (oLoop && (oLoop->type == uris.atom_Bool)) sample->loop = bool(((LV2_Atom_Bool*)oLoop)->body);
+					scheduleNotifyStateChanged = true;
 				}
 			}
 
@@ -786,6 +797,8 @@ void BJumblr::run (uint32_t n_samples)
 		if (scheduleNotifyMidiLearnedToGui) notifyMidiLearnedToGui ();
 		if (message.isScheduled ()) notifyMessageToGui();
 	}
+
+	if (scheduleNotifyStateChanged) notifyStateChanged();
 	lv2_atom_forge_pop(&notifyForge, &notifyFrame);
 }
 
@@ -910,7 +923,7 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 		if (pathData)
 		{
 			char* absPath  = mapPath->absolute_path (mapPath->handle, (char*)pathData);
-			
+
 		        if (absPath)
 			{
 				if (strlen (absPath) < PATH_MAX) strcpy (samplePath, absPath);
@@ -1233,10 +1246,15 @@ LV2_Worker_Status BJumblr::work_response (uint32_t size, const void* data)
 			sample->end = LIMIT (nAtom->end, sample->start, sample->info.frames);
 			sampleAmp = LIMIT (nAtom->amp, 0.0f, 1.0f);
 			sample->loop = bool (nAtom->loop);
+			scheduleNotifyStateChanged = true;
 			return LV2_WORKER_SUCCESS;
 		}
 
-		else return LV2_WORKER_ERR_UNKNOWN;
+		else
+		{
+			scheduleNotifyStateChanged = true;
+			return LV2_WORKER_ERR_UNKNOWN;
+		}
 	}
 
 	else return LV2_WORKER_ERR_UNKNOWN;
@@ -1465,6 +1483,15 @@ void BJumblr::notifySamplePathToGui ()
 	}
 
 	scheduleNotifySamplePathToGui = false;
+}
+
+void BJumblr::notifyStateChanged()
+{
+	LV2_Atom_Forge_Frame frame;
+	lv2_atom_forge_frame_time(&notifyForge, 0);
+	lv2_atom_forge_object(&notifyForge, &frame, 0, uris.state_StateChanged);
+	lv2_atom_forge_pop(&notifyForge, &frame);
+	scheduleNotifyStateChanged = false;
 }
 
 /*

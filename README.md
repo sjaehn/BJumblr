@@ -160,6 +160,7 @@ speed-induced delay) is displayed in the panel above the buttons.
 * Enable enter dial values via keyboard
 * Update pugl
 * Support ui:resize (qtractor)
+* Notify host about changes in pattern / file path / page / orientation
 * Bugfixes
 
 

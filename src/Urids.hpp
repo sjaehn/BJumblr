@@ -53,6 +53,7 @@ struct BJumblrURIs
 	LV2_URID time_beatUnit;
 	LV2_URID time_speed;
 	LV2_URID midi_Event;
+	LV2_URID state_StateChanged;
 	LV2_URID ui_on;
 	LV2_URID ui_off;
 	LV2_URID state_pad;
@@ -107,6 +108,7 @@ void getURIs (LV2_URID_Map* m, BJumblrURIs* uris)
 	uris->time_beatsPerBar = m->map(m->handle, LV2_TIME__beatsPerBar);
 	uris->time_speed = m->map(m->handle, LV2_TIME__speed);
 	uris->midi_Event = m->map(m->handle, LV2_MIDI__MidiEvent);
+	uris->state_StateChanged = m->map(m->handle, LV2_STATE__StateChanged);
 	uris->ui_on = m->map(m->handle, BJUMBLR_URI "#UIon");
 	uris->ui_off = m->map(m->handle, BJUMBLR_URI "#UIoff");
 	uris->state_pad = m->map(m->handle, BJUMBLR_URI "#STATEpad");

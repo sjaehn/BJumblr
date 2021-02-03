@@ -90,6 +90,7 @@ private:
 	void notifyMidiLearnedToGui ();
 	void notifyMessageToGui();
 	void notifySamplePathToGui ();
+	void notifyStateChanged ();
 
 	// URIs
 	BJumblrURIs uris;
@@ -254,6 +255,7 @@ private:
 	bool scheduleNotifyWaveformToGui;
 	bool scheduleNotifySamplePathToGui;
 	bool scheduleNotifyMidiLearnedToGui;
+	bool scheduleNotifyStateChanged;
 	Message message;
 };
 
