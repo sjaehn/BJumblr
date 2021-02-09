@@ -86,7 +86,7 @@ const std::string editLabels[MAXEDIT] = {"Select & cut", "Select & copy", "Selec
 class BJumblrGUI : public BWidgets::Window
 {
 public:
-	BJumblrGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeWindow parentWindow);
+	BJumblrGUI (const char *bundle_path, const LV2_Feature *const *features, PuglNativeView parentWindow);
 	~BJumblrGUI ();
 	void port_event (uint32_t port_index, uint32_t buffer_size, uint32_t format, const void *buffer);
 	void send_ui_on ();
