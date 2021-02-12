@@ -2329,7 +2329,7 @@ void BJumblrGUI::drawPad (cairo_t* cr, int row, int step)
 	drawButton (cr, xr + 1, yr + 1, wr - 2, hr - 2, color);
 }
 
-LV2UI_Handle instantiate (const LV2UI_Descriptor *descriptor,
+static LV2UI_Handle instantiate (const LV2UI_Descriptor *descriptor,
 						  const char *plugin_uri,
 						  const char *bundle_path,
 						  LV2UI_Write_Function write_function,
@@ -2381,13 +2381,13 @@ LV2UI_Handle instantiate (const LV2UI_Descriptor *descriptor,
 	return (LV2UI_Handle) ui;
 }
 
-void cleanup(LV2UI_Handle ui)
+static void cleanup(LV2UI_Handle ui)
 {
 	BJumblrGUI* self = (BJumblrGUI*) ui;
 	delete self;
 }
 
-void port_event(LV2UI_Handle ui, uint32_t port_index, uint32_t buffer_size,
+static void port_event(LV2UI_Handle ui, uint32_t port_index, uint32_t buffer_size,
 	uint32_t format, const void* buffer)
 {
 	BJumblrGUI* self = (BJumblrGUI*) ui;
@@ -2419,7 +2419,7 @@ static const void* extension_data(const char* uri)
 	else return NULL;
 }
 
-const LV2UI_Descriptor guiDescriptor = {
+static const LV2UI_Descriptor guiDescriptor = {
 		BJUMBLR_GUI_URI,
 		instantiate,
 		cleanup,

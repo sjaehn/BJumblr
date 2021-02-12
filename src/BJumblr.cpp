@@ -809,12 +809,16 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 	if (sample && sample->path && (sample->path[0] != 0) && (controllers[SOURCE] == 1.0))
 	{
 		LV2_State_Map_Path* mapPath = NULL;
+#ifdef LV2_STATE__freePath
 		LV2_State_Free_Path* freePath = NULL;
+#endif
 		const char* missing  = lv2_features_query
 		(
 			features,
 			LV2_STATE__mapPath, &mapPath, true,
+#ifdef LV2_STATE__freePath
 			LV2_STATE__freePath, &freePath, false,
+#endif
 			nullptr
 		);
 
@@ -838,8 +842,13 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 				const int32_t sloop = int32_t (sample->loop);
 				store(handle, uris.notify_sampleLoop, &sloop, sizeof (sloop), uris.atom_Bool, LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE);
 
+#ifdef LV2_STATE__freePath
 				if (freePath) freePath->free_path (freePath->handle, abstrPath);
-				else free (abstrPath);
+				else
+#endif
+				{
+					free (abstrPath);
+				}
 			}
 
 			else fprintf(stderr, "BJumblr.lv2: Can't generate abstr_path from %s\n", sample->path);
@@ -891,12 +900,16 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 	// Get host features
 	LV2_Worker_Schedule* schedule = nullptr;
 	LV2_State_Map_Path* mapPath = nullptr;
+#ifdef LV2_STATE__freePath
 	LV2_State_Free_Path* freePath = NULL;
+#endif
 	const char* missing  = lv2_features_query
 	(
 		features,
 		LV2_STATE__mapPath, &mapPath, true,
+#ifdef LV2_STATE__freePath
 		LV2_STATE__freePath, &freePath, false,
+#endif
 		LV2_WORKER__schedule, &schedule, false,
 		nullptr
 	);
@@ -935,8 +948,13 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 
 				fprintf(stderr, "BJumblr.lv2: Restore abs_path:%s\n", absPath);
 
+#ifdef LV2_STATE__freePath
 				if (freePath) freePath->free_path (freePath->handle, absPath);
-				else free (absPath);
+				else
+#endif
+				{
+					free (absPath);
+				}
 		        }
 		}
 
@@ -1521,7 +1539,7 @@ static void connect_port (LV2_Handle instance, uint32_t port, void *data)
 	inst->connect_port (port, data);
 }
 
-void activate (LV2_Handle instance)
+static void activate (LV2_Handle instance)
 {
 	BJumblr* inst = (BJumblr*) instance;
 	if (inst) inst->activate();
@@ -1533,7 +1551,7 @@ static void run (LV2_Handle instance, uint32_t n_samples)
 	if (inst) inst->run (n_samples);
 }
 
-void deactivate (LV2_Handle instance)
+static void deactivate (LV2_Handle instance)
 {
 	BJumblr* inst = (BJumblr*) instance;
 	if (inst) inst->deactivate();

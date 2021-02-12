@@ -31,6 +31,10 @@
 #include <lv2/lv2plug.in/ns/ext/state/state.h>
 #include "definitions.h"
 
+#ifndef LV2_STATE__StateChanged
+#define LV2_STATE__StateChanged LV2_STATE_PREFIX "StateChanged"
+#endif
+
 struct BJumblrURIs
 {
 	LV2_URID atom_Sequence;

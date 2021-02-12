@@ -156,6 +156,8 @@ speed-induced delay) is displayed in the panel above the buttons.
 
 ## What's new
 
+* Compatibility with older versions of LV2_State
+* Compatibility with older compilers
 * Bugfixes
 
 
