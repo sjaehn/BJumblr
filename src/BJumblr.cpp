@@ -26,7 +26,6 @@
 #endif
 #endif
 #include "Sample.hpp"
-#include "lv2/core/lv2_util.h"
 
 inline double floorfrac (const double value) {return value - floor (value);}
 inline double floormod (const double numer, const double denom) {return numer - floor(numer / denom) * denom;}
@@ -812,21 +811,26 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 #ifdef LV2_STATE__freePath
 		LV2_State_Free_Path* freePath = NULL;
 #endif
-		const char* missing  = lv2_features_query
-		(
-			features,
-			LV2_STATE__mapPath, &mapPath, true,
-#ifdef LV2_STATE__freePath
-			LV2_STATE__freePath, &freePath, false,
-#endif
-			nullptr
-		);
 
-		if (missing)
+		for (int i = 0; features[i]; ++i)
 		{
-			fprintf (stderr, "BJumblr.lv2: Host doesn't support required features.\n");
-			return LV2_STATE_ERR_NO_FEATURE;
+			if (strcmp(features[i]->URI, LV2_URID__map) == 0)
+			{
+				mapPath = (LV2_State_Map_Path*) features[i]->data;
+				break;
+			}
 		}
+
+#ifdef LV2_STATE__freePath
+		for (int i = 0; features[i]; ++i)
+		{
+			if (strcmp(features[i]->URI, LV2_STATE__freePath) == 0)
+			{
+				freePath = (LV2_State_Free_Path*) features[i]->data;
+				break;
+			}
+		}
+#endif
 
 		if (mapPath)
 		{
@@ -853,7 +857,11 @@ LV2_State_Status BJumblr::state_save (LV2_State_Store_Function store, LV2_State_
 
 			else fprintf(stderr, "BJumblr.lv2: Can't generate abstr_path from %s\n", sample->path);
 		}
-		else fprintf (stderr, "BJumblr.lv2: Feature map_path not available! Can't save sample!\n" );
+		else
+		{
+			fprintf (stderr, "BJumblr.lv2: Feature map_path not available! Can't save sample!\n" );
+			return LV2_STATE_ERR_NO_FEATURE;
+		}
 	}
 
 	// Store pattern orientation
@@ -903,18 +911,37 @@ LV2_State_Status BJumblr::state_restore (LV2_State_Retrieve_Function retrieve, L
 #ifdef LV2_STATE__freePath
 	LV2_State_Free_Path* freePath = NULL;
 #endif
-	const char* missing  = lv2_features_query
-	(
-		features,
-		LV2_STATE__mapPath, &mapPath, true,
-#ifdef LV2_STATE__freePath
-		LV2_STATE__freePath, &freePath, false,
-#endif
-		LV2_WORKER__schedule, &schedule, false,
-		nullptr
-	);
 
-	if (missing)
+	for (int i = 0; features[i]; ++i)
+	{
+		if (strcmp(features[i]->URI, LV2_URID__map) == 0)
+		{
+			mapPath = (LV2_State_Map_Path*) features[i]->data;
+			break;
+		}
+	}
+
+	for (int i = 0; features[i]; ++i)
+	{
+		if (strcmp(features[i]->URI, LV2_WORKER__schedule) == 0)
+		{
+			schedule = (LV2_Worker_Schedule*) features[i]->data;
+			break;
+		}
+	}
+
+#ifdef LV2_STATE__freePath
+	for (int i = 0; features[i]; ++i)
+	{
+		if (strcmp(features[i]->URI, LV2_STATE__freePath) == 0)
+		{
+			freePath = (LV2_State_Free_Path*) features[i]->data;
+			break;
+		}
+	}
+#endif
+
+	if (!mapPath)
 	{
 		fprintf (stderr, "BJumblr.lv2: Host doesn't support required features.\n");
 		return LV2_STATE_ERR_NO_FEATURE;
