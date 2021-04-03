@@ -43,6 +43,12 @@
 #include "BWidgets/TextToggleButton.hpp"
 #include "screen.h"
 
+#ifdef LOCALEFILE
+#include LOCALEFILE
+#else
+#include "Locale_EN.hpp"
+#endif
+
 #include "drawbutton.hpp"
 #include "HaloButton.hpp"
 #include "HaloToggleButton.hpp"
@@ -81,7 +87,16 @@ enum editIndex
 	MAXEDIT		= 8
 };
 
-const std::string editLabels[MAXEDIT] = {"Select & cut", "Select & copy", "Select & X flip", "Select & Y flip", "Paste", "Reset", "Undo", "Redo"};
+const std::string editLabels[MAXEDIT] =
+{
+	BJUMBLR_LABEL_SELECT_CUT,
+	BJUMBLR_LABEL_SELECT_COPY,
+	BJUMBLR_LABEL_SELECT_XFLIP,
+	BJUMBLR_LABEL_SELECT_YFLIP,
+	BJUMBLR_LABEL_PASTE,
+	BJUMBLR_LABEL_RESET,
+	BJUMBLR_LABEL_UNDO,
+	BJUMBLR_LABEL_REDO};
 
 class BJumblrGUI : public BWidgets::Window
 {

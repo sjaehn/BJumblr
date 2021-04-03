@@ -23,6 +23,12 @@
 
 #include <string>
 
+#ifdef LOCALEFILE
+#include LOCALEFILE
+#else
+#include "Locale_EN.hpp"
+#endif
+
 #define MAXMESSAGES 3
 
 enum MessageNr
@@ -35,8 +41,8 @@ enum MessageNr
 const std::string messageStrings[MAXMESSAGES] =
 {
 	"",
-	"Msg: Jack transport off or halted. Plugin halted.",
-	"Msg: Can't open sample file."
+	BJUMBLR_LABEL_JACK_OFF,
+	BJUMBLR_LABEL_CANT_OPEN_SAMPLE
 };
 
 #endif /* MESSAGEDEFINITIONS_HPP_ */

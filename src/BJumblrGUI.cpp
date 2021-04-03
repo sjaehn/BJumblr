@@ -45,72 +45,74 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	pageForwardSymbol (482, 0, 10, 30, "tab", RIGHTSYMBOL),
 
 	midiBox (18, 118, 510, 120, "screen", 0),
-	midiText (20, 10, 450, 20, "tlabel", "MIDI control page #1"),
-	midiStatusLabel (10, 30, 130, 20, "ylabel", "MIDI status"),
+	midiText (20, 10, 450, 20, "tlabel", BJUMBLR_LABEL_MIDI_PAGE " #1"),
+	midiStatusLabel (10, 30, 130, 20, "ylabel", BJUMBLR_LABEL_MIDI_STATUS),
 	midiStatusListBox
 	(
 		10, 50, 130, 20, 0, 20, 130, 100, "menu",
-		BItems::ItemList ({{0, "None"}, {9, "Note on"}, {8, "Note off"}, {11, "Control change"}}),
+		BItems::ItemList ({{0, BJUMBLR_LABEL_NONE}, {9, BJUMBLR_LABEL_NOTE_ON}, {8, BJUMBLR_LABEL_NOTE_OFF}, {11, BJUMBLR_LABEL_CC}}),
 		0
 	),
-	midiChannelLabel (150, 30, 50, 20, "ylabel", "Channel"),
+	midiChannelLabel (150, 30, 50, 20, "ylabel", BJUMBLR_LABEL_CHANNEL),
 	midiChannelListBox
 	(
 		150, 50, 50, 20, 0, 20, 50, 360, "menu",
 		BItems::ItemList
 		({
-			{0, "All"}, {1, "1"}, {2, "2"}, {3, "3"},
+			{0, BJUMBLR_LABEL_ALL}, {1, "1"}, {2, "2"}, {3, "3"},
 			{4, "4"}, {5, "5"}, {6, "6"}, {7, "7"},
 			{8, "8"}, {9, "9"}, {10, "10"}, {11, "11"},
 			{12, "12"}, {13, "13"}, {14, "14"}, {15, "15"}, {16, "16"}
 		}),
 		0
 	),
-	midiNoteLabel (210, 30, 160, 20, "ylabel", "Note"),
+	midiNoteLabel (210, 30, 160, 20, "ylabel", BJUMBLR_LABEL_NOTE),
 	midiNoteListBox (210, 50, 160, 20, 0, 20, 160, 360, "menu", BItems::ItemList ({NOTELIST}), 128),
-	midiValueLabel (380, 30, 50, 20, "ylabel", "Value"),
+	midiValueLabel (380, 30, 50, 20, "ylabel", BJUMBLR_LABEL_VALUE),
 	midiValueListBox (380, 50, 50, 20, 0, 20, 50, 360, "menu", BItems::ItemList ({VALLIST}), 128),
-	midiLearnButton (440, 50, 60, 20, "menu/button", "Learn"),
-	midiCancelButton (170, 90, 60, 20, "menu/button", "Cancel"),
-	midiOkButton (280, 90, 60, 20, "menu/button", "OK"),
+	midiLearnButton (440, 50, 60, 20, "menu/button", BJUMBLR_LABEL_LEARN),
+	midiCancelButton (170, 90, 60, 20, "menu/button", BJUMBLR_LABEL_CANCEL),
+	midiOkButton (280, 90, 60, 20, "menu/button", BJUMBLR_LABEL_OK),
 
 	flipButton (940, 120, 10, 10, "widget"),
 	padSurface (18, 128, 924, 434, "box"),
 	markerFwd (0, 130 + 15.5 * (430.0 / 16.0) - 10, 20, 20, "widget", MARKER_RIGHT),
 	markerRev (940, 130 + 15.5 * (430.0 / 16.0) - 10, 20, 20, "widget", MARKER_LEFT),
 	monitorWidget (20, 130, 920, 430, "monitor"),
-	sourceListBox (570, 90, 120, 20, 120, 60, "menu", BItems::ItemList ({{0, "Audio stream"}, {1, "Sample"}}), 0),
+	sourceListBox (570, 90, 120, 20, 120, 60, "menu", BItems::ItemList ({{0, BJUMBLR_LABEL_AUDIO_STREAM}, {1, BJUMBLR_LABEL_SAMPLE}}), 0),
 	loadButton (710, 90, 20, 20, "menu/button"),
 	sampleNameLabel (740, 90, 160, 20, "boxlabel", ""),
 	sampleAmpDial (918, 88, 24, 24, "dial", 1.0, 0.0, 1.0, 0.0),
-	playButton (18, 588, 24, 24, "widget", "Play"),
-	bypassButton (48, 588, 24, 24, "widget", "Bypass"),
-	stopButton (78, 588, 24, 24, "widget", "Stop"),
+	playButton (18, 588, 24, 24, "widget", BJUMBLR_LABEL_PLAY),
+	bypassButton (48, 588, 24, 24, "widget", BJUMBLR_LABEL_BYPASS),
+	stopButton (78, 588, 24, 24, "widget", BJUMBLR_LABEL_STOP),
 	syncWidget (400, 590, 95, 20, "widget", 0),
 	zeroStepOffsetButton (0, 0, 20, 20, "menu/button"),
 	decStepOffsetButton (25, 0, 20, 20, "menu/button"),
 	hostSyncButton (50, 0, 20, 20, "menu/button"),
 	incStepOffsetButton (75, 0, 20, 20, "menu/button"),
 	editModeListBox (530, 590, 90, 20, 0, -60, 90, 60, "menu",
-			 BItems::ItemList ({{0, "Add"}, {1, "Replace"}}), 0),
+			 BItems::ItemList ({{0, BJUMBLR_LABEL_ADD}, {1, BJUMBLR_LABEL_REPLACE}}), 0),
 	stepSizeListBox (650, 590, 70, 20, 0, -280, 70, 280, "menu",
 			 BItems::ItemList ({{0.0625, "1/16"}, {0.83333333, "1/12"}, {0.125, "1/8"}, {0.1666667, "1/6"},
 			 		    {0.25, "1/4"}, {0.3333333, "1/3"}, {0.5, "1/2"}, {0.666666667, "2/3"}, {0.75, "3/4"},
 					    {1, "1"}, {2, "2"}, {2, "3"}, {4, "4"}}), 1),
-	stepBaseListBox (730, 590, 90, 20, 0, -80, 90, 80, "menu", BItems::ItemList ({{0, "Seconds"}, {1, "Beats"}, {2, "Bars"}}), 1),
+	stepBaseListBox (730, 590, 90, 20, 0, -80, 90, 80, "menu", BItems::ItemList ({{0, BJUMBLR_LABEL_SECONDS}, {1, BJUMBLR_LABEL_BEATS}, {2, BJUMBLR_LABEL_BARS}}), 1),
 	padSizeListBox (850, 590, 90, 20, 0, -240, 100, 240, "menu",
-		     BItems::ItemList ({{2, "2 Steps"}, {3, "3 Steps"}, {4, "4 Steps"}, {6, "6 Steps"}, {8, "8 Steps"}, {9, "9 Steps"},
-		     			{12, "12 Steps"}, {16, "16 Steps"}, {18, "18 Steps"}, {24, "24 Steps"}, {32, "32 Steps"}}), 16),
+		     BItems::ItemList ({{2, "2 " BJUMBLR_LABEL_STEPS}, {3, "3 " BJUMBLR_LABEL_STEPS}, {4, "4 " BJUMBLR_LABEL_STEPS},
+		     			{6, "6 " BJUMBLR_LABEL_STEPS}, {8, "8 " BJUMBLR_LABEL_STEPS}, {9, "9 " BJUMBLR_LABEL_STEPS},
+		     			{12, "12 " BJUMBLR_LABEL_STEPS}, {16, "16 " BJUMBLR_LABEL_STEPS}, {18, "18 " BJUMBLR_LABEL_STEPS},
+					{24, "24 " BJUMBLR_LABEL_STEPS}, {32, "32 " BJUMBLR_LABEL_STEPS}}), 16),
 	levelDial (960, 290, 40, 48, "dial", 1.0, 0.0, 1.0, 0.01, "%1.2f"),
 	delayDisplayLabel (958, 370, 44, 20, "smboxlabel", ""),
 	manualProgressionDelayWidget (0, 0, 0, 0, "widget", 0.0, -32.0, 32.0, 0.0),
-	resetDelayButton (958, 398, 44, 22, "widget", "Reset delay"),
-	increaseDelayButton (958, 428, 44, 22, "widget", "Increase delay"),
-	decreaseDelayButton (958, 488, 44, 22, "widget", "Decrease delay"),
-	setStartDelayButton (958, 458, 44, 22, "widget", "Delay to start"),
+	resetDelayButton (958, 398, 44, 22, "widget", BJUMBLR_LABEL_RESET_DELAY),
+	increaseDelayButton (958, 428, 44, 22, "widget", BJUMBLR_LABEL_INCREASE_DELAY),
+	decreaseDelayButton (958, 488, 44, 22, "widget", BJUMBLR_LABEL_DECREASE_DELAY),
+	setStartDelayButton (958, 458, 44, 22, "widget", BJUMBLR_LABEL_DELAY_TO_START),
 	speedDial (960, 530, 40, 48, "dial", 1.0, 0.0, 4.0, 0.25, "%1.2f"),
-	helpButton (958, 588, 24, 24, "widget", "Help"),
-	ytButton (988, 588, 24, 24, "widget", "Tutorial"),
+	helpButton (958, 588, 24, 24, "widget", BJUMBLR_LABEL_HELP),
+	ytButton (988, 588, 24, 24, "widget", BJUMBLR_LABEL_TUTORIAL),
 	fileChooser (nullptr)
 {
 	// Init tabs
@@ -1533,7 +1535,7 @@ void BJumblrGUI::midiSymbolClickedCallback(BEvents::Event* event)
 	{
 		if (widget == &ui->tabs[i].midiSymbol)
 		{
-			ui->midiText.setText ("MIDI control page #" + std::to_string (i + 1));
+			ui->midiText.setText (BJUMBLR_LABEL_MIDI_PAGE " #" + std::to_string (i + 1));
 			ui->midiStatusListBox.setValue (ui->controllers[MIDI + i * NR_MIDI_CTRLS + STATUS]);
 			ui->midiChannelListBox.setValue (ui->controllers[MIDI + i * NR_MIDI_CTRLS + CHANNEL]);
 			ui->midiNoteListBox.setValue (ui->controllers[MIDI + i * NR_MIDI_CTRLS + NOTE]);
@@ -1605,7 +1607,7 @@ void BJumblrGUI::midiStatusChangedCallback(BEvents::Event* event)
 			BItems::ItemList ({CCLIST}),
 			0
 		);
-		nl.setText ("Control change");
+		nl.setText (BJUMBLR_LABEL_CC);
 	}
 
 	else
@@ -1617,7 +1619,7 @@ void BJumblrGUI::midiStatusChangedCallback(BEvents::Event* event)
 			BItems::ItemList ({NOTELIST}),
 			0
 		);
-		nl.setText ("Note");
+		nl.setText (BJUMBLR_LABEL_NOTE);
 	}
 
 	nlb.resizeListBoxItems(BUtilities::Point (160 * ui->sz, 20 * ui->sz));
@@ -2110,9 +2112,9 @@ void BJumblrGUI::padsFocusedCallback (BEvents::Event* event)
 	{
 		ui->padSurface.focusText.setText
 		(
-			"Row: " + std::to_string (row + 1) + "\n" +
-			"Step: " + std::to_string (step + 1) + "\n" +
-			"Level: " + BUtilities::to_string (ui->pattern[page].getPad (row, step).level, "%1.2f")
+			BJUMBLR_LABEL_ROW ": " + std::to_string (row + 1) + "\n" +
+			BJUMBLR_LABEL_STEP ": " + std::to_string (step + 1) + "\n" +
+			BJUMBLR_LABEL_LEVEL ": " + BUtilities::to_string (ui->pattern[page].getPad (row, step).level, "%1.2f")
 		);
 	}
 }
@@ -2165,10 +2167,10 @@ void BJumblrGUI::loadButtonClickedCallback (BEvents::Event* event)
 		200, 140, 640, 400, "filechooser", ui->samplePath,
 		std::vector<BWidgets::FileFilter>
 		{
-			BWidgets::FileFilter {"All files", std::regex (".*")},
-			BWidgets::FileFilter {"Audio files", std::regex (".*\\.((wav)|(wave)|(aif)|(aiff)|(au)|(sd2)|(flac)|(caf)|(ogg)|(mp3))$", std::regex_constants::icase)}
+			BWidgets::FileFilter {BJUMBLR_LABEL_ALL_FILES, std::regex (".*")},
+			BWidgets::FileFilter {BJUMBLR_LABEL_AUDIO_FILES, std::regex (".*\\.((wav)|(wave)|(aif)|(aiff)|(au)|(sd2)|(flac)|(caf)|(ogg)|(mp3))$", std::regex_constants::icase)}
 		},
-		"Open");
+		BJUMBLR_LABEL_OPEN);
 	if (ui->fileChooser)
 	{
 		const std::string filename = ui->sampleNameLabel.getText();
@@ -2182,7 +2184,7 @@ void BJumblrGUI::loadButtonClickedCallback (BEvents::Event* event)
 
 		RESIZE ((*ui->fileChooser), 200, 140, 640, 400, ui->sz);
 		ui->fileChooser->applyTheme (ui->theme);
-		ui->fileChooser->selectFilter ("Audio files");
+		ui->fileChooser->selectFilter (BJUMBLR_LABEL_AUDIO_FILES);
 		ui->mContainer.add (*ui->fileChooser);
 	}
 }
