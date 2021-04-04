@@ -2170,7 +2170,12 @@ void BJumblrGUI::loadButtonClickedCallback (BEvents::Event* event)
 			BWidgets::FileFilter {BJUMBLR_LABEL_ALL_FILES, std::regex (".*")},
 			BWidgets::FileFilter {BJUMBLR_LABEL_AUDIO_FILES, std::regex (".*\\.((wav)|(wave)|(aif)|(aiff)|(au)|(sd2)|(flac)|(caf)|(ogg)|(mp3))$", std::regex_constants::icase)}
 		},
-		BJUMBLR_LABEL_OPEN);
+		std::vector<std::string>
+		{
+			BJUMBLR_LABEL_OK, BJUMBLR_LABEL_OPEN, BJUMBLR_LABEL_CANCEL, BJUMBLR_LABEL_PLAY_AS_LOOP,
+			BJUMBLR_LABEL_FILE, BJUMBLR_LABEL_SELECTION_START, BJUMBLR_LABEL_SELECTION_END, BJUMBLR_LABEL_FRAMES
+		}
+	);
 	if (ui->fileChooser)
 	{
 		const std::string filename = ui->sampleNameLabel.getText();

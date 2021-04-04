@@ -1,5 +1,5 @@
-#ifndef LOCALE_EN_HPP_
-#define LOCALE_EN_HPP_
+#ifndef BJUMBLR_LOCALE
+#define BJUMBLR_LOCALE
 
 #define BJUMBLR_LABEL_JACK_OFF "Msg: Jack transport off or halted. Plugin halted."
 #define BJUMBLR_LABEL_CANT_OPEN_SAMPLE "Msg: Can't open sample file."
@@ -27,7 +27,7 @@
 #define BJUMBLR_LABEL_AUDIO_STREAM "Audio stream"
 #define BJUMBLR_LABEL_SAMPLE "Sample"
 #define BJUMBLR_LABEL_PLAY "Play"
-#define BJUMBLR_LABEL_BYPASS "BYPASS"
+#define BJUMBLR_LABEL_BYPASS "Bypass"
 #define BJUMBLR_LABEL_STOP "Stop"
 #define BJUMBLR_LABEL_ADD "Add"
 #define BJUMBLR_LABEL_REPLACE "Replace"
@@ -47,6 +47,11 @@
 #define BJUMBLR_LABEL_ALL_FILES "All files"
 #define BJUMBLR_LABEL_AUDIO_FILES "Audio files"
 #define BJUMBLR_LABEL_OPEN "Open"
+#define BJUMBLR_LABEL_PLAY_AS_LOOP "Play selection as loop"
+#define BJUMBLR_LABEL_FILE "File"
+#define BJUMBLR_LABEL_SELECTION_START "Selection start"
+#define BJUMBLR_LABEL_SELECTION_END "Selection end"
+#define BJUMBLR_LABEL_FRAMES "frames"
 
 
 #endif
