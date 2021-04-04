@@ -177,6 +177,7 @@ But do not change or delete any definition symbol!
 ## What's new
 
 * Support LANGUAGE parameter
+* Locales: EN, DE
 
 
 ## Acknowledgments
