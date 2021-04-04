@@ -230,6 +230,15 @@ private:
 	SymbolWidget pageBackSymbol;
 	SymbolWidget pageForwardSymbol;
 
+	BWidgets::Label sourceLabel;
+	BWidgets::Label calibrationLabel;
+	BWidgets::Label stepEditModeLabel;
+	BWidgets::Label stepSizeLabel;
+	BWidgets::Label patternSizeLabel;
+	BWidgets::Label padLevelLabel;
+	BWidgets::Label playbackLabel;
+	BWidgets::Label speedLabel;
+
 	struct Tab
 	{
 		BWidgets::Widget container;

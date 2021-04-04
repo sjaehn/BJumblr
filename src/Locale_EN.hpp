@@ -52,6 +52,14 @@
 #define BJUMBLR_LABEL_SELECTION_START "Selection start"
 #define BJUMBLR_LABEL_SELECTION_END "Selection end"
 #define BJUMBLR_LABEL_FRAMES "frames"
+#define BJUMBLR_LABEL_SOURCE "Source"
+#define BJUMBLR_LABEL_CALIBRATION "Calibration"
+#define BJUMBLR_LABEL_STEP_EDIT_MODE "Step edit mode"
+#define BJUMBLR_LABEL_STEP_SIZE "Step size"
+#define BJUMBLR_LABEL_PATTERN_SIZE "Pattern size"
+#define BJUMBLR_LABEL_PAD_LEVEL "Pad level"
+#define BJUMBLR_LABEL_PLAYBACK "Playback"
+#define BJUMBLR_LABEL_SPEED "Speed"
 
 
 #endif

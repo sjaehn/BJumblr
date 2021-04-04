@@ -44,6 +44,15 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	pageBackSymbol (0, 0, 10, 30, "tab", LEFTSYMBOL),
 	pageForwardSymbol (482, 0, 10, 30, "tab", RIGHTSYMBOL),
 
+	sourceLabel (510, 95, 60, 10, "ylabel", BJUMBLR_LABEL_SOURCE),
+	calibrationLabel (405, 577, 80, 10, "ylabel", BJUMBLR_LABEL_CALIBRATION),
+	stepEditModeLabel (535, 577, 80, 10, "ylabel", BJUMBLR_LABEL_STEP_EDIT_MODE),
+	stepSizeLabel (690, 577, 80, 10, "ylabel", BJUMBLR_LABEL_STEP_SIZE),
+	patternSizeLabel (850, 577, 80, 10, "ylabel", BJUMBLR_LABEL_PATTERN_SIZE),
+	padLevelLabel (950, 120, 60, 10, "ylabel", BJUMBLR_LABEL_PAD_LEVEL),
+	playbackLabel (950, 350, 60, 10, "ylabel", BJUMBLR_LABEL_PLAYBACK),
+	speedLabel (950, 515, 60, 10, "ylabel", BJUMBLR_LABEL_SPEED),
+
 	midiBox (18, 118, 510, 120, "screen", 0),
 	midiText (20, 10, 450, 20, "tlabel", BJUMBLR_LABEL_MIDI_PAGE " #1"),
 	midiStatusLabel (10, 30, 130, 20, "ylabel", BJUMBLR_LABEL_MIDI_STATUS),
@@ -251,6 +260,15 @@ BJumblrGUI::BJumblrGUI (const char *bundle_path, const LV2_Feature *const *featu
 	applyTheme (theme);
 
 	// Pack widgets
+	mContainer.add (sourceLabel);
+	mContainer.add (calibrationLabel);
+	mContainer.add (stepEditModeLabel);
+	mContainer.add (stepSizeLabel);
+	mContainer.add (patternSizeLabel);
+	mContainer.add (padLevelLabel);
+	mContainer.add (playbackLabel);
+	mContainer.add (speedLabel);
+
 	mContainer.add (messageLabel);
 	mContainer.add (pageWidget);
 	pageWidget.add (pageBackSymbol);
@@ -716,6 +734,15 @@ void BJumblrGUI::resize ()
 		for (int j = 0; j < 4; ++j) RESIZE (tabs[i].symbols[j], 68 - j * 10, 2, 8, 8, sz);
 	}
 
+	RESIZE (sourceLabel, 510, 95, 60, 10, sz);
+	RESIZE (calibrationLabel, 405, 577, 80, 10, sz);
+	RESIZE (stepEditModeLabel ,535, 577, 80, 10, sz);
+	RESIZE (stepSizeLabel, 690, 577, 80, 10, sz);
+	RESIZE (patternSizeLabel, 850, 577, 80, 10, sz);
+	RESIZE (padLevelLabel, 950, 120, 60, 10, sz);
+	RESIZE (playbackLabel, 950, 350, 60, 10, sz);
+	RESIZE (speedLabel, 950, 515, 60, 10, sz);
+
 	RESIZE (midiBox, 18, 118, 510, 120, sz);
 	RESIZE (midiText, 20, 10, 450, 20, sz);
 	RESIZE (midiStatusLabel, 10, 30, 130, 20, sz);
@@ -810,6 +837,15 @@ void BJumblrGUI::applyTheme (BStyles::Theme& theme)
 		t.midiSymbol.applyTheme (theme);
 		for (SymbolWidget& s : t.symbols) s.applyTheme (theme);
 	}
+
+	sourceLabel.applyTheme (theme);
+	calibrationLabel.applyTheme (theme);
+	stepEditModeLabel.applyTheme (theme);
+	stepSizeLabel.applyTheme (theme);
+	patternSizeLabel.applyTheme (theme);
+	padLevelLabel.applyTheme (theme);
+	playbackLabel.applyTheme (theme);
+	speedLabel.applyTheme (theme);
 
 	midiBox.applyTheme (theme);
 	midiText.applyTheme (theme);
