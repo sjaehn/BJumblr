@@ -52,6 +52,7 @@
 #define BJUMBLR_LABEL_SELECTION_START "Beginn Auswahl"
 #define BJUMBLR_LABEL_SELECTION_END "Ende Auswahl"
 #define BJUMBLR_LABEL_FRAMES "Frames"
+#define BJUMBLR_LABEL_NO_FILE_SELECTED "Keine Audiodatei ausgewählt"
 #define BJUMBLR_LABEL_SOURCE "Quelle"
 #define BJUMBLR_LABEL_CALIBRATION "Kalibrierung"
 #define BJUMBLR_LABEL_STEP_EDIT_MODE "Bearbeitungsmodus"
