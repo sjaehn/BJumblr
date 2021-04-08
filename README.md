@@ -178,6 +178,9 @@ But do not change or delete any definition symbol!
 
 * Support LANGUAGE parameter
 * Locales: EN, DE
+* Bugfixes
+  * Hide sample preview for non samples
+  * Prohibit parallel build
 
 
 ## Acknowledgments

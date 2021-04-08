@@ -176,9 +176,9 @@ void SampleChooser::setFileName (const std::string& filename)
 
 			scrollbar.minButton.setValue (0.0);
 			scrollbar.maxButton.setValue (1.0);
-
-			update();
 		}
+
+		update();
 	}
 }
 
