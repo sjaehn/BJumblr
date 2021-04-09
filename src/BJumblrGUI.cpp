@@ -2273,11 +2273,11 @@ void BJumblrGUI::patternFlippedClickedCallback (BEvents::Event* event)
 
 void BJumblrGUI::helpButtonClickedCallback (BEvents::Event* event)
 {
-	if (system(OPEN_CMD " " HELP_URL)) std::cerr << "BJumblr.lv2#GUI: Can't open " << HELP_URL << ". You can try to call it maually.";
+	if (system(OPEN_CMD " " HELP_URL)) std::cerr << "BJumblr.lv2#GUI: Can't open " << HELP_URL << ". You can try to call it manually.\n";
 }
 void BJumblrGUI::ytButtonClickedCallback (BEvents::Event* event)
 {
-	if (system(OPEN_CMD " " YT_URL))  std::cerr << "BJumblr.lv2#GUI: Can't open " << YT_URL << ". You can try to call it maually.";
+	if (system(OPEN_CMD " " YT_URL))  std::cerr << "BJumblr.lv2#GUI: Can't open " << YT_URL << ". You can try to call it manually.\n";
 }
 
 void BJumblrGUI::setMarkers()
