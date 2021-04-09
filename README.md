@@ -182,6 +182,7 @@ But do not change or delete any definition symbol!
 * Bugfixes
   * Hide sample preview for non samples
   * Prohibit parallel build
+  * Improved POSIX comaptibility
 
 
 ## Acknowledgments
