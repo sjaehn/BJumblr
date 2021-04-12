@@ -96,7 +96,7 @@ struct Sample
         	{
                         SNDFILE* sndfile = sf_open (samplepath, SFM_READ, &info);
 
-                        if (!sndfile) throw std::invalid_argument ("Can't open " + std::string (name) + ".");
+                        //if (!sndfile) throw std::invalid_argument ("Can't open " + std::string (name) + ".");
                         if (sf_error (sndfile) != SF_ERR_NO_ERROR) throw std::invalid_argument (std::string (sf_strerror (sndfile)));
                         if (!info.frames) throw std::invalid_argument ("Empty sample file " + std::string (name) + ".");
 
