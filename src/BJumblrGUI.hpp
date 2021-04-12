@@ -72,7 +72,7 @@
 #define MAXUNDO 20
 
 #ifndef WWW_BROWSER_CMD
-#define WWW_BROWSER_CMD "/usr/bin/x-www-browser"
+#define WWW_BROWSER_CMD "x-www-browser"
 #endif
 
 #define RESIZE(widget, x, y, w, h, sz) {widget.moveTo ((x) * (sz), (y) * (sz)); widget.resize ((w) * (sz), (h) * (sz));}

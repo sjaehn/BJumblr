@@ -35,9 +35,9 @@ ifeq ($(shell test -e src/Locale_$(LANGUAGE).hpp && echo -n yes),yes)
   GUIPPFLAGS += -DLOCALEFILE=\"Locale_$(LANGUAGE).hpp\"
 endif
 
-WWW_BROWSER ?= x-www-browser
-WWW_BROWSER_CMD ?= $(shell eval which $(WWW_BROWSER))
-GUIPPFLAGS += -DWWW_BROWSER_CMD=\"$(WWW_BROWSER_CMD)\"
+ifdef WWW_BROWSER_CMD
+  GUIPPFLAGS += -DWWW_BROWSER_CMD=\"$(WWW_BROWSER_CMD)\"
+endif
 
 BUNDLE = BJumblr.lv2
 DSP = BJumblr
