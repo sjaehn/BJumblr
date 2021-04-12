@@ -175,10 +175,16 @@ void SampleChooser::setFileName (const std::string& filename)
 			sample = nullptr;
 		}
 		try {sample = new Sample (rp);}
-		catch (std::exception& exc) {fprintf(stderr, "Can't load %s\n", rp);}
+		catch (std::exception& exc)
+		{
+			std::cerr << exc.what() << "\n";
+			noFileLabel.setText (exc.what());
+		}
 
 		if (sample)
 		{
+			noFileLabel.setText (labels[BWIDGETS_DEFAULT_SAMPLECHOOSER_NO_FILE_INDEX]);
+
 			sample->start = 0;
 			sample->end = sample->info.frames;
 
@@ -441,6 +447,7 @@ void SampleChooser::sfileListBoxClickedCallback (BEvents::Event* event)
 				fc->sample = nullptr;
 			}
 			BEvents::ValueChangedEvent dummyEvent = BEvents::ValueChangedEvent (&fc->okButton, 1.0);
+			fc->noFileLabel.setText (fc->labels[BWIDGETS_DEFAULT_SAMPLECHOOSER_NO_FILE_INDEX]);
 			fc->okButtonClickedCallback (&dummyEvent);
 			fc->update();
 		}
