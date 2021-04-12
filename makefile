@@ -35,6 +35,10 @@ ifeq ($(shell test -e src/Locale_$(LANGUAGE).hpp && echo -n yes),yes)
   GUIPPFLAGS += -DLOCALEFILE=\"Locale_$(LANGUAGE).hpp\"
 endif
 
+WWW_BROWSER ?= x-www-browser
+WWW_BROWSER_CMD ?= $(shell eval which $(WWW_BROWSER))
+GUIPPFLAGS += -DWWW_BROWSER_CMD=\"$(WWW_BROWSER_CMD)\"
+
 BUNDLE = BJumblr.lv2
 DSP = BJumblr
 DSP_SRC = ./src/BJumblr.cpp
@@ -89,7 +93,8 @@ GUI_CXX_INCL = \
 	src/BWidgets/BColors.cpp \
 	src/BWidgets/BItems.cpp \
 	src/BUtilities/to_string.cpp \
-	src/BUtilities/stof.cpp
+	src/BUtilities/stof.cpp \
+	src/BUtilities/vsystem.cpp
 
 GUI_C_INCL = \
 	src/screen.c \

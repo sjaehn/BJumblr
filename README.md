@@ -183,6 +183,7 @@ But do not change or delete any definition symbol!
   * Hide sample preview for non samples
   * Prohibit parallel build
   * Improved POSIX comaptibility
+  * Enable web browser call (help, tutorial) on fork-blocking hosts
 
 
 ## Acknowledgments

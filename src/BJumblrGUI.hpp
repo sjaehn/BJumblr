@@ -69,8 +69,11 @@
 #define BG_FILE "inc/surface.png"
 #define HELP_URL "https://github.com/sjaehn/BJumblr/blob/master/README.md"
 #define YT_URL "https://www.youtube.com/watch?v=DFSi7TMqvMw"
-#define OPEN_CMD "xdg-open"
 #define MAXUNDO 20
+
+#ifndef WWW_BROWSER_CMD
+#define WWW_BROWSER_CMD "/usr/bin/x-www-browser"
+#endif
 
 #define RESIZE(widget, x, y, w, h, sz) {widget.moveTo ((x) * (sz), (y) * (sz)); widget.resize ((w) * (sz), (h) * (sz));}
 

@@ -21,6 +21,7 @@
 #include "BJumblrGUI.hpp"
 #include "BUtilities/to_string.hpp"
 #include "BUtilities/Path.hpp"
+#include "BUtilities/vsystem.hpp"
 #include "MessageDefinitions.hpp"
 #include "MidiDefs.hpp"
 
@@ -2273,11 +2274,20 @@ void BJumblrGUI::patternFlippedClickedCallback (BEvents::Event* event)
 
 void BJumblrGUI::helpButtonClickedCallback (BEvents::Event* event)
 {
-	if (system(OPEN_CMD " " HELP_URL)) std::cerr << "BJumblr.lv2#GUI: Can't open " << HELP_URL << ". You can try to call it manually.\n";
+	char cmd[] = WWW_BROWSER_CMD;
+	char param[] = HELP_URL;
+	char* argv[] = {cmd, param, NULL};
+	std::cerr << "BJumblr.lv2#GUI: Call " << HELP_URL << " for help.\n";
+	if (BUtilities::vsystem (argv) == -1) std::cerr << "BJumblr.lv2#GUI: Couldn't fork.\n";
 }
+
 void BJumblrGUI::ytButtonClickedCallback (BEvents::Event* event)
 {
-	if (system(OPEN_CMD " " YT_URL))  std::cerr << "BJumblr.lv2#GUI: Can't open " << YT_URL << ". You can try to call it manually.\n";
+	char cmd[] = WWW_BROWSER_CMD;
+	char param[] = YT_URL;
+	char* argv[] = {cmd, param, NULL};
+	std::cerr << "BJumblr.lv2#GUI: Call " << YT_URL << " for tutorial video.\n";
+	if (BUtilities::vsystem (argv) == -1) std::cerr << "BJumblr.lv2#GUI: Couldn't fork.\n";
 }
 
 void BJumblrGUI::setMarkers()
