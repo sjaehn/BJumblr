@@ -180,9 +180,9 @@ But do not change or delete any definition symbol!
 * Locales: EN, DE
 * Update sample browser
 * Bugfixes
-  * Hide sample preview for non samples
+  * Hide sample preview for non / broken samples
   * Prohibit parallel build
-  * Improved POSIX comaptibility
+  * Improved POSIX compatibility
   * Enable web browser call (help, tutorial) on fork-blocking hosts
 
 
