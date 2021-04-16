@@ -167,7 +167,7 @@ are facilitated via the progression delay. The total amount of the progression d
 speed-induced delay) is displayed in the panel above the buttons.
 
 
-##Customize
+## Customize
 
 You can create customized builds of B.Jumblr using the parameter `LANGUAGE` (e.g., `make LANGUAGE=DE`).
 To create a new language pack, copy `src/Locale_EN.hpp` and edit the text for the respective definitions.
@@ -177,7 +177,7 @@ But do not change or delete any definition symbol!
 ## What's new
 
 * Support LANGUAGE parameter
-* Locales: EN, DE
+* Locales: EN, DE, FR
 * Update sample browser
 * Bugfixes
   * Hide sample preview for non / broken samples
