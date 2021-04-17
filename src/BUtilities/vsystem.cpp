@@ -24,12 +24,8 @@ namespace BUtilities
 
 [[noreturn]] static void vexec (char* argv[])
 {
-#if defined(__FreeBSD__) // execvpe isn't a POSIX function and it doesn't exist on FreeBSD
         execvp (argv[0], argv);
-#else
-        execvpe (argv[0], argv, environ);
-#endif
-        perror ("execvpe");
+        perror ("execvp");
         _exit (1);
 }
 
