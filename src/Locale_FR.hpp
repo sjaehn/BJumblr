@@ -45,7 +45,7 @@
 #define BJUMBLR_LABEL_STEP "Pas"
 #define BJUMBLR_LABEL_LEVEL "Niveau"
 #define BJUMBLR_LABEL_ALL_FILES "Tous les fichiers"
-#define BJUMBLR_LABEL_AUDIO_FILES "fichiers audio"
+#define BJUMBLR_LABEL_AUDIO_FILES "Fichiers audio"
 #define BJUMBLR_LABEL_OPEN "Ouvrir"
 #define BJUMBLR_LABEL_PLAY_AS_LOOP "Jouer la sélection en boucle"
 #define BJUMBLR_LABEL_FILE "Fichier"
