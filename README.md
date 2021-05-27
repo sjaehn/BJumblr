@@ -177,14 +177,9 @@ But do not change or delete any definition symbol!
 
 ## What's new
 
-* Support LANGUAGE parameter
-* Locales: EN, DE, FR
+* Locales: FR
 * Update sample browser
-* Bugfixes
-  * Hide sample preview for non / broken samples
-  * Prohibit parallel build
-  * Improved POSIX compatibility
-  * Enable web browser call (help, tutorial) on fork-blocking hosts
+* Compatibility improved (FreeBSD)
 
 
 ## Acknowledgments

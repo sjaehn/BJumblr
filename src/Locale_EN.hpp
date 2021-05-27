@@ -53,6 +53,8 @@
 #define BJUMBLR_LABEL_SELECTION_END "Selection end"
 #define BJUMBLR_LABEL_FRAMES "frames"
 #define BJUMBLR_LABEL_NO_FILE_SELECTED "No audio file selected"
+#define BJUMBLR_LABEL_NEW_FOLDER "Create new folder:"
+#define BJUMBLR_LABEL_CANT_CREATE_NEW_FOLDER "Error: Can't create new folder"
 #define BJUMBLR_LABEL_SOURCE "Source"
 #define BJUMBLR_LABEL_CALIBRATION "Calibration"
 #define BJUMBLR_LABEL_STEP_EDIT_MODE "Step edit mode"
