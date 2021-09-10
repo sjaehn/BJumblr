@@ -15,7 +15,15 @@ a) Install the bjumblr package for your system
 * [openSUSE](https://software.opensuse.org/package/BJumblr)
 * Check https://repology.org/project/bjumblr/versions for other systems
 
-b) Build your own binaries in the following three steps.
+Note: This will NOT necessarily install the latest version of B.Jumblr. The version provided depends on the packagers.
+
+b) Use the latest provided binaries
+
+Unpack the provided bjumblr-\*.zip or bjumblr-\*.tar.xz from the latest release and 
+copy the BJumblr.lv2 folder to your lv2 directory (depending on your system settings,
+~/.lv2/, /usr/lib/lv2/, /usr/local/lib/lv2/, or ...).
+
+c) Build your own binaries in the following three steps.
 
 Step 1: Clone or download this repository.
 
@@ -41,8 +49,7 @@ make
 sudo make install
 ```
 
-**Optional:** Standard `make` and `make install` parameters are supported. Compiling using `make CPPFLAGS+=-O3`
-is recommended to improve the plugin performance. Alternatively, you may build a debugging version using
+**Optional:** Standard `make` and `make install` parameters are supported. Alternatively, you may build a debugging version using
 `make CPPFLAGS+=-g`. For installation into an alternative directory (e.g., /usr/lib/lv2/), change the
 variable `PREFIX` while installing: `sudo make install PREFIX=/usr`. If you want to freely choose the
 install target directory, change the variable `LV2DIR` (e.g., `make install LV2DIR=~/.lv2`) or even define
@@ -180,6 +187,13 @@ But do not change or delete any definition symbol!
 * Locales: FR
 * Update sample browser
 * Compatibility improved (FreeBSD)
+* Faster
+  * Optimized DSP code
+  * Compiler optimizations (`-O3 -ffast-math`)
+* Binary compatibility improved
+  * Static libs
+  * Strip symbols by default
+* Binary packages provided
 
 
 ## Acknowledgments
